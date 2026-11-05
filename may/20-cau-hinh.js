@@ -1,5 +1,5 @@
 /* ============================================================= *
- * 1. CẤU HÌNH MẶC ĐỊNH — sửa bằng dqtv.dat(...) hoặc trên bảng   *
+ * 1. CẤU HÌNH MẶC ĐỊNH — sửa bằng ita.dat(...) hoặc trên bảng   *
  * ============================================================= */
 const MAC_DINH = {
   /* --- phạm vi duyệt menu / tab --- */
@@ -56,7 +56,7 @@ const MAC_DINH = {
   tienToKiemThu: '[KIEMTHU] ',  // chỉ thao tác trên hồ sơ mang tiền tố này (mức 2)
 
   // Đặc tả để đối chiếu. Để null thì bỏ qua kiểm quy trình, chỉ kiểm mã.
-  // Khai theo hệ thống thật rồi dán vào (dqtv.dat({ dacTa: {...} })).
+  // Khai theo hệ thống thật rồi dán vào (ita.dat({ dacTa: {...} })).
   dacTa: null,
   // dacTa = {
   //   trangThai: ['Dự thảo','Trình ký','Đã ký','Hoàn thành','Trả lại'], // danh mục trạng thái hợp lệ
@@ -104,7 +104,7 @@ function timNhayCam(text) {
 }
 const cheMot = x => x.length <= 8 ? x.slice(0, 2) + '…' : x.slice(0, 8) + '…(' + x.length + ' ký tự)';
 function cheChuoi(s) {
-  if (window.__dqtvKhongChe) return String(s);
+  if (window.__itaKhongChe) return String(s);
   let t = String(s);
   // che một lần: bỏ qua đoạn đã che (có "…" trong đoạn khớp hoặc ngay sau nó), để không che chồng
   for (const [, re] of MAU_NHAY_CAM) {
@@ -115,9 +115,9 @@ function cheChuoi(s) {
   return t;
 }
 
-const PHIEN_BAN = '3.31';
-const KEY_CFG = 'dqtv.cfg.v325', KEY_CKPT = 'dqtv.ckpt.v325', KEY_LAST = 'dqtv.last.v325', KEY_TAY = 'dqtv.truongtay.v325', KEY_SAP = 'dqtv.sap.v325';
-// khóa của các bản trước (v3, v3.6, 3.17–3.23): dqtv.donBoNho() xoá để trả chỗ cho trình duyệt
+const PHIEN_BAN = '5.0';
+const KEY_CFG = 'ita.cfg.v50', KEY_CKPT = 'ita.ckpt.v50', KEY_LAST = 'ita.last.v50', KEY_TAY = 'ita.truongtay.v50', KEY_SAP = 'ita.sap.v50';
+// khóa của các bản trước (v3, v3.6, 3.17–3.23): ita.donBoNho() xoá để trả chỗ cho trình duyệt
 const KHOA_CU = /^dqtv\.(cfg|ckpt|last|truongtay|run|nk|sap)\.v3(24)?(\||$)|^dqtv\.dacta\.v(1|324)$/;
 
 /* --- Nhận ra tài khoản đang đăng nhập, để điểm dừng và kết quả TÁCH RIÊNG theo tài khoản ---
@@ -131,18 +131,18 @@ function taiKhoan() {
     // khối chữ ở góc phải trên cùng (thường là chức vụ + đơn vị người dùng), bỏ ô tìm kiếm và bảng điều khiển
     const W = innerWidth;
     const ds = [...document.querySelectorAll('header *, nav *, body > div *')].filter(e => {
-      if (e.closest('#dqtv-panel-host') || e.querySelector('input,svg + svg') || e.children.length > 4) return false;
+      if (e.closest('#ita-panel-host') || e.querySelector('input,svg + svg') || e.children.length > 4) return false;
       const r = e.getBoundingClientRect(); return r.top >= 0 && r.top < 90 && r.left > W * 0.6 && r.width > 0 && r.width < W * 0.35;
     }).map(e => (e.innerText || '').trim().replace(/\s+/g, ' ')).filter(t => /\p{L}{3,}/u.test(t) && t.length < 160);
     return ds.sort((a, b) => b.length - a.length)[0] || '';
   } catch (e) { return ''; }
 }
 // Cờ "đang chạy" — còn lại sau khi trang tự tải lại giữa chừng thì lần nạp sau tự chạy tiếp
-const KEY_RUN = 'dqtv.run.v325';
+const KEY_RUN = 'ita.run.v50';
 
 /* --- Nhật ký lưu bền: giữ lại 300 thao tác gần nhất trong trình duyệt (không mất khi trang tải lại / bị đăng xuất).
  * Dùng để biết lần chạy trước dừng ở đâu, sau thao tác nào, có lỗi 401/403 hay lệnh ghi bị chặn nào. */
-const KEY_NK = 'dqtv.nk.v325';
+const KEY_NK = 'ita.nk.v50';
 let NK_BO = null;
 function nk(loai, noiDung) {
   try {
@@ -158,7 +158,7 @@ let APP_SAP = '';     // có giá trị khi ứng dụng hiện màn hình hỏn
 // Mã có đang chạy trong chính trang không (thử chèn một thẻ script nhỏ rồi xem trang có thấy biến không)
 function laTrangThat() {
   try {
-    const k = '__dqtvKiem' + Math.random().toString(36).slice(2);
+    const k = '__itaKiem' + Math.random().toString(36).slice(2);
     const s = document.createElement('script'); s.textContent = 'window["' + k + '"]=1';
     (document.head || document.documentElement).appendChild(s); s.remove();
     const ok = window[k] === 1; try { delete window[k]; } catch (e) {} return ok;
@@ -214,15 +214,15 @@ const HO_SO = {
   'kiem-ke-truong': { moHoSoDau: true, thuOTim: false, thuOChon: 0, doSauTab: 2, kiemKeTruong: true, moFormDeKiemKe: true, moDropdownTuyBien: true, moRongMuc: true, maxFormMoiMan: 20 },
 };
 
-// Cấu hình đang dùng = mặc định ← đã lưu ← DQTV_CONFIG (nếu có)
+// Cấu hình đang dùng = mặc định ← đã lưu ← ITA_CONFIG (nếu có)
 let daCanhBaoChiDoc = false;
 function cfgHienTai(over) {
-  const goc = Object.assign({}, MAC_DINH, cauHinhGoiAnToan((window.__dqtvDuAn || {}).cau_hinh), docCfgLuu(), window.DQTV_MAC_DINH || {}, window.DQTV_CONFIG || {}, over || {});
+  const goc = Object.assign({}, MAC_DINH, cauHinhGoiAnToan((window.__itaDuAn || {}).cau_hinh), docCfgLuu(), window.ITA_MAC_DINH || {}, window.ITA_CONFIG || {}, over || {});
   // 3.31 (CT-03): chỉ đọc, luôn luôn (mucQuyTrinh về 1, chanGhi về true); chế độ ghi chưa làm. Cảnh báo một lần mỗi lần nạp trang.
   const c = epChiDoc(goc);
   if (!daCanhBaoChiDoc && (c.mucQuyTrinh !== goc.mucQuyTrinh || c.chanGhi !== goc.chanGhi)) {
     daCanhBaoChiDoc = true;
-    console.warn('[dqtv] 3.31 chỉ chạy chỉ đọc; mucQuyTrinh 2/3 và chanGhi:false bị bỏ qua (chế độ ghi chưa làm, CT-11)');
+    console.warn('[ita] 3.31 chỉ chạy chỉ đọc; mucQuyTrinh 2/3 và chanGhi:false bị bỏ qua (chế độ ghi chưa làm, CT-11)');
   }
   return c;
 }

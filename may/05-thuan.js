@@ -124,7 +124,7 @@ const tenMan = m => String((m && (m.tab || m.man)) || '?');
 const rutTen = (ds, n) => ds.slice(0, n).join('; ') + (ds.length > n ? ' (+' + (ds.length - n) + ' màn khác)' : '');
 /**
  * Chấm các TC KHUNG-CHUNG.* từ kết quả quét giao diện của tool.
- * @param {object[]} dongMan  res[] của dqtvAudit (30-loi-kiem.js ~dòng 1231): mỗi màn có `tab` và các khoá như
+ * @param {object[]} dongMan  res[] của itaAudit (30-loi-kiem.js ~dòng 1231): mỗi màn có `tab` và các khoá như
  *                            tran_ngang, api_loi, cat_chu_khong_tooltip... (chuỗi rỗng = không lỗi). Rỗng = chưa kiểm màn nào.
  * @param {object[]} timThu   inputs[] của 30-loi-kiem.js (tryInputs ~dòng 1446): {man, o, loai: 'tìm · '+ten, loi}.
  *                            `ten` là giá trị `ten` trong cấu hình giaTriTim: 'không tồn tại' | 'thừa khoảng trắng' | 'không dấu'
@@ -132,9 +132,9 @@ const rutTen = (ds, n) => ds.slice(0, n).join('; ') + (ds.length > n ? ' (+' + (
  * @param {object}   duAn     du-an.json; dùng duAn.luat_khung_chung = [{ma, khoa?: string[], nguon?: 'sap'|'thiet_ke'|'tim', ten?}].
  *                            Có `khoa` (khác rỗng): LỆCH khi có màn mà một khoá không rỗng. `khoa: []` và không có `nguon`: công cụ chưa có phép kiểm.
  * @param {object}  [nguonKhac] {
- *     sap:     {man, duong_dan?, bo_truoc?, loi_da_biet?: {ma}}[] — SAP của dqtvAudit (30-loi-kiem.js dòng 38-63). Mục không `bo_truoc` = sập thấy trong lần chạy → LỆCH;
+ *     sap:     {man, duong_dan?, bo_truoc?, loi_da_biet?: {ma}}[] — SAP của itaAudit (30-loi-kiem.js dòng 38-63). Mục không `bo_truoc` = sập thấy trong lần chạy → LỆCH;
  *              chỉ còn mục `bo_truoc` (bỏ qua màn đã biết sập theo sổ) → CHƯA KIỂM; mảng rỗng + đã kiểm màn → ĐẠT; thiếu → CHƯA KIỂM.
- *     thietKe: {vuot_chuan: string[]} — dsKq của dqtvAudit (tổng hợp thiết kế so với chuanDS). null/thiếu (tắt kiemThietKe) = CHƯA KIỂM.
+ *     thietKe: {vuot_chuan: string[]} — dsKq của itaAudit (tổng hợp thiết kế so với chuanDS). null/thiếu (tắt kiemThietKe) = CHƯA KIỂM.
  *   }
  * @returns {{ma: string|null, kq: 'ĐẠT'|'LỆCH'|'CẢNH BÁO'|'CHƯA KIỂM', dg: string}[]}  thêm dòng {ma: null, khoa, man: string[]} cho khoá mồ côi.
  *          Chuỗi ô tìm chỉ có «[cần xác nhận]» thì CẢNH BÁO (không LỆCH).
@@ -217,7 +217,7 @@ function kiemGoi(duAn, dm) {
   if (!dm || typeof dm !== 'object') return 'chưa nạp danh mục TC v7';
   if (dm.phien_ban !== 2) return 'gói cũ (danh mục TC không phải bản 2)';
   const thieu = ['anh_xa_ket_qua', 'luat_khung_chung', 'duong_dan_xac_thuc', 'bam'].filter(k => duAn[k] == null)
-    .concat(['tc', 'vai', 'bo_chay'].filter(k => !Array.isArray(dm[k])).map(k => '__dqtvDanhMucTC.' + k));
+    .concat(['tc', 'vai', 'bo_chay'].filter(k => !Array.isArray(dm[k])).map(k => '__itaDanhMucTC.' + k));
   return thieu.length ? 'gói thiếu trường ' + thieu.join(', ') : '';
 }
 // Bộ lọc kế hoạch: 4 khoá chamTheoMaTran hiểu, mỗi khoá là mảng chuỗi
@@ -232,5 +232,5 @@ const chuoiBam = b => b && typeof b === 'object' ? Object.entries(b).map(([k, v]
 
 // Trình duyệt: gắn vào window. Node: xuất module (không đụng module.exports của trang nếu trang có sẵn `module`).
 const THUAN = { laPostDuocPhep, epChiDoc, cauHinhGoiAnToan, vaiCuaTaiKhoan, chamTheoMaTran, chamKhungChung, gopKetQua, csvMaTran, docCSVMaTran, kiemGoi, chuanLoc, chuoiBam };
-if (typeof window !== 'undefined') window.__dqtvThuan = THUAN;
+if (typeof window !== 'undefined') window.__itaThuan = THUAN;
 else if (typeof module !== 'undefined' && module.exports) module.exports = THUAN;

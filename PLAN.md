@@ -1,3 +1,5 @@
+> **05/11/2026:** nhánh này đã đổi tên thành ITA 5.0 — xem mục 0 của `QUY-TAC-DUNG-SCRIPT.md`. Các bước dưới đây là lịch sử dựng 3.31, tên `dqtv.*` trong đó nay đọc là `ita.*`.
+
 # Tool kiểm giao diện DQTV 3.31 — làm lại theo ma trận v7 của PM
 
 > **Cho người/agent thực hiện:** dùng superpowers:subagent-driven-development (khuyên dùng) hoặc superpowers:executing-plans, làm lần lượt từng việc. Đánh dấu `- [ ]` → `- [x]` khi xong một bước. Dừng giữa chừng thì để nguyên tệp này để phiên sau làm tiếp.

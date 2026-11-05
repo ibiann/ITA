@@ -83,3 +83,10 @@ Final: minor (deferred): quetManNay và nút Quét màn này không khoá khi t�
 Final: minor (deferred): v7 mục 5 «Đi vòng bộ chặn → Dừng lần chạy», bộ máy giữ hành vi 3.26 (ngừng bấm, chạy tiếp) — để vòng sau
 Final: fix wave dispatched (snapshot snap/fin)
 Task 5: final fix wave 1 (4 addressed, 0 open; snap/fin) — Final: complete, review clean
+
+## ITA 5.0 — đổi tên (05/11/2026)
+Ruling: đổi tên công cụ thành ITA, giữ `dqtv.*` làm tên phụ — chủ dự án chọn tên; giữ tên phụ để thói quen và tài liệu cũ vẫn chạy — sai thì: tài liệu/ghi chú cũ gọi `dqtv.*` vẫn chạy, không mất gì.
+Ruling: khoá localStorage đổi sang `ita.*.v50`, KHÔNG cho `KHOA_CU` dọn khoá `dqtv.*.v325` — nếu dọn, chạy ITA trên cùng máy sẽ xoá cấu hình của bản 3.31 đang dùng song song — sai thì: còn sót vài khoá cũ trên máy (vô hại).
+Ruling: dist ghép thử trong sandbox bằng `--dm-cu` (lấy dòng danh mục của dist 3.31) vì không có tc_all.csv → `bam` thiếu `tc_all.csv`; phải ghép lại bằng `--tc` trên máy chủ dự án — sai thì: báo cáo ma trận không ghi mã băm tc_all.csv.
+Kiểm: test_thuan 36/36; `node --check` OK; bộ máy 299.673 B; 4 dòng dữ liệu (đặc tả, quy tắc, danh mục TC, hiệu năng) trùng từng ký tự với 3.31; chạy thử jsdom: 32/32 lệnh trùng, `ita === dqtv`, lá chắn POST cho/chặn y như 3.31. test_dong_goi.py chưa chạy (cần tệp 3.26 và tc_all.csv trong ~/Downloads).
+minor (deferred): tuyến `/dqtv/` còn viết cứng ở `30-loi-kiem.js:1340` và `50-doi-chieu-dac-ta.js:112` — chuyển vào gói (`tienToDuongDan`) ở bước tách lõi.

@@ -2,9 +2,9 @@
 import csv, functools, json, pathlib, subprocess, sys, tempfile
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-BAN_326 = pathlib.Path.home() / 'Downloads' / 'dqtv-kiem-tra-dacta-3.26.js'
+BAN_326 = pathlib.Path.home() / 'Downloads' / 'ita-kiem-tra-dacta-3.26.js'
 TC_CSV = pathlib.Path.home() / 'Downloads/MaTran_UC_TC_DQTV_02112026_v7/tc_all.csv'
-DAU_DM = 'window.__dqtvDanhMucTC = '
+DAU_DM = 'window.__itaDanhMucTC = '
 
 
 def chay(*lenh):
@@ -30,21 +30,21 @@ def test_thieu_moc_thi_dung():
     with tempfile.TemporaryDirectory() as tam:
         tam = pathlib.Path(tam)
         hong = tam / 'hong.js'
-        hong.write_text('//a\n//b\nwindow.__dqtvDanhMucTC = {};\nwindow.__dqtvDacTaNap = [];\nwindow.__dqtvQuyTac = {};\nx\n', encoding='utf-8')
+        hong.write_text('//a\n//b\nwindow.__itaDanhMucTC = {};\nwindow.__itaDacTaNap = [];\nwindow.__itaQuyTac = {};\nx\n', encoding='utf-8')
         r = chay(GOC / 'cong-cu/tach_326.py', hong, '--may', tam / 'may', '--goi', tam / 'goi')
         assert r.returncode != 0 and '0. LÁ CHẮN' in r.stderr, r.stderr
 
 
 @functools.lru_cache(maxsize=1)
 def dong_goi_tc():
-    """Đóng gói thật với tc_all.csv v7; trả về (danh mục TC, dòng __dqtvDuAn, dòng __dqtvHieuNang)."""
+    """Đóng gói thật với tc_all.csv v7; trả về (danh mục TC, dòng __itaDuAn, dòng __itaHieuNang)."""
     tam = pathlib.Path(tempfile.mkdtemp())
     r = chay(GOC / 'cong-cu/dong_goi.py', '--tc', TC_CSV, '--ra', tam / 'x.js')
     assert r.returncode == 0, r.stderr
     dong = (tam / 'x.js').read_text(encoding='utf-8').split('\n')
     lay = lambda dau: next(d for d in dong if d.startswith(dau))
     dm = json.loads(lay(DAU_DM)[len(DAU_DM):].rstrip(';'))
-    return dm, lay('window.__dqtvDuAn = '), lay('window.__dqtvHieuNang = ')
+    return dm, lay('window.__itaDuAn = '), lay('window.__itaHieuNang = ')
 
 
 def test_dem_tc():
@@ -79,11 +79,11 @@ def test_vai_m1():
 
 def test_bam_va_hieu_nang():
     _, du_an, hieu_nang = dong_goi_tc()
-    bam = json.loads(du_an[len('window.__dqtvDuAn = '):].rstrip(';'))['bam']
+    bam = json.loads(du_an[len('window.__itaDuAn = '):].rstrip(';'))['bam']
     assert set(bam) == {'tc_all.csv', 'du-an.json', 'dac-ta.json', 'quy-tac.json', 'hieu-nang.json'}
     assert all(len(v) == 12 for v in bam.values())
     goc = json.loads((GOC / 'goi-du-an/dqtv/hieu-nang.json').read_text(encoding='utf-8'))
-    assert json.loads(hieu_nang[len('window.__dqtvHieuNang = '):].rstrip(';')) == goc
+    assert json.loads(hieu_nang[len('window.__itaHieuNang = '):].rstrip(';')) == goc
 
 
 def _csv_mau(tam, bo_cot=None, lap_ma=False):

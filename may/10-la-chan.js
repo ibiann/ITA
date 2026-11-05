@@ -4,13 +4,13 @@
  * Chỉ chặn ghi khi: đang chạy kiểm, hoặc có lượt chạy dở sau khi   *
  * trang tải lại (chặn luôn cả lệnh ứng dụng gửi lúc tải trang).    *
  * ============================================================= */
-if (!window.__dqtvLaChan) (function caiLaChan() {
-  const LC = window.__dqtvLaChan = { som: document.readyState === 'loading', quyetDinh: null, chan: [], seen: new Set() };
+if (!window.__itaLaChan) (function caiLaChan() {
+  const LC = window.__itaLaChan = { som: document.readyState === 'loading', quyetDinh: null, chan: [], seen: new Set() };
   const abs = u => { try { return new URL(String(u), location.href).href; } catch (e) { return String(u); } };
-  // 3.31: POST chỉ được đi khi đúng trọn một đường dẫn trong gói (window.__dqtvDuAn.duong_dan_xac_thuc); thiếu gói = chặn mọi POST
-  const ghiChat = (m, u) => (!/^(GET|HEAD|OPTIONS)$/i.test(m || 'GET') && !laPostDuocPhep(m, u, (window.__dqtvDuAn || {}).duong_dan_xac_thuc, location.href)) ? 'block' : 'ok';
+  // 3.31: POST chỉ được đi khi đúng trọn một đường dẫn trong gói (window.__itaDuAn.duong_dan_xac_thuc); thiếu gói = chặn mọi POST
+  const ghiChat = (m, u) => (!/^(GET|HEAD|OPTIONS)$/i.test(m || 'GET') && !laPostDuocPhep(m, u, (window.__itaDuAn || {}).duong_dan_xac_thuc, location.href)) ? 'block' : 'ok';
   LC.ghiChat = ghiChat;
-  try { const r = JSON.parse(localStorage.getItem('dqtv.run.v325') || 'null'); if (r && Date.now() - r.ts < 6 * 3600e3) LC.quyetDinh = ghiChat; } catch (e) {}
+  try { const r = JSON.parse(localStorage.getItem('ita.run.v50') || 'null'); if (r && Date.now() - r.ts < 6 * 3600e3) LC.quyetDinh = ghiChat; } catch (e) {}
   const xet = (m, u) => {
     LC.seen.add(abs(u)); const f = LC.quyetDinh; if (!f) return 'ok';
     let r; try { r = f(m || 'GET', String(u)); } catch (e) { r = 'block'; }
@@ -21,7 +21,7 @@ if (!window.__dqtvLaChan) (function caiLaChan() {
   const F0 = window.fetch;
   if (F0) window.fetch = function (input, init) {
     const url = String((input && input.url) || input), m = (init && init.method) || (input && input.method) || 'GET';
-    if (xet(m, url) === 'block') { const e = new TypeError('dqtvAudit: lá chắn chặn ' + m); e.__dqtv = true; return Promise.reject(e); }
+    if (xet(m, url) === 'block') { const e = new TypeError('itaAudit: lá chắn chặn ' + m); e.__ita = true; return Promise.reject(e); }
     return F0.apply(this, arguments);
   };
   const XO0 = XMLHttpRequest.prototype.open, XS0 = XMLHttpRequest.prototype.send;
@@ -41,11 +41,11 @@ if (!window.__dqtvLaChan) (function caiLaChan() {
   window.addEventListener('submit', e => { const f = e.target; if (!f || f.tagName !== 'FORM') return;
     if (xet(f.getAttribute('method') || 'get', f.action || location.href) === 'block') { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 })();
-const LC = window.__dqtvLaChan;
+const LC = window.__itaLaChan;
 
 // 3.31 (CT-02): lá chắn tự kiểm. Bị chặn = ghiChat trả 'block' cho đúng lời gọi. Không gì ra mạng dù kênh hở: fetch có tín hiệu
 // đã huỷ, XHR chưa open, form không gắn trang, sendBeacon/WS.send trên đối tượng giả. WebSocket chỉ báo, không tính vào dat.
-const DUONG_TU_KIEM = '/__dqtv_tu_kiem__';
+const DUONG_TU_KIEM = '/__ita_tu_kiem__';
 let KQ_TU_KIEM = null;
 function tuKiemLaChan() {
   const chi_tiet = [], canh_bao = [], kq = (dat, ly_do) => (KQ_TU_KIEM = { dat, chi_tiet, canh_bao, ly_do, luc: new Date().toLocaleString('vi-VN') });

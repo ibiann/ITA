@@ -20,15 +20,15 @@ function htmlThietKe(kq) {
     ds('Định dạng ngày đang dùng', n.dinh_dang_ngay_dung, a => esc(a.gia_tri) + ' (' + esc(a.so_man) + ' màn)');
 }
 // 3.31 (CT-15): bộ lọc kế hoạch
-const KEY_KE_HOACH = 'dqtv.kehoach.v331';
+const KEY_KE_HOACH = 'ita.kehoach.v50';
 function docKeHoach() { try { return chuanLoc(JSON.parse(localStorage.getItem(KEY_KE_HOACH) || '{}')); } catch (e) { return {}; } }
 // 3.31 (CT-07): mục «Kết quả theo ma trận v7» (thay «Phủ danh mục TC của PM»)
 // '' = có ma_tran.dong, khác rỗng = lý do. dong không lưu → bản đọc lại thì dựng lại bằng đúng gói lúc chạy.
 function dungLaiMaTran(kq) {
   const M = kq.ma_tran;
-  if (!M) return kiemGoi(window.__dqtvDuAn, window.__dqtvDanhMucTC) || 'lần chạy này chưa chấm ma trận';
+  if (!M) return kiemGoi(window.__itaDuAn, window.__itaDanhMucTC) || 'lần chạy này chưa chấm ma trận';
   if (M.loi || M.dong) return M.loi || '';
-  if (chuoiBam(M.bam) !== chuoiBam((window.__dqtvDuAn || {}).bam)) return 'không dựng lại được danh sách TC: gói đang nạp khác gói lúc chạy (' + chuoiBam(M.bam) + ')';
+  if (chuoiBam(M.bam) !== chuoiBam((window.__itaDuAn || {}).bam)) return 'không dựng lại được danh sách TC: gói đang nạp khác gói lúc chạy (' + chuoiBam(M.bam) + ')';
   phuDanhMucTC(kq, kq.doi_chieu_dac_ta); if (kq.ma_tran.dong) return '';
   const l = kq.ma_tran.loi; kq.ma_tran = M; return 'không dựng lại được danh sách TC: ' + (l || 'không rõ');
 }
@@ -41,7 +41,7 @@ function htmlMaTran(kq) {
     + (h[c] === THU_TU_V7[0] ? 'cao' : h[c] === THU_TU_V7[1] ? 'tb' : '') + '"><td>' + h.map(esc).join('</td><td>') + '</td></tr>').join('') + '</tbody></table>';
   return h2 + ' (' + Object.values(dem).reduce((a, b) => a + b, 0) + ' TC)</h2>' + (loi ? do_(loi) : '') + (M.canh_bao ? do_(M.canh_bao) : '') + '<p class=m>Danh mục ' + esc((M.danh_muc || {}).tep) + ' · bản tool ' + esc(M.ban_tool) + ' · <b>mã băm gói:</b> ' + esc(chuoiBam(M.bam)) + '<br>'
     + (M.so_tc_theo_vai ? 'TC theo vai của tài khoản: ' + M.so_tc_theo_vai : '<b>0 TC theo vai</b>: không có TC M1 theo vai trong v7, chỉ chấm KHUNG-CHUNG và TC cho mọi vai')
-    + (Object.keys(M.loc || {}).length ? ' · bộ lọc: ' + esc(JSON.stringify(M.loc)) : '') + '. Chỉ bộ chạy M1. Từng TC: dqtv.xuat(\'ket-qua-ma-tran\').</p>'
+    + (Object.keys(M.loc || {}).length ? ' · bộ lọc: ' + esc(JSON.stringify(M.loc)) : '') + '. Chỉ bộ chạy M1. Từng TC: ita.xuat(\'ket-qua-ma-tran\').</p>'
     + bang(['Kết quả chạy', 'Số TC'], THU_TU_V7.concat(Object.keys(dem).filter(k => !THU_TU_V7.includes(k))).filter(k => dem[k]).map(k => [k, dem[k]]), 0)
     + h3('KHUNG-CHUNG') + (loi ? '' : bang(['Mã TC', 'Kết quả chạy', 'Phân loại', 'Lý do'], dong.filter(x => /^KHUNG-CHUNG\./.test(x.ma_tc)).map(x => [x.ma_tc, x.ket_qua, x.phan_loai, x.ly_do]), 1))
     + h3('Chờ PM quyết') + '<p class=m>' + choPM + ' TC: không chấm, không tính vào tỉ lệ phủ.</p>'
@@ -65,11 +65,11 @@ function sangHTML(kq) {
     r.chuoi_dai_khong_ngat && 'Chuỗi dài không ngắt: ' + r.chuoi_dai_khong_ngat, r.dinh_dang_ngay_tron && 'Ngày trộn: ' + r.dinh_dang_ngay_tron, r.dinh_dang_so_tron && 'Số trộn: ' + r.dinh_dang_so_tron,
     r.tieu_de_lech_menu && 'Tiêu đề lệch menu: ' + r.tieu_de_lech_menu, r.nut_chinh_nhieu && 'Nhiều nút chính: ' + r.nut_chinh_nhieu, r.can_xac_nhan && 'Cần xác nhận: ' + r.can_xac_nhan,
   ].filter(Boolean).join(' | '))}</td></tr>`).join('');
-  return `<!doctype html><meta charset=utf-8><title>DQTV kết quả kiểm</title>
+  return `<!doctype html><meta charset=utf-8><title>ITA kết quả kiểm</title>
 <style>body{font:14px system-ui;margin:24px;color:#1a1a1a}h1{font-size:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}tr.cao td{background:#fdecea}tr.tb td{background:#fff6e5}.m{color:#666}</style>
-<h1>DQTV — kết quả kiểm giao diện</h1>
+<h1>ITA — kết quả kiểm giao diện</h1>
 <p><b>Tài khoản:</b> ${esc(kq.tai_khoan || '')}${kq.dung_giua_chung ? ' · <b style="color:#c62828">LẦN CHẠY BỊ DỪNG GIỮA CHỪNG — kết quả chưa đủ</b>' : ''}</p>${kq.dung_giua_chung ? `<p style="color:#c62828"><b>Lý do dừng:</b> ${esc(kq.ly_do_dung || '')}${(kq.menu_chua_chay || []).length ? '<br><b>Mục menu chưa chạy (' + kq.menu_chua_chay.length + '):</b> ' + kq.menu_chua_chay.map(esc).join(' · ') : ''}</p>` : ''}
-<p class=m>Công cụ bản ${esc(kq.phien_ban || '≤3.10')} · nạp bằng ${esc(kq.cach_nap || '?')} · cửa sổ ${esc(kq.cua_so || '?')}${kq.ngung_bam_do_di_vong ? ' · <b style="color:#c62828">có phần chạy ở chế độ ngừng bấm nút nghiệp vụ (bản dán Console gặp yêu cầu mạng đi vòng bộ chặn) — form chưa kiểm đủ; chạy lại từ đầu bằng Tampermonkey: dqtv.chayLaiTuDau()</b>' : ''}</p>
+<p class=m>Công cụ bản ${esc(kq.phien_ban || '≤3.10')} · nạp bằng ${esc(kq.cach_nap || '?')} · cửa sổ ${esc(kq.cua_so || '?')}${kq.ngung_bam_do_di_vong ? ' · <b style="color:#c62828">có phần chạy ở chế độ ngừng bấm nút nghiệp vụ (bản dán Console gặp yêu cầu mạng đi vòng bộ chặn) — form chưa kiểm đủ; chạy lại từ đầu bằng Tampermonkey: ita.chayLaiTuDau()</b>' : ''}</p>
 <p class=m>${esc(kq.url)} · ${esc(kq.luc)} · ${kq.so_man_da_kiem} màn đã kiểm · cao ${kq.man_cao}, trung bình ${kq.man_trung_binh} · ${kq.o_nhap_co_loi} lỗi ô nhập · ${kq.doi_chieu_dac_ta ? 'đối chiếu đặc tả: ' + esc(gonMaDT(kq.doi_chieu_dac_ta.quy_trinh.map(q => q.ma))) : 'mức quy trình ' + kq.muc_quy_trinh + (kq.co_dac_ta ? ' (có đặc tả)' : ' (chưa nạp đặc tả)')}</p>
 ${htmlMaTranAnToan(kq)}
 ${htmlDacTa(kq)}
@@ -97,29 +97,29 @@ ${trThieu ? `<h2 style="font-size:16px;margin-top:28px">Thiếu trường so v�
 <table><thead><tr>${COT_TRUONG.map(c => `<th>${c[1]}</th>`).join('')}</tr></thead><tbody>${trT}</tbody></table>`;
 }
 
-/* ---------- đối tượng lệnh dqtv ---------- */
-window.dqtv = {
+/* ---------- đối tượng lệnh ita (tên phụ dqtv) ---------- */
+window.ita = window.dqtv = {
   cauHinh() { const c = cfgHienTai(); console.log(jsLiteral(Object.fromEntries(Object.keys(KIEU).map(k => [k, c[k]])))); return c; },
   dat(a, b) {
     const cur = docCfgLuu(); let patch = {};
     if (typeof a === 'string') patch[a] = b; else patch = a || {};
-    for (const k in patch) { const e = kiemKieu(k, patch[k]); if (e) { console.warn('[dqtv] ' + e); delete patch[k]; }
-      else if (KHONG_LUU[k]) { console.warn('[dqtv] "' + k + '" không lưu — bản 3.31 chỉ chạy chỉ đọc, không mở được chế độ ghi'); delete patch[k]; } }
-    Object.assign(cur, patch); luuCfg(cur); console.log('[dqtv] Đã lưu:', Object.keys(patch).join(', ') || '(không có)'); return this;
+    for (const k in patch) { const e = kiemKieu(k, patch[k]); if (e) { console.warn('[ita] ' + e); delete patch[k]; }
+      else if (KHONG_LUU[k]) { console.warn('[ita] "' + k + '" không lưu — bản 3.31 chỉ chạy chỉ đọc, không mở được chế độ ghi'); delete patch[k]; } }
+    Object.assign(cur, patch); luuCfg(cur); console.log('[ita] Đã lưu:', Object.keys(patch).join(', ') || '(không có)'); return this;
   },
-  datLai() { try { localStorage.removeItem(KEY_CFG); } catch (e) {} delete window.DQTV_CONFIG; console.log('[dqtv] Về mặc định.'); return this; },
-  hoSo(ten) { const h = HO_SO[ten]; if (!h) { console.warn('[dqtv] Không có bộ "' + ten + '". Có: ' + Object.keys(HO_SO).join(', ')); return this; } this.dat(h); console.log('[dqtv] Dùng bộ:', ten); return this; },
+  datLai() { try { localStorage.removeItem(KEY_CFG); } catch (e) {} delete window.ITA_CONFIG; console.log('[ita] Về mặc định.'); return this; },
+  hoSo(ten) { const h = HO_SO[ten]; if (!h) { console.warn('[ita] Không có bộ "' + ten + '". Có: ' + Object.keys(HO_SO).join(', ')); return this; } this.dat(h); console.log('[ita] Dùng bộ:', ten); return this; },
   xuatCauHinh() { return hoaChuoi(docCfgLuu()); },
   nhapCauHinh(s) { const o = typeof s === 'string' ? doChuoi(s) : s; return this.dat(o || {}); },
 
   async chay(over) {
-    if (CO.dangChay) { console.warn('[dqtv] Đang chạy rồi, không cần bấm lại. Muốn chạy lại thì bấm "■ Dừng" (hoặc gõ dqtv.dung()) trước.'); return; }
-    { const l = loiTuKiem(); if (l) { CO.tienDo = 'Không chạy: ' + l + (LC && LC.quyetDinh ? ' — lệnh ghi vẫn đang bị chặn — bấm ■ Dừng để làm việc bình thường' : ''); console.warn('[dqtv] ' + CO.tienDo); capNhatBang(); return; } }   // 3.31 (CT-02)
+    if (CO.dangChay) { console.warn('[ita] Đang chạy rồi, không cần bấm lại. Muốn chạy lại thì bấm "■ Dừng" (hoặc gõ ita.dung()) trước.'); return; }
+    { const l = loiTuKiem(); if (l) { CO.tienDo = 'Không chạy: ' + l + (LC && LC.quyetDinh ? ' — lệnh ghi vẫn đang bị chặn — bấm ■ Dừng để làm việc bình thường' : ''); console.warn('[ita] ' + CO.tienDo); capNhatBang(); return; } }   // 3.31 (CT-02)
     // Chạy từ userscript: phải chắc mã đang chạy trong chính trang (không phải vùng tách riêng của tiện ích),
     // vì chỉ khi đó lệnh ghi của trang mới bị chặn được. Không chắc thì KHÔNG chạy.
-    if (window.__dqtvNguon === 'userscript' && !laTrangThat()) {
+    if (window.__itaNguon === 'userscript' && !laTrangThat()) {
       const t = 'Không chạy: userscript đang chạy tách khỏi trang nên không chặn được lệnh ghi. Kiểm tra dòng "@grant none" trong Tampermonkey, hoặc dán tệp vào Console.';
-      console.warn('[dqtv] ' + t); CO.tienDo = t; capNhatBang(); return;
+      console.warn('[ita] ' + t); CO.tienDo = t; capNhatBang(); return;
     }
     TK = taiKhoan();
     MAT_PHIEN = ''; APP_SAP = '';
@@ -127,51 +127,51 @@ window.dqtv = {
     try { localStorage.setItem(KEY_RUN, hoaChuoi({ tk: TK, over: locLuu(over || {}), ts: Date.now(), lan: (CO.lanTiep || 0), moc: CO.mocTiep || '' })); } catch (e) {}   // 3.5: không lưu khoá mở ghi
     CO.mocTiep = '';
     CO.dung = false; CO.tamDung = false; CO.dangChay = true; CO.tienDo = 'Tài khoản: ' + (TK || '(không nhận ra)'); capNhatBang();
-    console.info('[dqtv] Tài khoản: ' + (TK || '(không nhận ra — điểm dừng dùng chung, nên khai dqtv.dat({dacTa:{vaiChon:"..."}}))'));
+    console.info('[ita] Tài khoản: ' + (TK || '(không nhận ra — điểm dừng dùng chung, nên khai ita.dat({dacTa:{vaiChon:"..."}}))'));
     // điểm dừng của bản cũ (dùng chung mọi tài khoản) → bỏ, để không chạy tiếp nhầm sang tài khoản khác
-    try { if (localStorage.getItem(KEY_CKPT)) { localStorage.removeItem(KEY_CKPT); console.info('[dqtv] Đã bỏ điểm dừng cũ dùng chung mọi tài khoản (bản trước).'); } } catch (e) {}
+    try { if (localStorage.getItem(KEY_CKPT)) { localStorage.removeItem(KEY_CKPT); console.info('[ita] Đã bỏ điểm dừng cũ dùng chung mọi tài khoản (bản trước).'); } } catch (e) {}
     // tiếp tục từ điểm dừng của ĐÚNG tài khoản này (nếu có)
     let tiep = null; try { const c = localStorage.getItem(ckptKey()); if (c) { const ck = doChuoi(c); if (ck.origin === location.origin && ck.tk === TK) tiep = ck; } } catch (e) {}
-    if (tiep) console.info('[dqtv] Chạy tiếp từ điểm dừng lúc ' + new Date(tiep.ts).toLocaleString('vi-VN') + ' (' + tiep.xong.length + ' mục đã xong). Muốn chạy lại từ đầu: dqtv.chayLaiTuDau()');
-    try { const kq = await dqtvAudit(over, tiep); return kq; }
-    catch (e) { console.log('%c[dqtv] LỖI: ' + (e && e.message || e), 'color:#fff;background:#b00;padding:2px 6px'); }
+    if (tiep) console.info('[ita] Chạy tiếp từ điểm dừng lúc ' + new Date(tiep.ts).toLocaleString('vi-VN') + ' (' + tiep.xong.length + ' mục đã xong). Muốn chạy lại từ đầu: ita.chayLaiTuDau()');
+    try { const kq = await itaAudit(over, tiep); return kq; }
+    catch (e) { console.log('%c[ita] LỖI: ' + (e && e.message || e), 'color:#fff;background:#b00;padding:2px 6px'); }
     // tới được đây là lần chạy đã kết thúc trong trang (xong, dừng hoặc lỗi) → bỏ cờ "đang chạy";
     // nếu trang tự tải lại giữa chừng thì không tới được đây, cờ còn lại để lần nạp sau chạy tiếp
     // mất phiên: GIỮ cờ đang chạy để đăng nhập lại cùng tài khoản là chạy tiếp (bản Tampermonkey tự chạy tiếp)
-    finally { if (window.__dqtvGoHook) window.__dqtvGoHook(); CO.dangChay = false; CO.lanTiep = 0; if (!window.__dqtvDangRoi && !MAT_PHIEN && !APP_SAP) { try { localStorage.removeItem(KEY_RUN); } catch (e) {} }
-    if (APP_SAP && window.__dqtvNguon !== 'userscript') console.log('%c[dqtv] ỨNG DỤNG SẬP Ở "' + APP_SAP + '" — TRANG SẼ TẢI LẠI.\nAPP KẸT MÀN BÁO LỖI SANG CẢ MÀN KHÁC.\nSAU KHI TRANG TẢI XONG: DÁN LẠI ĐÚNG TỆP BUNDLE NÀY (bản ' + PHIEN_BAN + ') VÀO CONSOLE. Công cụ tự chạy tiếp từ mục đang dở và bỏ qua các màn đã sập.\n(Dùng Tampermonkey thì không phải dán lại.)', 'color:#fff;background:#c62828;font-size:14px;font-weight:bold;padding:6px 10px');
-    if (APP_SAP) { CO.tienDo = '⚠ Ứng dụng sập ở "' + APP_SAP + '". Đang tải lại trang để chạy tiếp (bản dán Console: dán lại tệp sau khi trang tải xong).'; setTimeout(() => { try { location.assign(location.origin + '/' + (location.pathname.split('/')[1] || '')); } catch (e) {} }, 1500); } if (MAT_PHIEN) { CO.tienDo = '⚠ Dừng vì mất phiên: ' + MAT_PHIEN + '. Đăng nhập lại cùng tài khoản — công cụ tự chạy tiếp.'; setTimeout(() => window.__dqtvChoDangNhap && window.__dqtvChoDangNhap(true), 1000); } capNhatBang(); }
+    finally { if (window.__itaGoHook) window.__itaGoHook(); CO.dangChay = false; CO.lanTiep = 0; if (!window.__itaDangRoi && !MAT_PHIEN && !APP_SAP) { try { localStorage.removeItem(KEY_RUN); } catch (e) {} }
+    if (APP_SAP && window.__itaNguon !== 'userscript') console.log('%c[ita] ỨNG DỤNG SẬP Ở "' + APP_SAP + '" — TRANG SẼ TẢI LẠI.\nAPP KẸT MÀN BÁO LỖI SANG CẢ MÀN KHÁC.\nSAU KHI TRANG TẢI XONG: DÁN LẠI ĐÚNG TỆP BUNDLE NÀY (bản ' + PHIEN_BAN + ') VÀO CONSOLE. Công cụ tự chạy tiếp từ mục đang dở và bỏ qua các màn đã sập.\n(Dùng Tampermonkey thì không phải dán lại.)', 'color:#fff;background:#c62828;font-size:14px;font-weight:bold;padding:6px 10px');
+    if (APP_SAP) { CO.tienDo = '⚠ Ứng dụng sập ở "' + APP_SAP + '". Đang tải lại trang để chạy tiếp (bản dán Console: dán lại tệp sau khi trang tải xong).'; setTimeout(() => { try { location.assign(location.origin + '/' + (location.pathname.split('/')[1] || '')); } catch (e) {} }, 1500); } if (MAT_PHIEN) { CO.tienDo = '⚠ Dừng vì mất phiên: ' + MAT_PHIEN + '. Đăng nhập lại cùng tài khoản — công cụ tự chạy tiếp.'; setTimeout(() => window.__itaChoDangNhap && window.__itaChoDangNhap(true), 1000); } capNhatBang(); }
   },
   // nạp bảng đặc tả quy trình (JSON chuyển từ YAML theo mẫu) — một bảng hoặc mảng nhiều bảng
   napDacTa(x) {
-    try { const ds = napDacTaVao(x); console.info('[dqtv] Đã nạp đặc tả: ' + ds.map(d => maQT(d) + ' (' + (d.buoc || []).length + ' bước)').join(', ') + '. Vai của tài khoản này: ' + this.vaiDacTa().join(', ')); return ds.length; }
-    catch (e) { console.warn('[dqtv] Không nạp được đặc tả: ' + e.message); return 0; }
+    try { const ds = napDacTaVao(x); console.info('[ita] Đã nạp đặc tả: ' + ds.map(d => maQT(d) + ' (' + (d.buoc || []).length + ' bước)').join(', ') + '. Vai của tài khoản này: ' + this.vaiDacTa().join(', ')); return ds.length; }
+    catch (e) { console.warn('[ita] Không nạp được đặc tả: ' + e.message); return 0; }
   },
   xemDacTa() { const ds = docDacTa(); console.table(ds.map(d => ({ 'quy trình': maQT(d), 'tên': (d.dinh_danh || {}).ten, 'bản': (d.dinh_danh || {}).phien_ban, 'số bước': (d.buoc || []).length, 'menu': (d.menu || []).join(' · ') }))); return ds; },
-  xoaDacTa(ma) { const ds = ma ? docDacTa().filter(d => maQT(d) !== ma) : []; luuDacTa(ds); console.info('[dqtv] Đã xoá ' + (ma ? 'đặc tả ' + ma : 'mọi đặc tả') + '.'); return this; },
+  xoaDacTa(ma) { const ds = ma ? docDacTa().filter(d => maQT(d) !== ma) : []; luuDacTa(ds); console.info('[ita] Đã xoá ' + (ma ? 'đặc tả ' + ma : 'mọi đặc tả') + '.'); return this; },
   vaiDacTa() { const tk = taiKhoan(); return docDacTa().map(d => { const v = (d.vai || []).find(x => khopTK(tk, x.nhan_dang_nhap)); return maQT(d) + ': ' + (v ? v.ma : 'ngoài đặc tả'); }); },
   // 3.6: xem công cụ nhận ra menu, vùng chính, bảng, ô tìm, tài khoản thế nào (không bấm gì)
   // bỏ điểm dừng của tài khoản đang đăng nhập rồi chạy lại toàn bộ
-  async chayLaiTuDau(over) { TK = taiKhoan(); try { localStorage.removeItem(ckptKey()); localStorage.removeItem(KEY_CKPT); } catch (e) {} /* màn sập vẫn giữ: muốn thử lại màn sập thì dqtv.manSap('xoa') */ console.info('[dqtv] Đã xoá điểm dừng của tài khoản này, chạy lại từ đầu.'); return this.chay(over); },
+  async chayLaiTuDau(over) { TK = taiKhoan(); try { localStorage.removeItem(ckptKey()); localStorage.removeItem(KEY_CKPT); } catch (e) {} /* màn sập vẫn giữ: muốn thử lại màn sập thì ita.manSap('xoa') */ console.info('[ita] Đã xoá điểm dừng của tài khoản này, chạy lại từ đầu.'); return this.chay(over); },
   // in 40 thao tác cuối (giữ qua tải lại trang / đăng xuất) để biết lần chạy dừng ở đâu
   nhatKy(n = 40) { const ds = docNK().slice(-n); console.table(ds.map(x => ({ giờ: x.t, 'tài khoản': x.tk, loại: x.loai, 'nội dung': x.nd, url: x.url }))); return ds; },
-  xoaNhatKy() { try { localStorage.removeItem(KEY_NK); } catch (e) {} NK_BO = null; console.info('[dqtv] Đã xoá nhật ký.'); },
-  taiKhoan() { const t = taiKhoan(); console.info('[dqtv] Tài khoản nhận ra: ' + (t || '(không nhận ra)')); return t; },
-  tamDung() { CO.tamDung = true; console.log('[dqtv] Tạm dừng.'); return this; },
-  tiep() { CO.tamDung = false; console.log('[dqtv] Tiếp.'); return this; },
-  dung() { CO.dung = true; CO.tamDung = false; try { localStorage.removeItem(KEY_RUN); } catch (e) {} if (!CO.dangChay && LC) LC.quyetDinh = null; console.log('[dqtv] Dừng.'); return this; },
+  xoaNhatKy() { try { localStorage.removeItem(KEY_NK); } catch (e) {} NK_BO = null; console.info('[ita] Đã xoá nhật ký.'); },
+  taiKhoan() { const t = taiKhoan(); console.info('[ita] Tài khoản nhận ra: ' + (t || '(không nhận ra)')); return t; },
+  tamDung() { CO.tamDung = true; console.log('[ita] Tạm dừng.'); return this; },
+  tiep() { CO.tamDung = false; console.log('[ita] Tiếp.'); return this; },
+  dung() { CO.dung = true; CO.tamDung = false; try { localStorage.removeItem(KEY_RUN); } catch (e) {} if (!CO.dangChay && LC) LC.quyetDinh = null; console.log('[ita] Dừng.'); return this; },
   async chayLaiLoi() {
     let kq; try { kq = doChuoi(localStorage.getItem(KEY_LAST) || 'null'); } catch (e) {}
-    if (CO.dangChay) { console.warn('[dqtv] Đang chạy. Dùng dqtv.dung() trước.'); return; }   // 3.5: không chạy chồng
-    { const l = loiTuKiem(); if (l) return console.warn('[dqtv] Không chạy: ' + l); }   // 3.31 (CT-02)
-    const loi = (kq && kq.van_de || []).map(r => r.tab); if (!loi.length) { console.warn('[dqtv] Lần trước không có màn lỗi.'); return; }
+    if (CO.dangChay) { console.warn('[ita] Đang chạy. Dùng ita.dung() trước.'); return; }   // 3.5: không chạy chồng
+    { const l = loiTuKiem(); if (l) return console.warn('[ita] Không chạy: ' + l); }   // 3.31 (CT-02)
+    const loi = (kq && kq.van_de || []).map(r => r.tab); if (!loi.length) { console.warn('[ita] Lần trước không có màn lỗi.'); return; }
     TK = taiKhoan();
     try { localStorage.removeItem(ckptKey()); } catch (e) {}
     CO.dung = false; CO.tamDung = false; CO.dangChay = true; capNhatBang();
-    try { return await dqtvAudit({}, { chiLoi: loi }); } finally { if (window.__dqtvGoHook) window.__dqtvGoHook(); CO.dangChay = false; capNhatBang(); }
+    try { return await itaAudit({}, { chiLoi: loi }); } finally { if (window.__itaGoHook) window.__itaGoHook(); CO.dangChay = false; capNhatBang(); }
   },
   async moMan(url, ten) {   // mở lại đúng màn có lỗi để xem tận mắt
-    console.log('[dqtv] Mở lại:', ten, url);
+    console.log('[ita] Mở lại:', ten, url);
     if (location.pathname + location.search === url) return;
     try { history.pushState({}, '', url); dispatchEvent(new PopStateEvent('popstate', { state: {} })); }   // 3.5: điều hướng trong app, không tải lại trang
     catch (e) { location.href = url; }
@@ -179,7 +179,7 @@ window.dqtv = {
   // [S1] xem / xoá danh sách màn sập đã nhớ của tài khoản này (xoá khi Bên B báo đã sửa, để lần chạy sau thử lại)
   manSap(lenh) {
     TK = taiKhoan(); const k = KEY_SAP + '|' + location.origin + '|' + bam(TK || '?');
-    if (lenh === 'xoa') { try { localStorage.removeItem(k); } catch (e) {} console.info('[dqtv] Đã xoá danh sách màn sập của tài khoản này.'); return []; }
+    if (lenh === 'xoa') { try { localStorage.removeItem(k); } catch (e) {} console.info('[ita] Đã xoá danh sách màn sập của tài khoản này.'); return []; }
     let ds = []; try { ds = doChuoi(localStorage.getItem(k) || '[]') || []; } catch (e) {}
     console.table(ds.map(x => ({ man: x.man, duong_dan: x.duong_dan, loi_da_biet: x.loi_da_biet ? x.loi_da_biet.ma + ' ' + (x.loi_da_biet.yc || '') : 'MỚI — cần báo', vai: x.vai_tren_giao_dien, luc: x.luc })));
     return ds;
@@ -188,91 +188,91 @@ window.dqtv = {
   donBoNho() {
     const bo = []; for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && KHOA_CU.test(k)) { bo.push(k); try { localStorage.removeItem(k); } catch (e) {} } }
     let dung = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); dung += (k.length + (localStorage.getItem(k) || '').length); }
-    console.info('[dqtv] Đã xoá ' + bo.length + ' khóa cũ. localStorage còn dùng khoảng ' + Math.round(dung / 1024) + ' nghìn ký tự.'); return bo;
+    console.info('[ita] Đã xoá ' + bo.length + ' khóa cũ. localStorage còn dùng khoảng ' + Math.round(dung / 1024) + ' nghìn ký tự.'); return bo;
   },
   vai() {
-    const d = cfgHienTai().dacTa; if (!d) { console.warn('[dqtv] Chưa khai dacTa. Chưa kiểm được vai.'); return ''; }
+    const d = cfgHienTai().dacTa; if (!d) { console.warn('[ita] Chưa khai dacTa. Chưa kiểm được vai.'); return ''; }
     let v = ''; if (d.vaiChon) { const e = document.querySelector(d.vaiChon); if (e) v = (e.innerText || '').trim(); }
     if (!v && d.vaiText) { const m = (document.body.innerText || '').match(d.vaiText); if (m) v = (m[1] || m[0]).trim(); }
-    console.log('[dqtv] Vai nhận ra:', v || '(không xác định)'); return v;
+    console.log('[ita] Vai nhận ra:', v || '(không xác định)'); return v;
   },
   xuat(kieu) {
     const ts = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-    if (kieu === 'truong-tay') { const ds = docTay(); if (!ds.length) { console.warn('[dqtv] Chưa có lần quét tay nào.'); return; } taiTep('dqtv-truong-quet-tay-' + ts + '.csv', sangCSVTruong(ds), 'text/csv'); console.log('[dqtv] Đã xuất ' + ds.length + ' trường quét tay.'); return; }
+    if (kieu === 'truong-tay') { const ds = docTay(); if (!ds.length) { console.warn('[ita] Chưa có lần quét tay nào.'); return; } taiTep('ita-truong-quet-tay-' + ts + '.csv', sangCSVTruong(ds), 'text/csv'); console.log('[ita] Đã xuất ' + ds.length + ' trường quét tay.'); return; }
     let kq; try { kq = doChuoi(localStorage.getItem(KEY_LAST) || 'null'); } catch (e) {}
-    kq = (window.__DQTV_AUDIT && window.__DQTV_AUDIT.ketQua) || kq;
-    if (!kq) { console.warn('[dqtv] Chưa có kết quả.'); return; }
+    kq = (window.__ITA_AUDIT && window.__ITA_AUDIT.ketQua) || kq;
+    if (!kq) { console.warn('[ita] Chưa có kết quả.'); return; }
     if (kieu === 'ket-qua-ma-tran') {   // 3.31 (CT-07): mỗi dòng một mã TC v7
-      const l = dungLaiMaTran(kq), M = kq.ma_tran; if (l) { console.warn('[dqtv] Không xuất được ma trận v7: ' + l); return; }
+      const l = dungLaiMaTran(kq), M = kq.ma_tran; if (l) { console.warn('[ita] Không xuất được ma trận v7: ' + l); return; }
       const them = { thoi_diem: kq.luc, tai_khoan: cheChuoi(kq.tai_khoan || ''), ban_tool: M.ban_tool, bam: chuoiBam(M.bam) };
-      taiTep('dqtv-ma-tran-' + slugTK() + '-' + ts + '.csv', csvMaTran(M.dong.map(x => Object.assign({}, x, them, { ly_do: cheChuoi(x.ly_do || '') }))), 'text/csv'); console.log('[dqtv] Đã xuất ' + M.dong.length + ' TC.'); return;
+      taiTep('ita-ma-tran-' + slugTK() + '-' + ts + '.csv', csvMaTran(M.dong.map(x => Object.assign({}, x, them, { ly_do: cheChuoi(x.ly_do || '') }))), 'text/csv'); console.log('[ita] Đã xuất ' + M.dong.length + ' TC.'); return;
     }
-    if (kieu === 'dacta') { if (!kq.doi_chieu_dac_ta) { console.warn('[dqtv] Lần chạy này chưa có đối chiếu đặc tả.'); return; } taiTep('dqtv-doi-chieu-dac-ta-' + slugTK() + '-' + ts + '.csv', sangCSVDacTa(kq), 'text/csv'); console.log('[dqtv] Đã xuất đối chiếu đặc tả.'); return; }
-    if (kieu === 'truong') { taiTep('dqtv-danh-muc-truong-' + ts + '.csv', sangCSVTruong(kq.danh_muc_truong), 'text/csv'); console.log('[dqtv] Đã xuất ' + (kq.danh_muc_truong || []).length + ' trường.'); return; }
-    const ten = 'dqtv-' + slugTK() + '-' + ts;
+    if (kieu === 'dacta') { if (!kq.doi_chieu_dac_ta) { console.warn('[ita] Lần chạy này chưa có đối chiếu đặc tả.'); return; } taiTep('ita-doi-chieu-dac-ta-' + slugTK() + '-' + ts + '.csv', sangCSVDacTa(kq), 'text/csv'); console.log('[ita] Đã xuất đối chiếu đặc tả.'); return; }
+    if (kieu === 'truong') { taiTep('ita-danh-muc-truong-' + ts + '.csv', sangCSVTruong(kq.danh_muc_truong), 'text/csv'); console.log('[ita] Đã xuất ' + (kq.danh_muc_truong || []).length + ' trường.'); return; }
+    const ten = 'ita-' + slugTK() + '-' + ts;
     if (kieu === 'csv') taiTep(ten + '.csv', sangCSV(kq), 'text/csv');
     else if (kieu === 'mau') taiTep(ten + '-mau-loi.csv', sangCSVMau(kq), 'text/csv');   // 3.6
     else if (kieu === 'html') taiTep(ten + '.html', sangHTML(kq), 'text/html');
     else taiTep(ten + '.json', hoaChuoi(kq), 'application/json');
-    console.log('[dqtv] Đã xuất ' + (kieu || 'json') + '.');
+    console.log('[ita] Đã xuất ' + (kieu || 'json') + '.');
   },
   bang() { moBang(); return this; },
   // 3.31 (CT-07): gộp CSV ket-qua-ma-tran; gopKetQua bên trong là hàm thuần của 05
   gopKetQua(...dsCSV) {
-    let dong; try { dong = gopKetQua(...dsCSV.map(docCSVMaTran)); } catch (e) { console.warn('[dqtv] ' + e.message); return ''; }
-    const DM = window.__dqtvDanhMucTC, co = kiemGoi(window.__dqtvDuAn, DM) ? null : new Set(DM.tc.map(t => t[0])), n = dong.length;
-    if (co) dong = dong.filter(x => co.has(x.ma_tc)); else console.warn('[dqtv] Chưa nạp gói v7: không soát được mã TC.');
-    if (dong.length < n) console.warn('[dqtv] Bỏ ' + (n - dong.length) + ' dòng có mã không thuộc v7.');
-    const s = csvMaTran(dong); taiTep('dqtv-ma-tran-gop-' + Date.now() + '.csv', s, 'text/csv');
-    console.log('[dqtv] Gộp ' + dsCSV.length + ' CSV → ' + dong.length + ' TC.'); return s;
+    let dong; try { dong = gopKetQua(...dsCSV.map(docCSVMaTran)); } catch (e) { console.warn('[ita] ' + e.message); return ''; }
+    const DM = window.__itaDanhMucTC, co = kiemGoi(window.__itaDuAn, DM) ? null : new Set(DM.tc.map(t => t[0])), n = dong.length;
+    if (co) dong = dong.filter(x => co.has(x.ma_tc)); else console.warn('[ita] Chưa nạp gói v7: không soát được mã TC.');
+    if (dong.length < n) console.warn('[ita] Bỏ ' + (n - dong.length) + ' dòng có mã không thuộc v7.');
+    const s = csvMaTran(dong); taiTep('ita-ma-tran-gop-' + Date.now() + '.csv', s, 'text/csv');
+    console.log('[ita] Gộp ' + dsCSV.length + ' CSV → ' + dong.length + ' TC.'); return s;
   },
   // 3.31 (CT-15): keHoach({loai_kiem:['T07']}) lưu cho lần chạy sau; keHoach() in; keHoach({}) bỏ lọc
   keHoach(loc) {
-    if (loc !== undefined && (!loc || typeof loc !== 'object' || Array.isArray(loc))) console.warn('[dqtv] keHoach cần đối tượng {loai_kiem:[…]}; giữ bộ lọc cũ.');
-    else if (loc !== undefined) { const la = Object.keys(loc).filter(k => !KHOA_LOC.includes(k)); if (la.length) console.warn('[dqtv] Bỏ khoá lạ: ' + la.join(', ') + ' (dùng: ' + KHOA_LOC.join(', ') + ')');
-      try { localStorage.setItem(KEY_KE_HOACH, JSON.stringify(chuanLoc(loc))); } catch (e) { console.warn('[dqtv] Không lưu được bộ lọc: ' + e.message); } }
-    const l = docKeHoach(); console.log('[dqtv] Bộ lọc kế hoạch: ' + (Object.keys(l).length ? JSON.stringify(l) : '(không lọc)')); return l;
+    if (loc !== undefined && (!loc || typeof loc !== 'object' || Array.isArray(loc))) console.warn('[ita] keHoach cần đối tượng {loai_kiem:[…]}; giữ bộ lọc cũ.');
+    else if (loc !== undefined) { const la = Object.keys(loc).filter(k => !KHOA_LOC.includes(k)); if (la.length) console.warn('[ita] Bỏ khoá lạ: ' + la.join(', ') + ' (dùng: ' + KHOA_LOC.join(', ') + ')');
+      try { localStorage.setItem(KEY_KE_HOACH, JSON.stringify(chuanLoc(loc))); } catch (e) { console.warn('[ita] Không lưu được bộ lọc: ' + e.message); } }
+    const l = docKeHoach(); console.log('[ita] Bộ lọc kế hoạch: ' + (Object.keys(l).length ? JSON.stringify(l) : '(không lọc)')); return l;
   },
   // 3.31 (CT-02)
   tuKiemChan() {
-    const r = tuKiemLaChan(); console.table(r.chi_tiet); r.canh_bao.forEach(c => console.warn('[dqtv] ' + c));
-    console.log('[dqtv] Lá chắn tự kiểm: ' + (r.dat ? 'ĐẠT' : 'KHÔNG ĐẠT — ' + r.ly_do));
+    const r = tuKiemLaChan(); console.table(r.chi_tiet); r.canh_bao.forEach(c => console.warn('[ita] ' + c));
+    console.log('[ita] Lá chắn tự kiểm: ' + (r.dat ? 'ĐẠT' : 'KHÔNG ĐẠT — ' + r.ly_do));
     if (root && root.querySelector('.tabs button[data-t=run].on')) veThe('run'); return r;
   },
 
   /* --- quét tay: anh tự mở form / hồ sơ / hộp thoại rồi gõ lệnh này --- */
   async quetManNay(ten) {
-    if (CO.dangChay) { console.warn('[dqtv] Đang chạy tự động, dừng trước đã.'); return; }
+    if (CO.dangChay) { console.warn('[ita] Đang chạy tự động, dừng trước đã.'); return; }
     CO.dung = false; CO.tamDung = false;
-    const ds = await dqtvAudit({ __chiManNay: true, __tenMan: ten || (document.title + ' · ' + location.pathname) });
+    const ds = await itaAudit({ __chiManNay: true, __tenMan: ten || (document.title + ' · ' + location.pathname) });
     const cu = docTay(); const khoa = new Set(cu.map(f => f.khoa));
     const moi = ds.filter(f => !khoa.has(f.khoa));
-    try { localStorage.setItem(KEY_TAY, hoaChuoi(cu.concat(moi))); } catch (e) { console.warn('[dqtv] Không lưu được vào trình duyệt (quá lớn). Xuất ngay bằng dqtv.xuat("truong-tay").'); }
+    try { localStorage.setItem(KEY_TAY, hoaChuoi(cu.concat(moi))); } catch (e) { console.warn('[ita] Không lưu được vào trình duyệt (quá lớn). Xuất ngay bằng ita.xuat("truong-tay").'); }
     console.table(ds.map(f => ({ vùng: f.vung, nhãn: f.nhan, kiểu: f.loai, 'bắt buộc': f.bat_buoc, 'số lựa chọn': f.so_lua_chon, lỗi: f.loi })));
-    console.log('%c[dqtv] Quét tay: ' + ds.length + ' trường (' + moi.length + ' mới). Tổng đã gom: ' + (cu.length + moi.length) + '. Xuất: dqtv.xuat("truong-tay")', 'color:#0b3d66;font-weight:bold');
+    console.log('%c[ita] Quét tay: ' + ds.length + ' trường (' + moi.length + ' mới). Tổng đã gom: ' + (cu.length + moi.length) + '. Xuất: ita.xuat("truong-tay")', 'color:#0b3d66;font-weight:bold');
     return ds;
   },
-  xoaTruongTay() { try { localStorage.removeItem(KEY_TAY); } catch (e) {} console.log('[dqtv] Đã xoá các lần quét tay.'); },
+  xoaTruongTay() { try { localStorage.removeItem(KEY_TAY); } catch (e) {} console.log('[ita] Đã xoá các lần quét tay.'); },
 
   /* --- ghi kịch bản bằng thao tác tay --- */
   ghi() {
-    if (CO.ghiKichBan) { console.warn('[dqtv] Đang ghi.'); return; }
+    if (CO.ghiKichBan) { console.warn('[ita] Đang ghi.'); return; }
     const buoc = []; CO.ghiKichBan = buoc;
     const labelOf = el => (el.getAttribute('aria-label') || el.placeholder || el.title || el.name || (el.id && (document.querySelector('label[for="' + CSS.escape(el.id) + '"]') || {}).innerText) || (el.closest('label') ? el.closest('label').innerText : '') || '').trim().slice(0, 40);
     const biMat = t => t.type === 'password' || t.autocomplete === 'one-time-code' || /pass|mat-?khau|mật khẩu|otp|token|secret|pin|cvv/i.test([t.name, t.id, t.autocomplete, labelOf(t)].join(' '));   // 3.5
     const onInput = e => { const t = e.target; if (!t.matches || !t.matches('input,textarea') || biMat(t)) return; const last = buoc[buoc.length - 1]; const lab = labelOf(t); if (last && last.nhap === lab) last.giaTri = t.value; else buoc.push({ nhap: lab, giaTri: t.value }); };
     const onChange = e => { const t = e.target; if (t.matches && t.matches('select')) buoc.push({ chon: labelOf(t), giaTri: (t.options[t.selectedIndex] || {}).text }); };
-    const onClick = e => { const b = e.target.closest('a,button,[role=tab],[role=button]'); if (b && b.closest && !b.closest('#dqtv-panel-host')) { const tx = (b.innerText || '').trim().slice(0, 30); if (tx) buoc.push({ bam: tx }); } };
+    const onClick = e => { const b = e.target.closest('a,button,[role=tab],[role=button]'); if (b && b.closest && !b.closest('#ita-panel-host')) { const tx = (b.innerText || '').trim().slice(0, 30); if (tx) buoc.push({ bam: tx }); } };
     CO._ghiHandlers = { onInput, onChange, onClick };
     document.addEventListener('input', onInput, true); document.addEventListener('change', onChange, true); document.addEventListener('click', onClick, true);
-    console.log('%c[dqtv] Bắt đầu ghi. Thao tác bình thường rồi gõ dqtv.dungGhi()', 'color:#b60;font-weight:bold');
+    console.log('%c[ita] Bắt đầu ghi. Thao tác bình thường rồi gõ ita.dungGhi()', 'color:#b60;font-weight:bold');
   },
   dungGhi() {
-    const buoc = CO.ghiKichBan; if (!buoc) { console.warn('[dqtv] Chưa ghi.'); return; }
+    const buoc = CO.ghiKichBan; if (!buoc) { console.warn('[ita] Chưa ghi.'); return; }
     const h = CO._ghiHandlers; document.removeEventListener('input', h.onInput, true); document.removeEventListener('change', h.onChange, true); document.removeEventListener('click', h.onClick, true);
     CO.ghiKichBan = null;
     const kb = { man: '(điền tên mục menu)', buoc: buoc.concat([{ kiemTra: { trangThai: '(điền trạng thái mong đợi)', apiKhongLoi: true } }]) };
-    console.log('%c[dqtv] Đã ghi ' + buoc.length + ' bước. Chép đoạn dưới vào kichBan rồi sửa phần kiemTra:', 'color:#070;font-weight:bold');
+    console.log('%c[ita] Đã ghi ' + buoc.length + ' bước. Chép đoạn dưới vào kichBan rồi sửa phần kiemTra:', 'color:#070;font-weight:bold');
     console.log(jsLiteral(kb));
     return kb;
   },

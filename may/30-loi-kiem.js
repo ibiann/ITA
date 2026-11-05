@@ -1,13 +1,13 @@
 /* ============================================================= *
  * 4. LÕI KIỂM                                                   *
  * ============================================================= */
-async function dqtvAudit(over, trangThaiTiep) {
+async function itaAudit(over, trangThaiTiep) {
   const C = cfgHienTai(over);
   if (C.tenMienDuocChay && !C.tenMienDuocChay.test(location.hostname)) {
-    console.warn('%c[dqtv] KHÔNG CHẠY: tên miền "' + location.hostname + '" không khớp tenMienDuocChay ' + C.tenMienDuocChay + '. Nếu đây đúng là môi trường kiểm thử: dqtv.dat({ tenMienDuocChay: /^' + location.hostname.replace(/\./g, '\\.') + '$/ })', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px');
-    throw new Error('dqtv: tên miền không được phép chạy');
+    console.warn('%c[ita] KHÔNG CHẠY: tên miền "' + location.hostname + '" không khớp tenMienDuocChay ' + C.tenMienDuocChay + '. Nếu đây đúng là môi trường kiểm thử: ita.dat({ tenMienDuocChay: /^' + location.hostname.replace(/\./g, '\\.') + '$/ })', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px');
+    throw new Error('ita: tên miền không được phép chạy');
   }
-  window.__dqtvKhongChe = !C.cheNhayCam;
+  window.__itaKhongChe = !C.cheNhayCam;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   // bản 3.5: so trên chữ đã chuẩn hoá (Xóa/Xoá, NFD)
   const W = s => { const re = new RegExp('(?<![\\p{L}\\d])(' + canon(s) + ')(?![\\p{L}\\d])', 'iu'); return { test: x => re.test(canon(x)), source: re.source }; };
@@ -41,13 +41,13 @@ async function dqtvAudit(over, trangThaiTiep) {
   const SAP_TEN = new Set(SAP.map(x => x.man));
   const chuanTuyen = u => String(u || '').replace(/^https?:\/\/[^/]+/, '').split(/[?#]/)[0].replace(/\/+$/, '') || '/';
   const SAP_TUYEN = new Set(SAP.map(x => x.duong_dan).filter(Boolean));
-  if (!C.thuLaiLoiDaBiet) for (const q of ((window.__dqtvQuyTac || {}).loi_sap || []).filter(x => x.duong_dan && x.trang_thai !== 'Đóng')) {
+  if (!C.thuLaiLoiDaBiet) for (const q of ((window.__itaQuyTac || {}).loi_sap || []).filter(x => x.duong_dan && x.trang_thai !== 'Đóng')) {
     const tu = chuanTuyen(q.duong_dan);
     if (!SAP_TUYEN.has(tu)) { SAP.push({ man: '(không mở — lỗi đã biết trong sổ)', duong_dan: tu, url: tu, loi: q.mo_ta || '', cach_nhan: 'bỏ trước theo sổ yêu cầu', vai_tren_giao_dien: TK || '', luc: new Date().toLocaleString('vi-VN'), loi_da_biet: { ma: q.ma, yc: q.yc || '', mo_ta: q.mo_ta || '' }, bo_truoc: true }); SAP_TUYEN.add(tu); }
   }
   const luuSap = () => { try { localStorage.setItem(sapKey(), hoaChuoi(SAP.slice(-200))); } catch (e) {} };
-  const loiDaBiet = tuyen => ((window.__dqtvQuyTac || {}).loi_sap || []).find(q => q.duong_dan && (tuyen === chuanTuyen(q.duong_dan) || tuyen.startsWith(chuanTuyen(q.duong_dan) + '/')));
-  const SAP_MAN = { __dqtvSapMan: true };   // lỗi điều khiển: thoát khỏi màn vừa sập, chạy tiếp mục sau
+  const loiDaBiet = tuyen => ((window.__itaQuyTac || {}).loi_sap || []).find(q => q.duong_dan && (tuyen === chuanTuyen(q.duong_dan) || tuyen.startsWith(chuanTuyen(q.duong_dan) + '/')));
+  const SAP_MAN = { __itaSapMan: true };   // lỗi điều khiển: thoát khỏi màn vừa sập, chạy tiếp mục sau
   let SAP_MOI = null, VUA_PHUC_HOI = '', CKPT_GON = false;
   let HIENTAI = '';   // màn / tab công cụ vừa bấm vào
   const LOI_NANG = /màn hình hỏng|componentDidCatch|Uncaught|TypeError|ReferenceError|RangeError|Cannot read|is not a function|is not defined|Minified React error|^Error: |\bError: /i;
@@ -62,10 +62,10 @@ async function dqtvAudit(over, trangThaiTiep) {
     SAP_MOI = rec;
     if (!SAP.some(y => y.duong_dan === tuyen && y.man === man)) { SAP.push(rec); SAP_TEN.add(man); SAP_TUYEN.add(tuyen); luuSap(); try { luuCkpt(); } catch (e) {} }
     nk('màn sập', man + ' — ' + tuyen + (biet ? ' — LỖI ĐÃ BIẾT ' + biet.ma : ''));
-    console.warn('%c[dqtv] MÀN SẬP: ' + man + ' (' + tuyen + ')' + (biet ? ' — LỖI ĐÃ BIẾT ' + biet.ma + (biet.yc ? ' / ' + biet.yc : '') : '') + '. Bỏ qua màn này, chạy tiếp mục sau.', 'color:#fff;background:#c62828;padding:2px 6px');
+    console.warn('%c[ita] MÀN SẬP: ' + man + ' (' + tuyen + ')' + (biet ? ' — LỖI ĐÃ BIẾT ' + biet.ma + (biet.yc ? ' / ' + biet.yc : '') : '') + '. Bỏ qua màn này, chạy tiếp mục sau.', 'color:#fff;background:#c62828;padding:2px 6px');
   }
   function ghiSap(msg) {
-    if (!LOI_NANG.test(msg) || /dqtvAudit/.test(msg)) return;
+    if (!LOI_NANG.test(msg) || /itaAudit/.test(msg)) return;
     nk('lỗi JS', (HIENTAI || CO.tienDo || location.pathname) + ' — ' + msg);
     // chỉ coi là màn sập khi có dấu hiệu sập thật; lỗi JS thường chỉ ghi vào nhật ký/báo cáo, không bỏ qua màn
     if (LOI_SAP_CONSOLE.test(msg)) danhDauSap(msg, 'console');
@@ -75,7 +75,7 @@ async function dqtvAudit(over, trangThaiTiep) {
     const re = C.mauManLoi; if (!(re instanceof RegExp)) return false;
     const vung = document.querySelector('main') || document.body; if (!vung) return false;
     const t = vung.textContent || ''; if (!re.test(t)) return false;
-    const host = document.getElementById('dqtv-panel-host');
+    const host = document.getElementById('ita-panel-host');
     return !(host && vung === document.body && re.test(host.textContent || '') && !re.test(t.replace(host.textContent || '', '')));
   }
   function kiemManLoi() {
@@ -92,7 +92,7 @@ async function dqtvAudit(over, trangThaiTiep) {
   let inflight = 0, pendingJson = 0, lastNet = Date.now();
 
   // 3.31: cùng một luật với lá chắn — POST chỉ đi khi đúng trọn đường dẫn xác thực trong gói
-  const isWrite = (m, url) => chanGhi && !/^(GET|HEAD|OPTIONS)$/i.test(m || 'GET') && !laPostDuocPhep(m, url, (window.__dqtvDuAn || {}).duong_dan_xac_thuc, location.href);
+  const isWrite = (m, url) => chanGhi && !/^(GET|HEAD|OPTIONS)$/i.test(m || 'GET') && !laPostDuocPhep(m, url, (window.__itaDuAn || {}).duong_dan_xac_thuc, location.href);
   // Mã 401 = mất phiên đăng nhập → dừng gọn ở thao tác kế tiếp (ứng dụng sắp đẩy về trang đăng nhập).
   // Mã 403 = giao diện cho vào nhưng máy chủ cấm → ghi lại, đây là lỗi phân quyền cần báo Bên B.
   const MA403 = [];
@@ -105,15 +105,15 @@ async function dqtvAudit(over, trangThaiTiep) {
   }
 
   // fetch — SỬA LỖI 1: trả promise ngay, không await thân JSON (không chặn ứng dụng)
-  // Bản Tampermonkey cài sẵn "cổng" fetch từ lúc trang bắt đầu tải (__dqtvFetchGoc / __dqtvFetchCong):
+  // Bản Tampermonkey cài sẵn "cổng" fetch từ lúc trang bắt đầu tải (__itaFetchGoc / __itaFetchCong):
   // mã ứng dụng lỡ giữ tham chiếu fetch cũ vẫn phải đi qua bộ chặn này.
-  const of = window.__dqtvFetchGoc || window.fetch;
+  const of = window.__itaFetchGoc || window.fetch;
   const QUA_MOC = new Set(), DI_VONG = [];
   const ghiQua = u => { try { QUA_MOC.add(new URL(u, location.href).href); } catch (e) {} };
   const moFetch = function (input, init) {
     const url = String((input && input.url) || input), m = (init && init.method) || (input && input.method) || 'GET';
     ghiQua(url);
-    if (isWrite(m, url)) { BLOCK.push(m + ' ' + url.replace(location.origin, '')); nk('chặn ghi', m + ' ' + url.replace(location.origin, '')); const e = new TypeError('dqtvAudit: chặn ' + m); e.__dqtv = true; return Promise.reject(e); }
+    if (isWrite(m, url)) { BLOCK.push(m + ' ' + url.replace(location.origin, '')); nk('chặn ghi', m + ' ' + url.replace(location.origin, '')); const e = new TypeError('itaAudit: chặn ' + m); e.__ita = true; return Promise.reject(e); }
     const t0 = performance.now(); inflight++;
     const p = of.apply(this, arguments);
     p.then(r => {
@@ -125,7 +125,7 @@ async function dqtvAudit(over, trangThaiTiep) {
       .finally(() => { inflight--; lastNet = Date.now(); });
     return p;   // ứng dụng nhận promise gốc, không bị can thiệp
   };
-  window.fetch = moFetch; window.__dqtvCong = moFetch;
+  window.fetch = moFetch; window.__itaCong = moFetch;
 
   const XO = XMLHttpRequest.prototype.open, XS = XMLHttpRequest.prototype.send;
   XMLHttpRequest.prototype.open = function (m, u) { this.__m = m; this.__u = String(u); ghiQua(u); return XO.apply(this, arguments); };
@@ -153,7 +153,7 @@ async function dqtvAudit(over, trangThaiTiep) {
   // SỬA LỖI 2: lỗi do công cụ tự gây ra (chặn ghi) KHÔNG tính là lỗi ứng dụng
   const onErr = e => {
     const msg = (e.message || (e.reason && (e.reason.message || e.reason)) || '') + '';
-    if ((e.reason && e.reason.__dqtv) || msg.includes('dqtvAudit')) return;
+    if ((e.reason && e.reason.__ita) || msg.includes('itaAudit')) return;
     ERR.push('JS: ' + msg); try { ghiSap('Uncaught ' + msg); } catch (x) {}
   };
   window.addEventListener('error', onErr); window.addEventListener('unhandledrejection', onErr);
@@ -186,7 +186,7 @@ async function dqtvAudit(over, trangThaiTiep) {
   let PO = null, DUNG_BAM = false;
   const T_MOC = performance.now();   // thời điểm cài móc: yêu cầu bắt đầu trước mốc này (đang dở lúc bấm Chạy) không tính là đi vòng
   const NGUNG_BAM_TRUOC = !!(trangThaiTiep && trangThaiTiep.ngungBam);   // phần đã chạy trước khi tải lại có ở chế độ ngừng bấm không
-  const coCong = !!window.__dqtvFetchGoc && !!window.__dqtvCongSom;   // bản Tampermonkey: có cổng fetch cài từ đầu → tham chiếu cũ vẫn bị chặn
+  const coCong = !!window.__itaFetchGoc && !!window.__itaCongSom;   // bản Tampermonkey: có cổng fetch cài từ đầu → tham chiếu cũ vẫn bị chặn
   try {
     PO = new PerformanceObserver(l => {
       for (const e of l.getEntries()) {
@@ -198,8 +198,8 @@ async function dqtvAudit(over, trangThaiTiep) {
         const rec = { url: u, ngan: u.replace(location.origin, ''), loai: e.initiatorType, man: CO.tienDo || location.pathname, luc: new Date().toLocaleTimeString('vi-VN') };
         DI_VONG.push(rec); nk('đi vòng bộ chặn', rec.loai + ' ' + rec.ngan);
         // bản dán Console không chặn được lối đi vòng → ngừng bấm nút nghiệp vụ cho tới hết lần chạy (chỉ đọc)
-        if (!coCong && chanGhi && !DUNG_BAM) { DUNG_BAM = true; console.warn('%c[dqtv] ĐÃ NGỪNG BẤM NÚT NGHIỆP VỤ / MỞ FORM cho tới hết lần chạy này (để không lọt lệnh ghi). Các màn vẫn được đọc. Muốn kiểm đủ form: dùng bản Tampermonkey.', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px'); }
-        if (DI_VONG.length === 1) console.warn('%c[dqtv] CÓ YÊU CẦU MẠNG KHÔNG ĐI QUA BỘ CHẶN: ' + rec.loai + ' ' + rec.ngan + '\nỨng dụng gọi mạng bằng tham chiếu cũ — bộ chặn ghi có thể không bảo vệ hết. Nên dùng bản Tampermonkey (cài móc từ lúc trang bắt đầu tải).', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px');
+        if (!coCong && chanGhi && !DUNG_BAM) { DUNG_BAM = true; console.warn('%c[ita] ĐÃ NGỪNG BẤM NÚT NGHIỆP VỤ / MỞ FORM cho tới hết lần chạy này (để không lọt lệnh ghi). Các màn vẫn được đọc. Muốn kiểm đủ form: dùng bản Tampermonkey.', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px'); }
+        if (DI_VONG.length === 1) console.warn('%c[ita] CÓ YÊU CẦU MẠNG KHÔNG ĐI QUA BỘ CHẶN: ' + rec.loai + ' ' + rec.ngan + '\nỨng dụng gọi mạng bằng tham chiếu cũ — bộ chặn ghi có thể không bảo vệ hết. Nên dùng bản Tampermonkey (cài móc từ lúc trang bắt đầu tải).', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px');
       }
     });
     PO.observe({ type: 'resource', buffered: false });
@@ -208,7 +208,7 @@ async function dqtvAudit(over, trangThaiTiep) {
   // Gỡ toàn bộ móc theo dõi, trả trang về như cũ
   const goHook = () => {
     if (goHook.xong) return; goHook.xong = true;
-    window.fetch = window.__dqtvFetchCong || of; window.__dqtvCong = null; try { PO && PO.disconnect(); } catch (e) {} XMLHttpRequest.prototype.open = XO; XMLHttpRequest.prototype.send = XS; console.error = oe;
+    window.fetch = window.__itaFetchCong || of; window.__itaCong = null; try { PO && PO.disconnect(); } catch (e) {} XMLHttpRequest.prototype.open = XO; XMLHttpRequest.prototype.send = XS; console.error = oe;
     window.removeEventListener('error', onErr); window.removeEventListener('unhandledrejection', onErr);
     document.removeEventListener('submit', onSubmit, true);
     if (SB0) navigator.sendBeacon = SB0;
@@ -216,11 +216,11 @@ async function dqtvAudit(over, trangThaiTiep) {
     HTMLFormElement.prototype.submit = FS1;
     if (LC) LC.quyetDinh = null;
     if (PO36) { try { PO36.disconnect(); } catch (e) {} }
-    window.__dqtvGoHook = null;
+    window.__itaGoHook = null;
   };
   // bản 3.5: lá chắn dùng chung quyết định của lần chạy này (lệnh qua đường giữ sẵn cũng bị xét)
   if (LC) LC.quyetDinh = (m, u) => isWrite(m, u) ? 'block' : 'ok';
-  window.__dqtvGoHook = goHook;   // lỗi ở bất cứ đâu: dqtv.chay() gọi lại để gỡ móc
+  window.__itaGoHook = goHook;   // lỗi ở bất cứ đâu: ita.chay() gọi lại để gỡ móc
   // bản 3.5: phát hiện lệnh mạng đi vòng mọi lớp chặn (thư viện giữ fetch gốc từ trước khi dán Console)
   const BYPASS = []; let PO36 = null;
   try {
@@ -233,14 +233,14 @@ async function dqtvAudit(over, trangThaiTiep) {
   // [gộp 3.23 + 3.6] Nút nghiệp vụ (gồm nút của các bước trong đặc tả) cần được mở để đọc form.
   //  - Tampermonkey (lá chắn từ đầu trang): mở như 3.6.
   //  - Dán Console: 3.6 tắt hẳn; 3.23 vẫn mở nhưng NGỪNG ngay khi thấy một lệnh mạng đi vòng bộ chặn.
-  //    Giữ cách của 3.23 (không có thì gần hết ca đặc tả thành CHƯA KIỂM). Muốn an toàn tuyệt đối: dqtv.chay({ moNutKhiDanConsole: false }).
+  //    Giữ cách của 3.23 (không có thì gần hết ca đặc tả thành CHƯA KIỂM). Muốn an toàn tuyệt đối: ita.chay({ moNutKhiDanConsole: false }).
   const nvOk = () => !!(C.moNutNghiepVu && !BYPASS.length && !DUNG_BAM && !NGUNG_BAM_TRUOC && ((LC && LC.som) || C.moNutKhiDanConsole !== false));
-  if (C.moNutNghiepVu && !(LC && LC.som)) console.warn('[dqtv] Dán Console: lá chắn cài muộn. Vẫn mở nút nghiệp vụ để đọc form (lệnh ghi bị chặn); thấy lệnh mạng đi vòng thì tự ngừng bấm. Muốn tắt hẳn: dqtv.chay({ moNutKhiDanConsole: false }).');
+  if (C.moNutNghiepVu && !(LC && LC.som)) console.warn('[ita] Dán Console: lá chắn cài muộn. Vẫn mở nút nghiệp vụ để đọc form (lệnh ghi bị chặn); thấy lệnh mạng đi vòng thì tự ngừng bấm. Muốn tắt hẳn: ita.chay({ moNutKhiDanConsole: false }).');
   const resetLog = () => { LOG.length = 0; ERR.length = 0; };
   const apiErrs = () => LOG.filter(l => l.s === 'NETERR' || l.s >= 400).map(l => l.s + ' ' + l.u.replace(location.origin, '').split('?')[0].slice(0, 60));
 
   /* ---------- tiện ích DOM ---------- */
-  const PANEL = 'dqtv-panel-host';
+  const PANEL = 'ita-panel-host';
   const vis = e => { if (!e || !e.getBoundingClientRect) return false; if (e.closest && e.closest('#' + PANEL)) return false; const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
   const txt = e => (e.innerText || e.textContent || '').trim().replace(/\s+/g, ' ');
   const cls = e => (e.getAttribute && e.getAttribute('class')) || '';
@@ -281,7 +281,7 @@ async function dqtvAudit(over, trangThaiTiep) {
   };
 
   // Lỗi điều khiển để thoát sớm khi bấm Dừng
-  const DUNG = { __dqtvDung: true };
+  const DUNG = { __itaDung: true };
   async function kiemCo() {
     while (CO.tamDung && !CO.dung) { CO.tienDo = '⏸ Tạm dừng'; await sleep(250); }
     if (CO.dung) throw DUNG;
@@ -1125,7 +1125,7 @@ async function dqtvAudit(over, trangThaiTiep) {
       add('Bảng dữ liệu', t ? 'table · ' + t.querySelectorAll('tbody tr').length + ' dòng' : '(màn này không có)', true, '');
       const boxes = [...m.querySelectorAll('input[type=search],input[type=text],input:not([type])')].filter(e => vis(e) && /tìm|lọc|search|tra cứu|họ tên|mã|số/i.test(labelOf(e)));
       add('Ô tìm', boxes.length ? boxes.map(b => '"' + cut(labelOf(b), 30) + '"').join(', ') : '(màn này không có)', true, '');
-      const tk = taiKhoan(); add('Tài khoản', tk || '(không nhận ra)', !!tk, 'Khai dqtv.dat({ dacTa: { vaiChon: "selector ô tên vai" } }) để kết quả tách đúng theo tài khoản');
+      const tk = taiKhoan(); add('Tài khoản', tk || '(không nhận ra)', !!tk, 'Khai ita.dat({ dacTa: { vaiChon: "selector ô tên vai" } }) để kết quả tách đúng theo tài khoản');
       if (C.dacTa) add('Đặc tả quy trình', (C.dacTa.trangThai || []).length + ' trạng thái · ' + (C.dacTa.quyTac || []).length + ' quy tắc', true, '');
       add('Kiểm thiết kế / ngôn từ', (C.kiemThietKe ? 'bật' : 'tắt') + ' / ' + (C.kiemNgonTu ? 'bật' : 'tắt'), true, '');
       return rows;
@@ -1258,7 +1258,7 @@ async function dqtvAudit(over, trangThaiTiep) {
         .filter(e => vis(e) && !inDialog(e) && !trongMenu(e) && !e.closest('table,[role=grid],nav')).map(tenNut).filter(x => x && x.length < 40))].slice(0, 20).join(' · '),
     }, them36.r));
     Object.defineProperty(res[res.length - 1], '__tp', { value: them36.tp, enumerable: false });   // 3.6: thành phần — để gom theo mẫu lỗi
-    if (window.__dqtvShot) { try { res[res.length - 1].anh = await window.__dqtvShot(name); } catch (e) {} }
+    if (window.__itaShot) { try { res[res.length - 1].anh = await window.__itaShot(name); } catch (e) {} }
   }
 
   /* ---------- tìm tab con ---------- */
@@ -1296,11 +1296,11 @@ async function dqtvAudit(over, trangThaiTiep) {
       const ten = nhom && nhom !== t ? nhom + ' › ' + t : t;
       const key = (e.getAttribute('href') || '') + '|' + ten;
       if (seen.has(key)) continue; seen.add(key);
-      const mid = 'm' + (id++); try { e.dataset.dqtvMenu = mid; } catch (x) {}
+      const mid = 'm' + (id++); try { e.dataset.itaMenu = mid; } catch (x) {}
       menuItems.push({ mid, ten, href: e.getAttribute('href') || '' });
     }
   })();
-  const findByMid = mid => side().querySelector('[data-dqtv-menu="' + mid + '"]') || document.querySelector('[data-dqtv-menu="' + mid + '"]');
+  const findByMid = mid => side().querySelector('[data-ita-menu="' + mid + '"]') || document.querySelector('[data-ita-menu="' + mid + '"]');
   async function openMenu(mid) {
     let it = findByMid(mid); if (!it) { await expandAll(); it = findByMid(mid); } if (!it) return false;
     it.scrollIntoView({ block: 'center' }); nk('mở menu', txt(it).slice(0, 80)); it.click();
@@ -1420,10 +1420,10 @@ async function dqtvAudit(over, trangThaiTiep) {
     if (C.thuOTim) for (const box of boxes.slice(0, 2)) {
       const lab = labelOf(box).slice(0, 40), orig = box.value; const base = output(); const got = {};
       const vals = [...C.giaTriTim];
-      if (C.thuBaoMat) vals.push({ giaTri: '"><img src=x onerror="window.__dqtvXss=1">', ten: 'XSS', xss: true }, { giaTri: "' OR '1'='1", ten: 'SQL' }, { giaTri: 'a'.repeat(600), ten: 'chuỗi rất dài' });
+      if (C.thuBaoMat) vals.push({ giaTri: '"><img src=x onerror="window.__itaXss=1">', ten: 'XSS', xss: true }, { giaTri: "' OR '1'='1", ten: 'SQL' }, { giaTri: 'a'.repeat(600), ten: 'chuỗi rất dài' });
       for (const v of vals) {
         await kiemCo();
-        resetLog(); window.__dqtvXss = 0;
+        resetLog(); window.__itaXss = 0;
         setVal(box, v.giaTri); const ms = await settle(900); const o = output();
         const loi = [];
         if (apiErrs().length) loi.push('API lỗi: ' + apiErrs()[0]);
@@ -1440,7 +1440,7 @@ async function dqtvAudit(over, trangThaiTiep) {
           if (khongChua && khongChua < o.rowText.length) loi.push('[cần xác nhận] ' + khongChua + '/' + o.rowText.length + ' dòng không chứa từ khoá (có thể tìm theo cột khác)');
           if (o.sig === base.sig) loi.push('[cần xác nhận] nội dung màn giống hệt lúc chưa tìm — ô tìm có thể không lọc');
         }
-        if (v.xss && (window.__dqtvXss || m.querySelector('img[src="x"]'))) loi.push('⚠ XSS: chuỗi gõ vào được chạy như HTML');
+        if (v.xss && (window.__itaXss || m.querySelector('img[src="x"]'))) loi.push('⚠ XSS: chuỗi gõ vào được chạy như HTML');
         if (v.ten === 'SQL' && apiErrs().some(a => /^5/.test(a))) loi.push('⚠ máy chủ lỗi 5xx với dấu nháy — kiểm tra xử lý đầu vào');
         got[v.giaTri] = o;
         inputs.push({ man: label, o: lab, loai: 'tìm · ' + v.ten, gia_tri: v.giaTri.slice(0, 40), so_dong_truoc: base.rows, so_dong_sau: o.rows, tong_ghi: o.total, ms, loi: loi.join(' | ') });
@@ -1511,8 +1511,8 @@ async function dqtvAudit(over, trangThaiTiep) {
     danhSach = menuItems.filter(mi => [...tenLoi].some(t => t === mi.ten || t.startsWith(mi.ten + ' ›')));
     res.length = 0; // chạy lại thì thay kết quả cũ
   }
-  console.log('%c[dqtv] Bắt đầu: ' + danhSach.length + ' mục menu', 'color:#b00;font-weight:bold');
-  if (choGhiMoiTruong) console.log('%c[dqtv] MỞ GHI: ' + host + ' nằm trong moiTruongKiemThu, mức ' + C.mucQuyTrinh, 'color:#b60;font-weight:bold');
+  console.log('%c[ita] Bắt đầu: ' + danhSach.length + ' mục menu', 'color:#b00;font-weight:bold');
+  if (choGhiMoiTruong) console.log('%c[ita] MỞ GHI: ' + host + ' nằm trong moiTruongKiemThu, mức ' + C.mucQuyTrinh, 'color:#b60;font-weight:bold');
 
   let idx = 0, dungGiuaChung = false;
   try {
@@ -1522,7 +1522,7 @@ async function dqtvAudit(over, trangThaiTiep) {
       if (SAP_TEN.has(mi.ten) || (tuyenMi && SAP_TUYEN.has(tuyenMi))) { idx++; const sx = SAP.find(x => x.man === mi.ten || x.duong_dan === tuyenMi) || {}; missing.push(mi.ten + ' (bỏ qua: màn sập ' + (sx.duong_dan || '') + (sx.loi_da_biet ? ' — LỖI ĐÃ BIẾT ' + sx.loi_da_biet.ma + (sx.loi_da_biet.yc ? '/' + sx.loi_da_biet.yc : '') : '') + ')'); DA_XONG.add(mi.ten); continue; }
       GOC = mi.ten; DANG = mi.ten; HIENTAI = mi.ten; luuCkpt();
       CO.tienDo = (++idx) + '/' + danhSach.length + ' ' + mi.ten;
-      console.log('[dqtv] ' + CO.tienDo);
+      console.log('[ita] ' + CO.tienDo);
       // Mất kết nối máy chủ (phần lớn lệnh gọi lỗi mạng) → bỏ kết quả của mục này, chờ rồi thử lại; quá 3 lần thì ghi "chưa kiểm được"
       let matMang = false;
       try {   // [S1] màn sập giữa chừng → thoát mục này, chạy tiếp mục sau
@@ -1550,9 +1550,9 @@ async function dqtvAudit(over, trangThaiTiep) {
         res.length = r0; inputs.length = i0; skipped.length = s0;
         TRUONG.splice(t0).forEach(f => DA_GHI_TRUONG.delete(f.khoa));
         [[VISITED, v0], [DA_MO_FORM, f0], [DA_MO_LOC, l0], [DA_TT, tt0]].forEach(([a, b]) => { a.clear(); b.forEach(x => a.add(x)); });
-        const cho = (window.__dqtvChoThu || 20) * (lanThu + 1);
+        const cho = (window.__itaChoThu || 20) * (lanThu + 1);
         nk('mất kết nối', mi.ten + ' — ' + DEM_NETERR + '/' + DEM_API + ' lệnh lỗi mạng, chờ ' + cho + ' giây rồi thử lại');
-        console.warn('[dqtv] Mất kết nối máy chủ ở "' + mi.ten + '" (' + DEM_NETERR + '/' + DEM_API + ' lệnh lỗi mạng). Chờ ' + cho + ' giây rồi thử lại (lần ' + (lanThu + 1) + '/3).');
+        console.warn('[ita] Mất kết nối máy chủ ở "' + mi.ten + '" (' + DEM_NETERR + '/' + DEM_API + ' lệnh lỗi mạng). Chờ ' + cho + ' giây rồi thử lại (lần ' + (lanThu + 1) + '/3).');
         if (lanThu < 3) { CO.tienDo = '⏳ Mất kết nối máy chủ — chờ ' + cho + ' giây rồi thử lại "' + mi.ten + '"'; capNhatBang(); for (let k = 0; k < cho * 4; k++) { await sleep(250); await kiemCo(); } }
       }
       } catch (e) {
@@ -1565,22 +1565,22 @@ async function dqtvAudit(over, trangThaiTiep) {
       DA_XONG.add(mi.ten);
       luuCkpt();   // lưu điểm dừng sau mỗi mục
     }
-    for (const k of C.kichBan || []) { console.log('[dqtv] Kịch bản: ' + k.man); await runScenario(k); }
+    for (const k of C.kichBan || []) { console.log('[ita] Kịch bản: ' + k.man); await runScenario(k); }
   } catch (e) {
     if (e === SAP_MAN) { dungGiuaChung = true; SAP_MOI = null; nk('dừng', 'màn sập ngoài vòng menu (kịch bản)'); }
-    else if (e === DUNG) { dungGiuaChung = true; if (APP_SAP) { nk('dừng do ứng dụng sập', APP_SAP); console.warn('[dqtv] DỪNG: ứng dụng báo màn hình hỏng ở "' + APP_SAP + '" — tải lại trang rồi chạy tiếp, bỏ qua màn này.'); } else if (MAT_PHIEN) { nk('dừng do mất phiên', MAT_PHIEN); console.warn('[dqtv] DỪNG: mất phiên đăng nhập — ' + MAT_PHIEN + '. Đăng nhập lại cùng tài khoản rồi bấm Chạy để chạy tiếp.'); } else console.log('%c[dqtv] Đã dừng theo yêu cầu', 'color:#b60'); }
+    else if (e === DUNG) { dungGiuaChung = true; if (APP_SAP) { nk('dừng do ứng dụng sập', APP_SAP); console.warn('[ita] DỪNG: ứng dụng báo màn hình hỏng ở "' + APP_SAP + '" — tải lại trang rồi chạy tiếp, bỏ qua màn này.'); } else if (MAT_PHIEN) { nk('dừng do mất phiên', MAT_PHIEN); console.warn('[ita] DỪNG: mất phiên đăng nhập — ' + MAT_PHIEN + '. Đăng nhập lại cùng tài khoản rồi bấm Chạy để chạy tiếp.'); } else console.log('%c[ita] Đã dừng theo yêu cầu', 'color:#b60'); }
     else throw e;
   } finally {
     goHook();
     // gỡ dấu định danh menu
-    document.querySelectorAll('[data-dqtv-menu]').forEach(e => { try { delete e.dataset.dqtvMenu; } catch (x) {} });
+    document.querySelectorAll('[data-ita-menu]').forEach(e => { try { delete e.dataset.itaMenu; } catch (x) {} });
   }
 
   function luuCkpt() {
     const goc = { origin: location.origin, tk: TK, ts: Date.now(), dang: DANG, sap: SAP, boQuaDoTaiLai: BO_DO_TAI_LAI, ngungBam: DUNG_BAM || NGUNG_BAM_TRUOC, xong: [...DA_XONG], visited: [...VISITED], ds: DS, nt: NT };
     try { localStorage.setItem(ckptKey(), hoaChuoi(Object.assign({ res, inputs, truong: TRUONG }, goc))); CKPT_GON = false; return; } catch (e) {}
     // [S2] đầy chỗ: vẫn giữ tiến độ + màn sập (bản gọn) để tải lại không chạy lại từ đầu; kết quả chi tiết chỉ còn trong trang
-    try { localStorage.setItem(ckptKey(), hoaChuoi(Object.assign({ gon: true }, goc))); if (!CKPT_GON) { CKPT_GON = true; nk('điểm dừng gọn', 'trình duyệt hết chỗ lưu'); console.warn('[dqtv] Trình duyệt gần hết chỗ lưu: điểm dừng chỉ giữ tiến độ, không giữ kết quả chi tiết. Xuất báo cáo trước khi tải lại trang, hoặc chạy dqtv.donBoNho().'); } } catch (e) {}
+    try { localStorage.setItem(ckptKey(), hoaChuoi(Object.assign({ gon: true }, goc))); if (!CKPT_GON) { CKPT_GON = true; nk('điểm dừng gọn', 'trình duyệt hết chỗ lưu'); console.warn('[ita] Trình duyệt gần hết chỗ lưu: điểm dừng chỉ giữ tiến độ, không giữ kết quả chi tiết. Xuất báo cáo trước khi tải lại trang, hoặc chạy ita.donBoNho().'); } } catch (e) {}
   }
 
   // So với danh mục trường mong đợi (nếu anh khai truongMongDoi)
@@ -1681,9 +1681,9 @@ async function dqtvAudit(over, trangThaiTiep) {
   const ketQua = {
     url: location.origin, luc: new Date().toLocaleString('vi-VN'), thoi_gian_s: Math.round((Date.now() - tStart) / 1000),
     dung_giua_chung: dungGiuaChung, ly_do_dung: !dungGiuaChung ? '' : (APP_SAP ? 'app kẹt ở màn báo lỗi sau khi một màn sập ("' + APP_SAP + '"): đã tải lại trang. Bản dán Console: dán lại đúng tệp bundle để chạy tiếp các mục chưa chạy.' : MAT_PHIEN ? 'mất phiên đăng nhập (' + MAT_PHIEN + '): đăng nhập lại cùng tài khoản để chạy tiếp.' : 'dừng theo lệnh người chạy hoặc lỗi công cụ.'), menu_chua_chay: danhSach.map(x => x.ten).filter(t => !DA_XONG.has(t)), tai_khoan: TK || '(không nhận ra — khai dacTa.vaiChon)',
-    mat_phien: MAT_PHIEN, loi_403: MA403.slice(0, 100), man_loi_nang: SAP, man_sap: SAP, diem_dung_gon: CKPT_GON, quy_tac: (window.__dqtvQuyTac || {}).meta || null, thao_tac_cuoi: docNK().slice(-15),
+    mat_phien: MAT_PHIEN, loi_403: MA403.slice(0, 100), man_loi_nang: SAP, man_sap: SAP, diem_dung_gon: CKPT_GON, quy_tac: (window.__itaQuyTac || {}).meta || null, thao_tac_cuoi: docNK().slice(-15),
     muc_quy_trinh: C.mucQuyTrinh, co_dac_ta: !!C.dacTa, mo_ghi: choGhiMoiTruong,
-    phien_ban: PHIEN_BAN, cach_nap: window.__dqtvNguon === 'userscript' ? 'Tampermonkey (cổng chặn từ đầu trang)' : 'dán Console',
+    phien_ban: PHIEN_BAN, cach_nap: window.__itaNguon === 'userscript' ? 'Tampermonkey (cổng chặn từ đầu trang)' : 'dán Console',
     ten_mien: location.hostname, cua_so: innerWidth + '×' + innerHeight + ' (tỉ lệ ' + (window.devicePixelRatio || 1) + ')',
     danh_sach_menu: danhSach.map(x => x.ten), di_vong_bo_chan: DI_VONG.slice(), ngung_bam_do_di_vong: DUNG_BAM || NGUNG_BAM_TRUOC, co_cong_fetch: coCong,
     mau_loi, he_thong_thiet_ke: dsKq, ngon_tu: ntKq, la_chan_tu_dau_trang: !!(LC && LC.som), nut_nghiep_vu_da_bat: nvOk(),
@@ -1710,29 +1710,29 @@ async function dqtvAudit(over, trangThaiTiep) {
   Object.defineProperty(ketQua, 'man_quet', { value: resG });
   // đối chiếu với bảng đặc tả quy trình đã nạp (nếu có)
   const dsDT = docDacTa();
-  if (dsDT.length) { try { ketQua.doi_chieu_dac_ta = doiChieuDacTa(ketQua, dsDT); } catch (e) { console.warn('[dqtv] Lỗi khi đối chiếu đặc tả: ' + e.message); } }
-  { try { ketQua.phu_danh_muc_tc = phuDanhMucTC(ketQua, ketQua.doi_chieu_dac_ta); } catch (e) { console.warn('[dqtv] Lỗi khi đối chiếu danh mục TC: ' + e.message); } }
-  window.__DQTV_AUDIT = { res, inputs, scen, skipped, ketQua };
+  if (dsDT.length) { try { ketQua.doi_chieu_dac_ta = doiChieuDacTa(ketQua, dsDT); } catch (e) { console.warn('[ita] Lỗi khi đối chiếu đặc tả: ' + e.message); } }
+  { try { ketQua.phu_danh_muc_tc = phuDanhMucTC(ketQua, ketQua.doi_chieu_dac_ta); } catch (e) { console.warn('[ita] Lỗi khi đối chiếu danh mục TC: ' + e.message); } }
+  window.__ITA_AUDIT = { res, inputs, scen, skipped, ketQua };
   // lưu kết quả; nếu vượt dung lượng trình duyệt thì lưu bản rút gọn (bỏ danh sách lựa chọn)
   // lưu "kết quả gần nhất" chung và một bản riêng của tài khoản này (để đổi tài khoản không mất kết quả cũ)
   const luuKQ = key => { try { localStorage.setItem(key, hoaChuoi(ketQua)); return true; } catch (e) { try { localStorage.setItem(key, hoaChuoi(Object.assign({}, ketQua, { danh_muc_truong: ketQua.danh_muc_truong.map(f => Object.assign({}, f, { lua_chon: '' })), thu_o_nhap: [] }))); return true; } catch (x) { return false; } } };
-  if (!luuKQ(KEY_LAST)) console.warn('[dqtv] Kết quả quá lớn để lưu vào trình duyệt; vẫn xuất được ngay bây giờ bằng dqtv.xuat()');
+  if (!luuKQ(KEY_LAST)) console.warn('[ita] Kết quả quá lớn để lưu vào trình duyệt; vẫn xuất được ngay bây giờ bằng ita.xuat()');
   luuKQ(lastKeyTK());
   if (!dungGiuaChung) { try { localStorage.removeItem(ckptKey()); } catch (e) {} }   // xong thì xoá điểm dừng của tài khoản này
   // tự tải báo cáo HTML khi chạy xong, để kết quả không bị mất khi đổi tài khoản / tải lại trang
   // [3.25] dừng vì app kẹt màn lỗi / mất phiên: vẫn tải báo cáo phần đã chạy TRƯỚC khi trang tải lại, để lỗi không bị mất
-  if (C.tuTaiBaoCao && (!dungGiuaChung || APP_SAP || MAT_PHIEN)) { try { taiTep('dqtv-' + slugTK() + '-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + (dungGiuaChung ? '-DANG-DO' : '') + '.html', sangHTML(ketQua), 'text/html'); } catch (e) {} }
+  if (C.tuTaiBaoCao && (!dungGiuaChung || APP_SAP || MAT_PHIEN)) { try { taiTep('ita-' + slugTK() + '-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + (dungGiuaChung ? '-DANG-DO' : '') + '.html', sangHTML(ketQua), 'text/html'); } catch (e) {} }
 
-  console.log('%c[dqtv] Xong: ' + res.length + ' màn · ' + issues.length + ' có vấn đề (cao: ' + ketQua.man_cao + ', TB: ' + ketQua.man_trung_binh + ') · ' + inputs.length + ' lần thử ô (' + inputIssues.length + ' lỗi)', 'color:#070;font-weight:bold');
+  console.log('%c[ita] Xong: ' + res.length + ' màn · ' + issues.length + ' có vấn đề (cao: ' + ketQua.man_cao + ', TB: ' + ketQua.man_trung_binh + ') · ' + inputs.length + ' lần thử ô (' + inputIssues.length + ' lỗi)', 'color:#070;font-weight:bold');
   console.table(issues.map(r => ({ màn: r.tab, mức: r.muc_do, api_lỗi: r.api_loi || '', js: r.js_loi || '', quy_trình: r.quy_trinh_loi || '' })));
-  console.log('%c[dqtv] Kiểm kê: ' + TRUONG.length + ' trường · ' + ketQua.truong_co_loi + ' trường có lỗi · ' + ketQua.so_form_da_mo + ' form đã đọc được' + ((DUNG_BAM || NGUNG_BAM_TRUOC) ? ' (CÓ PHẦN CHẠY Ở CHẾ ĐỘ NGỪNG BẤM NÚT NGHIỆP VỤ vì có yêu cầu mạng đi vòng — chạy lại bằng Tampermonkey để đọc đủ form)' : '') + (thieuTruong.length ? ' · THIẾU ' + thieuTruong.length + ' trường so với danh mục mong đợi' : '') + '. Xuất: dqtv.xuat("truong")', 'color:#0b3d66;font-weight:bold');
+  console.log('%c[ita] Kiểm kê: ' + TRUONG.length + ' trường · ' + ketQua.truong_co_loi + ' trường có lỗi · ' + ketQua.so_form_da_mo + ' form đã đọc được' + ((DUNG_BAM || NGUNG_BAM_TRUOC) ? ' (CÓ PHẦN CHẠY Ở CHẾ ĐỘ NGỪNG BẤM NÚT NGHIỆP VỤ vì có yêu cầu mạng đi vòng — chạy lại bằng Tampermonkey để đọc đủ form)' : '') + (thieuTruong.length ? ' · THIẾU ' + thieuTruong.length + ' trường so với danh mục mong đợi' : '') + '. Xuất: ita.xuat("truong")', 'color:#0b3d66;font-weight:bold');
   if (ketQua.doi_chieu_dac_ta) {
     const d = ketQua.doi_chieu_dac_ta;
-    console.log('%c[dqtv] Đối chiếu đặc tả ' + gonMaDT(d.quy_trinh.map(q => q.ma)) + ':\n  ' + demBang(d).join('\n  '), 'color:#6a1b9a;font-weight:bold');
+    console.log('%c[ita] Đối chiếu đặc tả ' + gonMaDT(d.quy_trinh.map(q => q.ma)) + ':\n  ' + demBang(d).join('\n  '), 'color:#6a1b9a;font-weight:bold');
     const cl = d.ket_qua.filter(k => (k.kq === 'LỆCH' || k.kq === 'CẢNH BÁO') && k.loai_bang !== 'khung');
     if (cl.length) console.table(cl.map(k => ({ 'kết quả': k.kq, 'mã ca': k.ma, 'diễn giải': k.dg })));
     const clK = d.ket_qua.filter(k => k.kq === 'CẢNH BÁO' && k.loai_bang === 'khung').length;
-    if (clK) console.log('[dqtv] Bảng khung: ' + clK + ' chỗ khác mốc, xem trong báo cáo HTML hoặc dqtv.xuat("dacta").');
+    if (clK) console.log('[ita] Bảng khung: ' + clK + ' chỗ khác mốc, xem trong báo cáo HTML hoặc ita.xuat("dacta").');
   }
   capNhatBang();
   return ketQua;

@@ -296,11 +296,11 @@ test('vai_cung_cap: «cùng cấp với đơn vị chủ hồ sơ» áp khi tài
 
 test('danh mục thật (từ dist): vai ngoài v7 vẫn nhận đủ 28 KHUNG-CHUNG; vai có trong v7 có TC theo vai', async () => {
   const { existsSync, readFileSync } = await import('node:fs');
-  const f = fileURLToPath(new URL('../dist/dqtv-kiem-tra-3.31.js', import.meta.url));
+  const f = fileURLToPath(new URL('../dist/ita-dqtv-5.0.js', import.meta.url));
   if (!existsSync(f)) return console.log('BỎ QUA: chưa đóng gói dist — chạy cong-cu/dong_goi.py');
-  const dong = readFileSync(f, 'utf8').split('\n').find(l => l.startsWith('window.__dqtvDanhMucTC = '));
-  assert.ok(dong, 'dist không có dòng window.__dqtvDanhMucTC');
-  const dm = JSON.parse(dong.slice('window.__dqtvDanhMucTC = '.length).replace(/;\s*$/, ''));
+  const dong = readFileSync(f, 'utf8').split('\n').find(l => l.startsWith('window.__itaDanhMucTC = '));
+  assert.ok(dong, 'dist không có dòng window.__itaDanhMucTC');
+  const dm = JSON.parse(dong.slice('window.__itaDanhMucTC = '.length).replace(/;\s*$/, ''));
   const r = chamTheoMaTran([], dm, DU_AN, 'BC Ban Chỉ huy Phòng thủ khu vực Tỉnh Hà Tĩnh', undefined, {});
   const kc = r.dong.filter(d => d.ma_tc.startsWith('KHUNG-CHUNG.'));
   assert.equal(kc.length, 28);
@@ -366,7 +366,7 @@ test('kiem_goi: thiếu gói / gói cũ / thiếu trường / đủ', () => {
   assert.match(kiemGoi(DA, undefined), /chưa nạp danh mục TC/);
   assert.match(kiemGoi(DA, { meta: {}, vai: [], loai: [], tc: [] }), /gói cũ/);
   assert.match(kiemGoi(Object.assign({}, DA, { luat_khung_chung: undefined }), DM), /gói thiếu trường luat_khung_chung/);
-  assert.match(kiemGoi(DA, Object.assign({}, DM, { bo_chay: undefined })), /gói thiếu trường __dqtvDanhMucTC\.bo_chay/);
+  assert.match(kiemGoi(DA, Object.assign({}, DM, { bo_chay: undefined })), /gói thiếu trường __itaDanhMucTC\.bo_chay/);
   assert.equal(kiemGoi(DA, DM), '');
 });
 test('chuan_loc: chỉ giữ 4 khoá, chuỗi lẻ thành mảng, rỗng bỏ', () => {

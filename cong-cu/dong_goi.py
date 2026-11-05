@@ -3,8 +3,8 @@ import argparse, csv, hashlib, json, pathlib, re, sys
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
 # thứ tự dòng dữ liệu như 3.26: đặc tả, quy tắc, rồi danh mục TC
-DONG_DL = [('dac-ta.json', 'window.__dqtvDacTaNap = '), ('quy-tac.json', 'window.__dqtvQuyTac = ')]
-DAU_DM = 'window.__dqtvDanhMucTC = '
+DONG_DL = [('dac-ta.json', 'window.__itaDacTaNap = '), ('quy-tac.json', 'window.__itaQuyTac = ')]
+DAU_DM = 'window.__itaDanhMucTC = '
 CAC_COT = ['Mã TC', 'Mã UC', 'Loại kiểm thử', 'Ưu tiên', 'Vai', 'Bộ chạy đích', 'Loại ca tool', 'Trạng thái TC']
 UU_TIEN = ['Cao', 'Trung bình', 'Thấp']
 VAI_PHU_DINH = 'tài khoản cùng đơn vị, KHÔNG giữ vai:'
@@ -106,13 +106,13 @@ def main():
     a = ap.parse_args()
     goi, may = pathlib.Path(a.goi), pathlib.Path(a.may)
 
-    ra = ['// DQTV — công cụ kiểm giao diện + đặc tả quy trình, bản 3.31 (ghép từ gói + bộ máy)\n',
+    ra = ['// ITA — công cụ kiểm giao diện + đặc tả quy trình, bản 5.0 (ghép từ gói + bộ máy)\n',
           '// Nguồn: ' + goi.parent.name + '/' + goi.name + ' + may/\n']
     # hồ sơ dự án đứng đầu phần dữ liệu: lá chắn đọc nó ngay khi nạp (gói cũ chưa có thì bỏ qua = chặn mọi POST)
     if a.tc and a.dm_cu:
         sys.exit('--tc và --dm-cu loại trừ nhau')
     dm_tc = doc_tc(pathlib.Path(a.tc)) if a.tc else None
-    dong_dl = ([('du-an.json', 'window.__dqtvDuAn = ')] if (goi / 'du-an.json').exists() else []) + DONG_DL
+    dong_dl = ([('du-an.json', 'window.__itaDuAn = ')] if (goi / 'du-an.json').exists() else []) + DONG_DL
     hn = goi / 'hieu-nang.json'
     for ten, tt in dong_dl:
         du = json.loads((goi / ten).read_text(encoding='utf-8'))
@@ -132,7 +132,7 @@ def main():
     else:
         print('Chưa có danh mục TC (--tc hoặc --dm-cu): bỏ dòng này', file=sys.stderr)
     if hn.exists():
-        ra.append('window.__dqtvHieuNang = ' + json.dumps(json.loads(hn.read_text(encoding='utf-8')), ensure_ascii=False, separators=(',', ':')) + ';\n')
+        ra.append('window.__itaHieuNang = ' + json.dumps(json.loads(hn.read_text(encoding='utf-8')), ensure_ascii=False, separators=(',', ':')) + ';\n')
     tep = sorted(may.glob('*.js'))
     if not tep:
         sys.exit('Không có tệp .js nào trong ' + str(may))
