@@ -1,9 +1,14 @@
 /* ============================================================= *
- * 1. CẤU HÌNH MẶC ĐỊNH — sửa bằng ita.dat(...) hoặc trên bảng   *
+ * 1. CẤU HÌNH MẶC ĐỊNH — sửa bằng dqtv.dat(...) hoặc trên bảng   *
  * ============================================================= */
+// Hồ sơ dự án: du-an/<dự án>/ho-so.json, đóng gói thành window.__dqtvHoSo. Mọi chữ riêng của dự án lấy từ đây.
+// Không có hồ sơ thì máy kiểm vẫn chạy: không khoá tên miền, không có màn việc chung, không bỏ tiền tố tài khoản.
+const DU_AN = window.__dqtvHoSo || {};
+if (!window.__dqtvHoSo) console.warn('[dqtv] Không có hồ sơ dự án: không khoá tên miền.');
+const boGoc = s => DU_AN.goc_duong_dan && String(s).startsWith(DU_AN.goc_duong_dan) ? String(s).slice(DU_AN.goc_duong_dan.length) : s;
 const MAC_DINH = {
   /* --- phạm vi duyệt menu / tab --- */
-  tenMienDuocChay: /^dqtv\.linksafe\.vn$/i,   // chỉ chạy trên tên miền khớp (môi trường kiểm thử); null = không khoá
+  tenMienDuocChay: DU_AN.ten_mien ? new RegExp('^' + DU_AN.ten_mien.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') : null,   // chỉ chạy trên tên miền khớp (môi trường kiểm thử); null = không khoá
   cheNhayCam: true,             // che dữ liệu nhạy cảm (câu lệnh, IP nội bộ, đường dẫn máy chủ, SQL, khoá) khi in báo cáo
   chiMenu: null,                // RegExp: chỉ kiểm mục menu khớp, vd /Chiến sĩ|Đơn vị/
   boQuaMenu: null,              // RegExp: bỏ qua mục menu khớp
@@ -48,15 +53,16 @@ const MAC_DINH = {
   kiemThietKe: true,            // thống kê cỡ chữ, màu, bo góc, đổ bóng, khoảng cách lệch lưới, kiểu nút
   kiemNgonTu: true,             // một từ hai cách viết, hoa/thường, lẫn tiếng Anh, chữ tổ hợp
   cauTrongThem: [],             // câu báo trống riêng của app, vd ['Chưa phát sinh'] hoặc /chưa phát sinh/i
-  chuanDS: { coChuToiDa: 8, mauChuToiDa: 8, mauNenToiDa: 10, boGocToiDa: 4, doBongToiDa: 3, luoi: 4, khoangCach: [2, 6, 10, 18, 30, 42], nutChinhToiDa: 1, mauMoiMan: 900 },
+  chuanDS: { coChuToiDa: 6, mauChuToiDa: 8, mauNenToiDa: 10, boGocToiDa: 4, doBongToiDa: 3, luoi: 4, nutChinhToiDa: 1, mauMoiMan: 900 },
 
   /* --- LỚP KIỂM QUY TRÌNH --- */
+  // bản 3.26.1 luôn chỉ đọc: mucQuyTrinh, moiTruongKiemThu, chanGhi đặt gì cũng bỏ qua (xem 30-loi-kiem: chanGhi)
   mucQuyTrinh: 1,               // 1 = chỉ đọc (an toàn mọi nơi); 2/3 cần moiTruongKiemThu
   moiTruongKiemThu: [],         // vd ['staging.dqtv.local','test.dqtv'] — mở ghi khi origin khớp
   tienToKiemThu: '[KIEMTHU] ',  // chỉ thao tác trên hồ sơ mang tiền tố này (mức 2)
 
   // Đặc tả để đối chiếu. Để null thì bỏ qua kiểm quy trình, chỉ kiểm mã.
-  // Khai theo hệ thống thật rồi dán vào (ita.dat({ dacTa: {...} })).
+  // Khai theo hệ thống thật rồi dán vào (dqtv.dat({ dacTa: {...} })).
   dacTa: null,
   // dacTa = {
   //   trangThai: ['Dự thảo','Trình ký','Đã ký','Hoàn thành','Trả lại'], // danh mục trạng thái hợp lệ
@@ -76,7 +82,7 @@ const MAC_DINH = {
   /* --- kỹ thuật --- */
   waitMax: 10000, idle: 600, slowMs: 3000,
   chanGhi: true,
-  // 3.31: lệnh POST được đi nằm trong gói (du-an.json → duong_dan_xac_thuc), so trọn đường dẫn; xem laPostDuocPhep (may/05-thuan.js). Không cấu hình ở đây.
+  // lệnh POST được để đi: lấy từ hồ sơ dự án (post_cho_qua), không cấu hình được ở đây (xem 10-la-chan: postDuocDi)
   // [S1] chữ của màn báo lỗi do ứng dụng hiện khi một màn sập (app DQTV: "Màn hình này gặp lỗi và đã dừng lại…")
   mauManLoi: /gặp lỗi và đã dừng lại|đã dừng lại để không hiện số liệu sai|Unexpected Application Error/i,
   thuLaiLoiDaBiet: false,      // [S16] true: vẫn mở màn đã biết là sập (khi Bên B báo đã sửa)
@@ -104,7 +110,7 @@ function timNhayCam(text) {
 }
 const cheMot = x => x.length <= 8 ? x.slice(0, 2) + '…' : x.slice(0, 8) + '…(' + x.length + ' ký tự)';
 function cheChuoi(s) {
-  if (window.__itaKhongChe) return String(s);
+  if (window.__dqtvKhongChe) return String(s);
   let t = String(s);
   // che một lần: bỏ qua đoạn đã che (có "…" trong đoạn khớp hoặc ngay sau nó), để không che chồng
   for (const [, re] of MAU_NHAY_CAM) {
@@ -115,10 +121,10 @@ function cheChuoi(s) {
   return t;
 }
 
-const PHIEN_BAN = '5.0';
-const KEY_CFG = 'ita.cfg.v50', KEY_CKPT = 'ita.ckpt.v50', KEY_LAST = 'ita.last.v50', KEY_TAY = 'ita.truongtay.v50', KEY_SAP = 'ita.sap.v50';
-// khóa của các bản trước (v3, v3.6, 3.17–3.23): ita.donBoNho() xoá để trả chỗ cho trình duyệt
-const KHOA_CU = /^dqtv\.(cfg|ckpt|last|truongtay|run|nk|sap)\.v3(24)?(\||$)|^dqtv\.dacta\.v(1|324)$/;
+const PHIEN_BAN = '3.26.1';
+const KEY_CFG = 'dqtv.cfg.v3261', KEY_CKPT = 'dqtv.ckpt.v3261', KEY_LAST = 'dqtv.last.v3261', KEY_TAY = 'dqtv.truongtay.v3261', KEY_SAP = 'dqtv.sap.v3261';
+// khóa của các bản trước (v3, v3.6, 3.17–3.26): dqtv.donBoNho() xoá để trả chỗ cho trình duyệt
+const KHOA_CU = /^dqtv\.(cfg|ckpt|last|truongtay|run|nk|sap)\.v3(24|25)?(\||$)|^dqtv\.dacta\.v(1|324|325)$/;
 
 /* --- Nhận ra tài khoản đang đăng nhập, để điểm dừng và kết quả TÁCH RIÊNG theo tài khoản ---
  * Lý do: đổi tài khoản mà dùng chung một điểm dừng thì lần chạy mới bỏ qua các mục "đã xong"
@@ -131,18 +137,18 @@ function taiKhoan() {
     // khối chữ ở góc phải trên cùng (thường là chức vụ + đơn vị người dùng), bỏ ô tìm kiếm và bảng điều khiển
     const W = innerWidth;
     const ds = [...document.querySelectorAll('header *, nav *, body > div *')].filter(e => {
-      if (e.closest('#ita-panel-host') || e.querySelector('input,svg + svg') || e.children.length > 4) return false;
+      if (e.closest('#dqtv-panel-host') || e.querySelector('input,svg + svg') || e.children.length > 4) return false;
       const r = e.getBoundingClientRect(); return r.top >= 0 && r.top < 90 && r.left > W * 0.6 && r.width > 0 && r.width < W * 0.35;
     }).map(e => (e.innerText || '').trim().replace(/\s+/g, ' ')).filter(t => /\p{L}{3,}/u.test(t) && t.length < 160);
     return ds.sort((a, b) => b.length - a.length)[0] || '';
   } catch (e) { return ''; }
 }
 // Cờ "đang chạy" — còn lại sau khi trang tự tải lại giữa chừng thì lần nạp sau tự chạy tiếp
-const KEY_RUN = 'ita.run.v50';
+const KEY_RUN = 'dqtv.run.v3261';
 
 /* --- Nhật ký lưu bền: giữ lại 300 thao tác gần nhất trong trình duyệt (không mất khi trang tải lại / bị đăng xuất).
  * Dùng để biết lần chạy trước dừng ở đâu, sau thao tác nào, có lỗi 401/403 hay lệnh ghi bị chặn nào. */
-const KEY_NK = 'ita.nk.v50';
+const KEY_NK = 'dqtv.nk.v3261';
 let NK_BO = null;
 function nk(loai, noiDung) {
   try {
@@ -158,7 +164,7 @@ let APP_SAP = '';     // có giá trị khi ứng dụng hiện màn hình hỏn
 // Mã có đang chạy trong chính trang không (thử chèn một thẻ script nhỏ rồi xem trang có thấy biến không)
 function laTrangThat() {
   try {
-    const k = '__itaKiem' + Math.random().toString(36).slice(2);
+    const k = '__dqtvKiem' + Math.random().toString(36).slice(2);
     const s = document.createElement('script'); s.textContent = 'window["' + k + '"]=1';
     (document.head || document.documentElement).appendChild(s); s.remove();
     const ok = window[k] === 1; try { delete window[k]; } catch (e) {} return ok;
@@ -214,17 +220,9 @@ const HO_SO = {
   'kiem-ke-truong': { moHoSoDau: true, thuOTim: false, thuOChon: 0, doSauTab: 2, kiemKeTruong: true, moFormDeKiemKe: true, moDropdownTuyBien: true, moRongMuc: true, maxFormMoiMan: 20 },
 };
 
-// Cấu hình đang dùng = mặc định ← đã lưu ← ITA_CONFIG (nếu có)
-let daCanhBaoChiDoc = false;
+// Cấu hình đang dùng = mặc định ← đã lưu ← DQTV_CONFIG (nếu có)
 function cfgHienTai(over) {
-  const goc = Object.assign({}, MAC_DINH, cauHinhGoiAnToan((window.__itaDuAn || {}).cau_hinh), docCfgLuu(), window.ITA_MAC_DINH || {}, window.ITA_CONFIG || {}, over || {});
-  // 3.31 (CT-03): chỉ đọc, luôn luôn (mucQuyTrinh về 1, chanGhi về true); chế độ ghi chưa làm. Cảnh báo một lần mỗi lần nạp trang.
-  const c = epChiDoc(goc);
-  if (!daCanhBaoChiDoc && (c.mucQuyTrinh !== goc.mucQuyTrinh || c.chanGhi !== goc.chanGhi)) {
-    daCanhBaoChiDoc = true;
-    console.warn('[ita] 3.31 chỉ chạy chỉ đọc; mucQuyTrinh 2/3 và chanGhi:false bị bỏ qua (chế độ ghi chưa làm, CT-11)');
-  }
-  return c;
+  return Object.assign({}, MAC_DINH, docCfgLuu(), window.DQTV_MAC_DINH || {}, window.DQTV_CONFIG || {}, over || {});
 }
 
 /* ============================================================= *

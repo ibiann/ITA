@@ -1,0 +1,16 @@
+{
+  "loi_sap": [
+    {
+      "ma": "UI-01",
+      "yc": "YC-GD-11",
+      "duong_dan": "/dqtv/uniform-stock-in-slips",
+      "mo_ta": "Màn sập, hiện màn báo lỗi: EntityList «Các phiếu nhập kho trang phục» không suy ra được dấu cho hàng (tuyến /uniform-stock-in-slips chưa khai hình ở rail-icons.jsx). Gặp ngày 28/10 lúc 10:28, 11:11, 12:21 và khoảng 20:00.",
+      "vai_pm_ghi": "Chỉ huy trưởng (xã); Nhân viên tài chính kiêm hậu cần (xã); Trợ lý Quân lực (xã) — cả 3 vai cấp xã có quyền vào",
+      "trang_thai": "Mở"
+    }
+  ],
+  "meta": {
+    "nguon": "YeuCauSua_BenB_DQTV_29102026.xlsx",
+    "lay_tu": "dòng 4 của dqtv-kiem-tra-dacta-3.26.js (chỉ giữ loi_sap)"
+  }
+}

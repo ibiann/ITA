@@ -1,149 +1,85 @@
-# Ghép gói dự án + bộ máy thành một tệp dán Console / Tampermonkey.
-import argparse, csv, hashlib, json, pathlib, re, sys
+# Ghép may/*.js (+ dữ liệu dự án, nếu có) thành một tệp dán Console: dist/dqtv-kiem-tra-<bản>.js
+# Đóng gói sẵn (bước 7d): du-an/<dự án>/quy-trinh/**/*.md và tc/** (*.csv; *.zip → các tệp .csv bên trong, chỉ giữ cột tool đọc),
+# nén gzip + base64 vào window.__dqtvGoiSan; lúc khởi động tool giải nén và cho qua bộ đọc như tệp đã nạp.
+# Thư mục du-an/<dự án>/ trống thì vẫn ra tệp chạy được.
+# Thứ tự ghép: may/ có số < 90, rồi bo-doc/*.js (bộ đọc, nằm trong cùng khối mã), rồi may/ từ 90 (khởi động, đóng khối).
+# Chạy: python3 -I cong-cu/dong_goi.py [--du-an dqtv] [--ra <tệp ra>]
+import argparse, base64, csv, datetime, gzip, hashlib, io, json, pathlib, re, sys, zipfile
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-# thứ tự dòng dữ liệu như 3.26: đặc tả, quy tắc, rồi danh mục TC
-DONG_DL = [('dac-ta.json', 'window.__itaDacTaNap = '), ('quy-tac.json', 'window.__itaQuyTac = ')]
-DAU_DM = 'window.__itaDanhMucTC = '
-CAC_COT = ['Mã TC', 'Mã UC', 'Loại kiểm thử', 'Ưu tiên', 'Vai', 'Bộ chạy đích', 'Loại ca tool', 'Trạng thái TC']
-UU_TIEN = ['Cao', 'Trung bình', 'Thấp']
-VAI_PHU_DINH = 'tài khoản cùng đơn vị, KHÔNG giữ vai:'
-# AC-CHT (Tên) | AC-CHT Tên | AC-CHT: ghi chú mã vai của hệ thống, bỏ mã giữ tên
-RE_AC_TEN = re.compile(r'^AC-[A-Za-z]+(?:\s*\((.+)\)|\s+(.+))$')
-RE_AC = re.compile(r'^AC-[A-Za-z]+$')
-# Tên (`mã`) | Tên (mã): mã kỹ thuật nối sau tên, bỏ mã giữ tên. Chú thích tiếng Việt ("người giữ vai ở cấp trên…") thì giữ
-RE_TEN_MA = re.compile(r'^(.+?)\s*\((?:`[^`]+`|[A-Za-z][A-Za-z_-]*)\)\s*')
+# cột của tc_all.csv mà bo-doc/30-v7-tc-csv.js và bo-doc/90-ghep-v7-tai-lieu.js đọc; giữ đủ dòng (phần ghép học tên vai từ mọi dòng)
+COT_TC = ['Mã TC', 'Mã UC', 'Quy trình', 'Bước', 'Loại ca tool', 'Bộ chạy đích', 'Vai', 'Màn', 'Thao tác', 'Dữ liệu nhập',
+          'Kết quả mong đợi', 'Căn cứ đặc tả Bên B', 'Trạng thái TC', 'Ưu tiên']
 
 
-def bam(du_lieu):
-    return hashlib.sha256(du_lieu).hexdigest()[:12]
+def rut_gon_csv(chu):
+    csv.field_size_limit(10 ** 9)
+    r = csv.DictReader(io.StringIO(chu.lstrip('﻿')))
+    if not all(c in r.fieldnames for c in COT_TC):
+        return chu   # không phải khuôn v7: giữ nguyên, bộ đọc tự quyết
+    o = io.StringIO()
+    w = csv.DictWriter(o, fieldnames=COT_TC, extrasaction='ignore', lineterminator='\n')
+    w.writeheader()
+    for d in r:
+        w.writerow(d)
+    return o.getvalue()
 
 
-def tach_vai(chuoi, tu_dien):
-    """Một ô Vai -> danh sách vai chuẩn. tu_dien: mã AC -> tên (tự học từ chính cột Vai)."""
+def goi_san(du_an):
+    goc = GOC / 'du-an' / du_an
+    tep = []   # (tên, chữ, lúc)
+    for p in sorted((goc / 'quy-trinh').rglob('*.md')):
+        tep.append((str(p.relative_to(goc)), p.read_text(encoding='utf-8'), p.stat().st_mtime))
+    for p in sorted((goc / 'tc').rglob('*')):
+        if p.suffix == '.csv':
+            tep.append((str(p.relative_to(goc)), rut_gon_csv(p.read_text(encoding='utf-8')), p.stat().st_mtime))
+        elif p.suffix == '.zip':
+            with zipfile.ZipFile(p) as z:
+                for n in z.namelist():
+                    if n.endswith('.csv'):
+                        tep.append((str(p.relative_to(goc)) + '/' + n, rut_gon_csv(z.read(n).decode('utf-8')), p.stat().st_mtime))
     ra = []
-    for mau in chuoi.split(';'):
-        mau = mau.strip()
-        if mau in ('', '—'):
-            continue
-        if mau.startswith(VAI_PHU_DINH):
-            ra.append(mau)  # vai phủ định: giữ nguyên chuỗi, không khớp tài khoản nào
-            continue
-        m = RE_AC_TEN.match(mau)
-        if m:
-            mau = (m.group(1) or m.group(2)).strip()
-        mau = mau.strip('`')
-        # `AC-CHT/AC-CTV/…` hoặc AC-CHT trơ: tra tên
-        ma = [x.strip() for x in mau.split('/')]
-        if all(RE_AC.match(x) and x in tu_dien for x in ma):
-            ra += [tu_dien[x] for x in ma]
-            continue
-        # gỡ mã kỹ thuật nối sau tên, có thể hai lần: Tên (`mã`) (chú thích)
-        while True:
-            m = RE_TEN_MA.match(mau)
-            if not m:
-                break
-            mau = (m.group(1) + ' ' + mau[m.end():]).strip()
-        ra += tach_phay(mau, set(tu_dien.values()))
+    for ten, chu, mt in tep:
+        b = chu.encode('utf-8')
+        ra.append({'ten': ten, 'gz': base64.b64encode(gzip.compress(b, 9, mtime=0)).decode('ascii'), 'bam': hashlib.sha256(b).hexdigest()[:12],
+                   'luc': datetime.datetime.fromtimestamp(mt).strftime('%d/%m/%Y %H:%M')})
     return ra
-
-
-def tach_phay(mau, biet):
-    """'A, B' -> [A, B] chỉ khi mọi phần là vai đã biết (tên vai có thể chứa dấu phẩy, nên ghép dài nhất trước)."""
-    if mau in biet or ', ' not in mau:
-        return [mau]
-    phan, ra, i = mau.split(', '), [], 0
-    while i < len(phan):
-        j = next((j for j in range(len(phan), i, -1) if ', '.join(phan[i:j]) in biet), None)
-        if j is None:
-            return [mau]
-        ra.append(', '.join(phan[i:j]))
-        i = j
-    return ra
-
-
-def doc_tc(tep):
-    """tc_all.csv -> danh mục TC bản 2. Thiếu cột hoặc trùng mã thì dừng."""
-    du_lieu = tep.read_bytes()
-    with open(tep, encoding='utf-8-sig', newline='') as f:
-        rd = csv.DictReader(f)
-        thieu = [c for c in CAC_COT if c not in (rd.fieldnames or [])]
-        if thieu:
-            sys.exit('Thiếu cột trong ' + tep.name + ': ' + ', '.join(thieu))
-        hang = list(rd)
-    ma_thay = {}
-    for h in hang:
-        if h['Mã TC'] in ma_thay:
-            sys.exit('Mã TC trùng trong ' + tep.name + ': ' + h['Mã TC'])
-        ma_thay[h['Mã TC']] = 1
-    tu_dien = {}
-    for h in hang:
-        for mau in h['Vai'].split(';'):
-            m = RE_AC_TEN.match(mau.strip())
-            if m and not mau.strip().startswith(VAI_PHU_DINH):
-                tu_dien[mau.strip().split()[0].split('(')[0]] = (m.group(1) or m.group(2)).strip()
-    ds = {'vai': {}, 'loai_ca': {}, 'bo_chay': {}}
-    idx = lambda k, v: ds[k].setdefault(v, len(ds[k]))
-    tc = []
-    for h in hang:
-        if h['Ưu tiên'] not in UU_TIEN:
-            sys.exit('Ưu tiên lạ ở ' + h['Mã TC'] + ': ' + h['Ưu tiên'])
-        vai = sorted({idx('vai', v) for v in tach_vai(h['Vai'], tu_dien)})
-        tc.append([h['Mã TC'], h['Mã UC'], h['Loại kiểm thử'], UU_TIEN.index(h['Ưu tiên']),
-                   idx('bo_chay', h['Bộ chạy đích']), idx('loai_ca', h['Loại ca tool']), vai,
-                   1 if 'chờ PM quyết' in h['Trạng thái TC'] else 0])
-    return {'phien_ban': 2, 'meta': {'tep': tep.name, 'so_tc': len(tc), 'bam': bam(du_lieu)},
-            'vai': list(ds['vai']), 'loai_ca': list(ds['loai_ca']), 'bo_chay': list(ds['bo_chay']), 'tc': tc}
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--goi', default=GOC / 'goi-du-an/dqtv')
-    ap.add_argument('--may', default=GOC / 'may')
-    ap.add_argument('--ra', required=True)
-    ap.add_argument('--tc', help='tc_all.csv của PM: sinh danh mục TC bản 2')
-    ap.add_argument('--dm-cu', help='tệp 3.26: lấy nguyên dòng danh mục TC (chỉ để chứng minh ghép y nguyên)')
+    ap.add_argument('--du-an', default='dqtv')
+    ap.add_argument('--ra', help='tệp ra; mặc định dist/dqtv-kiem-tra-<bản>.js')
     a = ap.parse_args()
-    goi, may = pathlib.Path(a.goi), pathlib.Path(a.may)
-
-    ra = ['// ITA — công cụ kiểm giao diện + đặc tả quy trình, bản 5.0 (ghép từ gói + bộ máy)\n',
-          '// Nguồn: ' + goi.parent.name + '/' + goi.name + ' + may/\n']
-    # hồ sơ dự án đứng đầu phần dữ liệu: lá chắn đọc nó ngay khi nạp (gói cũ chưa có thì bỏ qua = chặn mọi POST)
-    if a.tc and a.dm_cu:
-        sys.exit('--tc và --dm-cu loại trừ nhau')
-    dm_tc = doc_tc(pathlib.Path(a.tc)) if a.tc else None
-    dong_dl = ([('du-an.json', 'window.__itaDuAn = ')] if (goi / 'du-an.json').exists() else []) + DONG_DL
-    hn = goi / 'hieu-nang.json'
-    for ten, tt in dong_dl:
-        du = json.loads((goi / ten).read_text(encoding='utf-8'))
-        if ten == 'du-an.json':  # mã băm ghi lúc đóng gói, không sửa tệp nguồn
-            du['bam'] = {t: bam((goi / t).read_bytes()) for t in ['du-an.json', 'dac-ta.json', 'quy-tac.json', 'hieu-nang.json'] if (goi / t).exists()}
-            if dm_tc:
-                du['bam']['tc_all.csv'] = dm_tc['meta']['bam']
-        ra.append(tt + json.dumps(du, ensure_ascii=False, separators=(',', ':')) + ';\n')
-    if dm_tc:
-        ra.append(DAU_DM + json.dumps(dm_tc, ensure_ascii=False, separators=(',', ':')) + ';\n')
-    elif a.dm_cu:
-        with open(a.dm_cu, encoding='utf-8', newline='') as f:
-            dm = next((d for d in f.read().split('\n')[:5] if d.startswith(DAU_DM)), None)
-        if dm is None:
-            sys.exit('Không thấy dòng ' + DAU_DM.strip() + ' trong ' + a.dm_cu)
-        ra.append(dm + '\n')
-    else:
-        print('Chưa có danh mục TC (--tc hoặc --dm-cu): bỏ dòng này', file=sys.stderr)
-    if hn.exists():
-        ra.append('window.__itaHieuNang = ' + json.dumps(json.loads(hn.read_text(encoding='utf-8')), ensure_ascii=False, separators=(',', ':')) + ';\n')
-    tep = sorted(may.glob('*.js'))
-    if not tep:
-        sys.exit('Không có tệp .js nào trong ' + str(may))
-    for t in tep:
-        with open(t, encoding='utf-8', newline='') as f:
-            ra.append(f.read())
-    out = pathlib.Path(a.ra)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    with open(out, 'w', encoding='utf-8', newline='') as f:
-        f.write(''.join(ra))
-    print('Đã ghép', out)
+    may = sorted((GOC / 'may').glob('*.js'))
+    if not may:
+        sys.exit('may/ trống: chạy cong-cu/tach.py trước')
+    truoc = [p for p in may if p.name[:2] < '90']
+    sau = [p for p in may if p.name[:2] >= '90']
+    bo_doc = sorted((GOC / 'bo-doc').glob('*.js'))
+    ma = ''.join(p.read_text(encoding='utf-8') for p in truoc + bo_doc + sau)
+    ban = re.search(r"const PHIEN_BAN = '([^']+)'", ma)
+    if not ban:
+        sys.exit('Không thấy PHIEN_BAN trong may/')
+    ban = ban.group(1)
+    luc = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')
+    gs = goi_san(a.du_an)
+    dau = ['// DQTV — công cụ kiểm giao diện, bản %s (nền 3.26), đóng gói %s; kèm sẵn %d tệp quy trình / TC của dự án (nén)\n' % (ban, luc, len(gs))]
+    # tệp nào trong du-an/<dự án>/ có thì đóng gói kèm, thiếu thì bỏ qua (máy kiểm vẫn chạy)
+    for ten, bien in (('ho-so.json', '__dqtvHoSo'), ('loi-da-biet.json', '__dqtvQuyTac'), ('gioi-han-o.json', '__dqtvGioiHanO'),
+                      ('trang-thai-quy-trinh.json', '__dqtvTrangThaiQT')):
+        tep = GOC / 'du-an' / a.du_an / ten
+        if tep.exists():
+            dl = json.loads(tep.read_text(encoding='utf-8'))
+            dau.append('window.%s = %s;\n' % (bien, json.dumps(dl, ensure_ascii=False, separators=(',', ':'))))
+            print('kèm', tep.relative_to(GOC))
+    if gs:
+        dau.append('window.__dqtvGoiSan = %s;\n' % json.dumps(gs, separators=(',', ':')))
+        print('kèm sẵn %d tệp quy trình / TC (nén %d byte)' % (len(gs), sum(len(x['gz']) for x in gs)))
+    ra = pathlib.Path(a.ra) if a.ra else GOC / 'dist' / ('dqtv-kiem-tra-%s.js' % ban)
+    ra.parent.mkdir(exist_ok=True)
+    ra.write_text(''.join(dau) + ma, encoding='utf-8')
+    print('Đã ghi %s (%d byte)' % (ra, ra.stat().st_size))
 
 
 main()

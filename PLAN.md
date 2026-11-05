@@ -1,266 +1,160 @@
-> **05/11/2026:** nhánh này đã đổi tên thành ITA 5.0 — xem mục 0 của `QUY-TAC-DUNG-SCRIPT.md`. Các bước dưới đây là lịch sử dựng 3.31, tên `dqtv.*` trong đó nay đọc là `ita.*`.
+# Tool kiểm giao diện DQTV: làm lại trên nền 3.26, tách mã khỏi dữ liệu
 
-# Tool kiểm giao diện DQTV 3.31 — làm lại theo ma trận v7 của PM
+## Mục đích
 
-> **Cho người/agent thực hiện:** dùng superpowers:subagent-driven-development (khuyên dùng) hoặc superpowers:executing-plans, làm lần lượt từng việc. Đánh dấu `- [ ]` → `- [x]` khi xong một bước. Dừng giữa chừng thì để nguyên tệp này để phiên sau làm tiếp.
+- Dán vào Console là chạy được: có hoặc không có quy trình, UC, TC đều chạy.
+- Quy trình đổi thì nạp tệp mới, không sửa script.
+- Mỗi kết quả phải có căn cứ. Không có kết quả nào do người viết script tự đặt.
 
-**Mục tiêu:** Một tool dán Console / Tampermonkey, nền 3.26, chấm kết quả theo **mã TC của ma trận v7**, gồm hai lớp kiểm (luật giao diện chung + theo quy trình/UC/TC), với dữ liệu dự án tách khỏi bộ máy.
+## Nền và tham chiếu
 
-**Kiến trúc:** Cắt 3.26 thành các tệp theo đúng các mục đã có sẵn (không đổi logic), cộng **một tệp hàm thuần mới** (`may/05-thuan.js`) chứa mọi logic ma trận để kiểm được bằng `node`. Dữ liệu riêng của DQTV (đặc tả, quy tắc, danh mục TC v7, hồ sơ dự án, ngưỡng hiệu năng) nằm trong `goi-du-an/dqtv/`. `cong-cu/dong-goi.py` ghép gói + bộ máy thành **một tệp duy nhất** để dán như cũ. Đổi quy trình, đổi dự án, đổi sang mobile thì thay gói và đóng gói lại, không sửa bộ máy.
+- Nền: `~/Downloads/dqtv-kiem-tra-dacta-3.26.js`. Giữ nguyên tệp này, không sửa.
+- Không dùng: 3.23 (`dqtv-kiem-tra-dacta.js`), 3.30, 3.31, 3.31.1, ITA 5.0.
+- Đầu ra của tool cũ (28/10): `~/Downloads/dqtv/test-ui-tool-28-10-2026/`. Phần kiểm giao diện đã đúng, nhưng thiếu đặc tả.
+- Bỏ khỏi nền: 118 bảng quy trình (dòng 3 của 3.26), danh mục TC tự sinh (dòng 5), và trong sổ quy tắc (dòng 4) bỏ các ca đã đóng gắn mã TC tự sinh (TR-046 đến TR-049, KHUNG-01, KHUNG-02).
 
-**Công nghệ:** JavaScript chạy trong trình duyệt (không thư viện ngoài), Python 3.12 thư viện chuẩn (đóng gói, đọc CSV), Node 26 (`node:test`, `node:assert`) để kiểm hàm thuần.
+## Quy tắc căn cứ
 
-**Căn cứ:** `~/Downloads/MaTran_UC_TC_DQTV_02112026_v7/` (`tc_all.csv`, `CaiTienTool_theo_MaTran_v7.md`, `cau_hinh_kiem_hieu_nang.json`, sheet «Ánh xạ kết quả») và các quyết định ở mục dưới.
+Mỗi dòng kết quả có hai vế:
+- **Căn cứ:** lấy từ đâu (tệp + dòng + mã; điều khoản của chuẩn công khai; mục trong tài liệu dự án đã nạp). Sự việc tự nó là lỗi (máy chủ trả lỗi, trang báo lỗi, màn sập) thì căn cứ ghi là «sự việc».
+- **Quan sát:** tool thấy gì, ở đâu (đường dẫn màn, chữ trên nút, mã lỗi).
 
-## Trạng thái (03/11/2026 14:20)
+| Căn cứ | Quan sát | Kết quả |
+|---|---|---|
+| có | có | Đạt / Không đạt |
+| không | có | Ghi nhận (không tính là lỗi) |
+| có | không | Chưa kiểm, kèm lý do (tool không thấy không có nghĩa là app thiếu) |
 
-- Việc 1–5: **xong**. Mỗi việc đều qua một agent soát riêng, cuối cùng soát toàn bộ một lần, lượt sửa sau soát cuối cũng đã được soát lại.
-- Kiểm tự động: `node --test kiem/test_thuan.mjs` 36/36, `python3 -I kiem/test_dong_goi.py` 8/8, `node --check dist/dqtv-kiem-tra-3.31.js` OK, bộ máy 299.896 B.
-- Việc 6: **chưa chạy**, chờ người dùng chạy trên giao diện thật.
-- Mọi phán quyết và lỗi nhỏ để sau: `SO-THEO-DOI.md` (dòng có `Ruling:` và `minor (deferred)`).
-- Để vòng sau, ngoài danh sách cuối tệp: nút «Quét màn này» chưa khoá khi tự kiểm hỏng; «đi vòng bộ chặn» vẫn chạy tiếp như 3.26 (v7 mục 5 đòi dừng lần chạy).
+Phép kiểm giao diện chung giữ đủ, không bỏ phép nào. Mỗi phép được gắn căn cứ. Phép nào chưa có căn cứ thì kết quả là Ghi nhận.
 
-## Quyết định đã chốt (02–03/11/2026)
-
-- Bộ TC chuẩn duy nhất là **v7 của PM** (44.124 TC). Không sinh lại TC từ tài liệu quy trình.
-- **Nền 3.26.** Từ 3.30 chỉ chép 3 chỗ sửa: T1 (chặn ghi), T4 (lưới khoảng cách theo token), T5 (bớt báo nhầm). Không chép phần danh mục TC (T2, T3) của 3.30.
-- **Không bỏ phép kiểm luật giao diện nào.** Các phép này có TC `KHUNG-CHUNG.*` của PM và là phần đã tìm ra lỗi thật (ví dụ 4580,3%).
-- **8.710 TC "chờ PM quyết"**: nạp vào gói nhưng không chấm, không tính phủ, ghi «chờ PM». 6 TC "GIỮ đến khi lỗi đóng" vẫn tính bình thường.
-- Tool báo "không thấy" thì không bao giờ được hiểu là app thiếu (bài học vụ 362 bước).
-- `cau_hinh_kiem_hieu_nang.json`: nạp nguyên tệp vào gói. Vòng này chỉ mốc HN-00 (lời gọi > 3 s) được dùng. Phần đo M4 làm ở vòng sau.
-- Phạm vi theo backlog của PM: **vòng này** làm CT-01, 02, 03, 04, 05, 06, 07, 08, 15. **Để sau:** CT-09, 10 (đo M4); CT-11 đến 14 (ghi dữ liệu, ghi lại/phát lại, tải nhẹ, chạy nối tiếp nhiều tài khoản); CT-16 (kiểm chung bổ sung).
-
-## Ràng buộc chung (mọi việc đều phải giữ)
-
-- Chỉ đọc, luôn luôn: `mucQuyTrinh` bị ép về 1. Truyền 2 hoặc 3 thì bỏ qua và in cảnh báo (CT-03, vì chế độ ghi chưa làm).
-- Chỉ cho POST tới đúng các đường dẫn trong `du-an.json` → `duong_dan_xac_thuc`. DQTV: `["/api/session", "/api/search"]`. So **trọn đường dẫn**, không so một phần.
-- Mọi dòng kết quả xuất ra phải mang **mã TC có trong v7**. Ca tool kiểm mà không có mã thì vào mục «ngoài danh mục — đề nghị PM thêm TC», không tự đặt mã.
-- Chữ kết quả ghi đúng như sheet «Ánh xạ kết quả» của v7: ĐẠT → `Đạt`; LỆCH → `Không đạt`; CẢNH BÁO → `Không đạt (chờ phân loại)`; CHƯA KIỂM → `Chưa chạy được`; LỚP 4 → `Chuyển bộ chạy R2/R3`; KHONG_VAO_MAN → `Chưa chạy được`.
-- Không thêm thư viện. Không đổi tên hàm hoặc lệnh `dqtv.*` đang có.
-- Không sửa `~/Downloads/dqtv-kiem-tra-dacta-3.26.js` và `-3.30.js`. Mọi thứ nằm trong `~/Downloads/dqtv-kiem-tra-3.31/`.
-- Bản tool ghi là `3.31`. Báo cáo ghi kèm mã băm (sha256, 12 ký tự đầu) của gói và cấu hình.
-
-## Điểm dễ hỏng cần soát (Review Focus)
-
-1. Lệnh ghi có đường dẫn **bắt đầu bằng** một đường dẫn được phép, ví dụ `POST /api/session/extend` hay `/api/search-index/rebuild`, phải **bị chặn**. Test ở Việc 2.
-2. Tài khoản giữ vai **không có trong v7** (ví dụ Ban Chỉ huy Phòng thủ khu vực): báo rõ "0 TC theo vai", nhưng lớp `KHUNG-CHUNG` vẫn phải có kết quả. Test ở Việc 4.
-3. Ca `.DUNG` mà tool "không thấy nút": ghi `Không đạt (chờ phân loại)`, phân loại «cần xác nhận trên giao diện». Không bao giờ ghi thẳng `Không đạt`. Test ở Việc 4.
-4. TC «chờ PM» mà tool vẫn có kết quả: không chấm, ghi `Chờ PM quyết`, không tính vào tỉ lệ phủ. Test ở Việc 4.
-5. Dán bộ máy mà **không có gói**, hoặc gói cũ thiếu trường: phần ma trận báo "chưa nạp gói / gói thiếu trường X" và không chạy. Phần luật giao diện vẫn chạy bình thường. Test ở Việc 3 (khuôn gói) và Việc 5 (bước tay).
-
----
-
-## Sơ đồ tệp
+## Thư mục
 
 ```
-~/Downloads/dqtv-kiem-tra-3.31/
-  PLAN.md
-  may/                         bộ máy, không chứa dữ liệu riêng DQTV
-    00-mo-dau.js               3.26 dòng 6 → trước "0. LÁ CHẮN" (chú thích, mở IIFE, __dqtvNguon)
-    05-thuan.js                MỚI: hàm thuần (xem các khối Giao diện), xuất cho node
-    10-la-chan.js              mục 0. LÁ CHẮN
-    20-cau-hinh.js             mục 1. CẤU HÌNH MẶC ĐỊNH + 2. LƯU / ĐỌC CẤU HÌNH + 3. CỜ ĐIỀU KHIỂN
-    30-loi-kiem.js             mục 4. LÕI KIỂM (dqtvAudit giữ nguyên một khối)
-    40-bang-dieu-khien.js      mục 5. BẢNG ĐIỀU KHIỂN + lệnh dqtv.* (tới trước "ĐẶC TẢ QUY TRÌNH")
-    50-doi-chieu-dac-ta.js     từ khối chú thích "ĐẶC TẢ QUY TRÌNH" tới /* <<DACTA-HET>> */
-    60-bao-cao.js              sau <<DACTA-HET>> tới trước "6. NẠP CẤU HÌNH MẪU"
-    90-khoi-dong.js            mục 6 tới hết tệp
-  goi-du-an/dqtv/
-    du-an.json                 hồ sơ dự án: tên, cấu hình đè, đường dẫn xác thực, ánh xạ kết quả, ánh xạ luật → KHUNG-CHUNG
-    dac-ta.json                118 bảng đặc tả (3.26 dòng 3)
-    quy-tac.json               quy tắc, lỗi sập đã biết, ca đã đóng (3.26 dòng 4)
-    hieu-nang.json             chép nguyên cau_hinh_kiem_hieu_nang.json
-  cong-cu/
-    tach_326.py                cắt 3.26 thành may/* và hai tệp json (chạy một lần)
-    dong_goi.py                tc_all.csv + gói + may/* → dist/dqtv-kiem-tra-3.31.js
-  kiem/
-    test_dong_goi.py           kiểm bước đóng gói (python, assert)
-    test_thuan.mjs             kiểm hàm thuần (node:test)
-  dist/
-    dqtv-kiem-tra-3.31.js      tệp duy nhất để dán Console / Tampermonkey
+dqtv-kiem-tra/
+  PLAN.md          tệp này
+  may/             máy kiểm (mã): dùng chung, không chứa chữ nào riêng của DQTV
+  bo-doc/          bộ đọc: mỗi kiểu tệp nạp vào có một tệp; nhận ra kiểu dữ liệu theo nội dung, không theo tên thư mục
+  du-an/dqtv/      mọi thứ riêng của DQTV; tool chạy được cả khi các thư mục này trống
+    quy-trinh/     tài liệu quy trình dự án
+    uc/            UC
+    tc/            TC
+    quan-sat/      danh mục màn, nút, trường quét được khi chưa có đặc tả; không trộn vào uc/ tc/
+    ket-qua/       báo cáo các lần chạy
+  cong-cu/         script tách 3.26, script đóng gói
+  kiem/            kiểm tệp sau khi đóng gói
+  dist/            tệp duy nhất để dán vào Console
 ```
 
-Thứ tự ghép trong `dist`: các dòng dữ liệu (`window.__dqtvDuAn`, `__dqtvDacTaNap`, `__dqtvQuyTac`, `__dqtvDanhMucTC`, `__dqtvHieuNang`, `DQTV_CONFIG`), rồi `may/*.js` theo thứ tự tên tệp.
+Hai tệp đã có trong `du-an/dqtv/`, đều đóng gói kèm vào `dist` (thiếu tệp nào thì bỏ qua, tool vẫn chạy):
+- `ho-so.json`: tên miền, gốc đường dẫn `/dqtv`, màn «Việc của tôi», tiền tố tên tài khoản, mã yêu cầu sửa. Mỗi mục ghi nguồn ở `_nguon`. Đường dẫn đăng nhập thêm ở bước 4.
+- `loi-da-biet.json`: màn sập đã biết (UI-01).
+- Chữ nút mở form / nút cấm bấm là chữ giao diện tiếng Việt chung, không riêng DQTV: để trong `may/20-cau-hinh.js`.
 
-Thư mục này **không phải kho git**. Muốn lưu từng bước bằng git thì phải hỏi người dùng trước. Mặc định không commit, bước "chốt" của mỗi việc là chạy kiểm.
+## Các bước
 
----
+| # | Việc | Cách chứng minh |
+|---|---|---|
+| 1 | Tách phần mã của 3.26 vào `may/` | Ghép lại phải ra đúng từng byte phần mã của 3.26 |
+| 2 | Bỏ dữ liệu tự sinh (xem «Nền và tham chiếu») | Tệp `dist` không còn các khối dữ liệu đó |
+| 3 | Chuyển chữ riêng DQTV từ `may/` sang `du-an/dqtv/ho-so.json` | Tìm trong `may/` không còn `viec-cua-toi`, `linksafe`, `YC-` |
+| 4 | Vá chặn ghi: chỉ cho POST tới đường dẫn đăng nhập có thật trong mã app | Thử trên Chrome chạy ngầm: `extend-age` bị chặn, `/api/session` đi qua |
+| 5 | Áp quy tắc căn cứ; bỏ các mặc định ngầm (3.26 dòng 2409, 2589, 2658) | Báo cáo mẫu: không dòng Đạt / Không đạt nào thiếu căn cứ |
+| 6 | Nút Nạp và `bo-doc/`: bộ đọc đầu tiên là JSON đặc tả 2.1; bộ đọc v7 chỉ làm khi có lệnh | Không nạp gì vẫn chạy; nạp tệp lạ thì báo «không nhận ra» |
+| 7 | Đóng gói `dist`, chạy thử trên Chrome chạy ngầm | Nạp không lỗi. Chạy trên site thật do người dùng làm (chỉ đọc) |
 
-### Việc 1: Tách 3.26 thành bộ máy + gói, ghép lại phải ra y nguyên
+### Bước 7 (người dùng duyệt 05/11): quy trình → UC → TC → giao diện, đóng gói sẵn trong 1 tệp
 
-**Tệp:**
-- Tạo: `cong-cu/tach_326.py`, `cong-cu/dong_goi.py` (bản đầu, chỉ ghép), `kiem/test_dong_goi.py`
-- Tạo (do script sinh): `may/00..90-*.js` (trừ `05-thuan.js`), `goi-du-an/dqtv/dac-ta.json`, `goi-du-an/dqtv/quy-tac.json`
+Nguyên tắc: v7 là thứ cần kiểm (TC, kết quả mong đợi); tài liệu quy trình của Bên B (máy sinh từ sổ và app) là căn cứ để biết TC còn đúng quy trình hiện tại. Không sinh TC từ tài liệu. TC lệch tài liệu → «Chưa chạy được — chờ PM», không kết luận app sai. «Đã duyệt» = Trạng thái TC «PM 29/10 · giữ nguyên» (khai trong `ho-so.json`); «chờ PM quyết» không chạy.
 
-**Giao diện:**
-- Sinh ra: `python3 cong-cu/dong_goi.py --goi goi-du-an/dqtv --ra dist/x.js [--dm-cu <tệp.js>]`. Có `--dm-cu` thì lấy nguyên dòng `window.__dqtvDanhMucTC` của tệp đó; chỉ dùng để chứng minh ghép lại ra y nguyên.
-- `tach_326.py <đường dẫn 3.26>` cắt theo **chuỗi mốc** (không theo số dòng): `0. LÁ CHẮN`, `1. CẤU HÌNH MẶC ĐỊNH`, `4. LÕI KIỂM`, `5. BẢNG ĐIỀU KHIỂN`, `ĐẶC TẢ QUY TRÌNH (UC)`, `/* <<DACTA-HET>> */`, `6. NẠP CẤU HÌNH MẪU`. Mỗi mốc lấy cả dòng `/* ===… *` ngay trên nó. Không thấy mốc nào thì dừng và báo tên mốc đó.
+| # | Việc | Cách chứng minh |
+|---|---|---|
+| 7a | `bo-doc/20-quy-trinh-md.js`: đọc 4 mục máy sinh (vai-tro, chang, buoc, du-lieu) của tài liệu `qt-*.md`, `dm.*.md`, `ngoai63.*.md`; nhận qua dấu mốc `<!-- máy sinh: buoc -->` | Chạy bằng Node trên 119 tài liệu thật: số bước / chặng / vai đọc ra khớp dòng tóm tắt máy sinh của từng tài liệu |
+| 7b | `bo-doc/30-v7-tc-csv.js`: đọc `tc_all.csv` (nhận qua tên cột) | Node: 44.124 dòng, 40 cột, khớp đọc bằng Python |
+| 7c | `bo-doc/90-ghep-v7-tai-lieu.js`: TC M1 (DUNG, SAI_VAI, XAC_NHAN, SAI_TRANG_THAI, TRUONG, NHAP) đối chiếu tài liệu → bảng cho phần đối chiếu; mỗi dòng kết quả mang mã TC, trạng thái TC, căn cứ tài liệu | Node: số TC khớp / lệch tài liệu khớp phân tích Python (lệch: không còn bước, ghi mã bước, vai trái); Chrome: trang mẫu có nút thật → `1.B1.DUNG` Đạt, căn cứ «TC 1.B1.DUNG · qt-1.md» |
+| 7d | Đóng gói sẵn: `dong_goi.py` lấy `du-an/<dự án>/quy-trinh/**` và `tc/**` (cả `.zip`), nén gzip; tool tự giải nén lúc khởi động. Xuất `dqtv.xuat('tc')`: CSV theo mã TC, chữ theo sheet «Ánh xạ kết quả» | Kích thước `dist`; Chrome: không bấm Nạp vẫn có quy trình + TC; CSV đúng cột, chỉ TC của vai đang đăng nhập |
 
-- [ ] **B1: Viết test** `test_ghep_lai_y_nguyen`: chạy tach rồi `dong_goi.py --dm-cu ~/Downloads/dqtv-kiem-tra-dacta-3.26.js`. Assert từ dòng 3 trở đi, `dist/x.js` **trùng từng byte** với 3.26 từ dòng 3 trở đi. Hai dòng đầu là chú thích phiên bản, được phép khác.
-- [ ] **B2: Chạy** `python3 -I kiem/test_dong_goi.py` → FAIL (chưa có script).
-- [ ] **B3: Viết** `tach_326.py`. Dòng 3 → `dac-ta.json`, dòng 4 → `quy-tac.json` (bỏ tiền tố `window.… = ` và dấu `;` cuối, ghi JSON `ensure_ascii=False`, giữ nguyên thứ tự khoá). Dòng 6 tới hết → `may/*.js` theo mốc.
-- [ ] **B4: Viết** `dong_goi.py` bản ghép. Dòng dữ liệu ghi lại **đúng dạng 3.26**: `window.__dqtvDacTaNap = ` + `json.dumps(…, ensure_ascii=False, separators=(',',':'))` + `;`.
-- [ ] **B5: Chạy test** → PASS. Ghép không ra y nguyên thì sửa cách ghi JSON (khoảng trắng, thứ tự). Không được sửa bộ so sánh.
-- [ ] **B6: Chốt:** `node --check dist/x.js` không lỗi.
+### Bước 8 (người dùng yêu cầu 05/11, theo ý PM «tool còn yếu phần audit trường»): kiểm ô theo khai báo giới hạn của app
 
-### Việc 2: Lá chắn và an toàn (CT-01, CT-03 + chép T1, T4, T5 từ 3.30)
+Lý do: bộ dữ liệu nhập ô của v7 (8 lớp cố định) đoán mốc, lệch khai báo của app — ví dụ «chữ ngắn» 255 trong khi app khai 300; ô «số lượng» coi 0 là sai trong khi app khai tối thiểu 0; không có ca ký tự đặc biệt. App khai giới hạn từng ô một chỗ (`ontology.yaml` → `dqtv-app/libs/registry/limits.gen.mjs`) và ghi rõ ô nhập mang đúng con số máy chủ ép (`libs/ui-lens/limits.js`, `libs/ui-lens/action-dialog.jsx`: mọi ô mang `name` = mã ô). Nhập / xuất tệp, ô ngày, ô tệp để sau.
 
-**Tệp:**
-- Tạo: `may/05-thuan.js`, `kiem/test_thuan.mjs`, `goi-du-an/dqtv/du-an.json` (bản đầu)
-- Sửa: `may/10-la-chan.js` (hàm `ghiChat`), `may/20-cau-hinh.js` (`chuanDS`, `choPhepPost`, hàm `cauHinh` có `Object.assign(... over || {})`), `may/30-loi-kiem.js` (lọc dòng `tbody tr` thêm bỏ dòng Σ; vòng `paddingTop…columnGap` thêm `khoangCach`; dấu `*` do CSS vẽ; lý do bỏ nút `aria-expanded`/`aria-haspopup`), `cong-cu/dong_goi.py` (ghi `window.__dqtvDuAn` trước mọi thứ)
+| # | Việc | Cách chứng minh |
+|---|---|---|
+| 8a | `cong-cu/sinh_gioi_han_o.mjs`: sinh `du-an/dqtv/gioi-han-o.json` từ `limits.gen.mjs` (ô chữ, ô số; mỗi tên ô kèm nơi khai, bản app); mẫu thử cho 4 pattern của app (số quyết định, CCCD, điện thoại, email) tự đối chiếu với pattern ở cờ `u` (máy chủ) và `v` (thuộc tính pattern của trình duyệt) | Bộ sinh dừng nếu một mẫu đúng không khớp / mẫu sai lại khớp / chuỗi dài tối đa không khớp |
+| 8b | `dong_goi.py` kèm `gioi-han-o.json` thành `window.__dqtvGioiHanO` | Bản đóng gói có dòng này |
+| 8c | `30-loi-kiem.js` `kiemO()`: chạy sau `chayTC` trong mỗi form đã mở. Ô có `name` trùng tên đã khai: so thuộc tính trên ô (maxlength, minlength, pattern, min, max, step) với khai báo; gõ thử đúng tối đa, quá dài, quá ngắn, ký tự đặc biệt, mẫu đúng / sai, dưới min, trên max, sai bước. Gõ qua bộ soạn thảo của trình duyệt (`execCommand insertText`, maxlength có hiệu lực), không được thì gán thẳng; KHÔNG bấm Lưu; trả lại giá trị cũ. Tên có nhiều khai báo: chỉ dùng khi thuộc tính trên ô khớp đúng một khai báo. Gõ thử mỗi khai báo một lần mỗi lượt chạy | `kiem/test_buoc8.py` + `kiem/thu_kiem_o.html` (form MẪU THỬ, tên ô thật) |
+| 8d | Kết quả: ĐẠT / KHÁC KHAI BÁO / CHƯA KIỂM; mỗi dòng có căn cứ «khai báo app «tên ô»: con số (nơi khai) · limits.gen.mjs @bản». Báo cáo HTML có mục riêng «Kiểm ô theo khai báo giới hạn của app — bổ sung, chưa có mã TC v7»; JSON có `kiem_o` | Như 8c |
 
-**Giao diện:**
-- Sinh ra (trong `05-thuan.js`, gắn vào `window.__dqtvThuan` và `module.exports` khi có `module`):
-  - `laPostDuocPhep(method: string, url: string, dsDuongDan: string[], goc: string) → boolean`: chỉ `true` khi method là POST **và** pathname (bỏ query/hash, bỏ một `/` cuối) **bằng đúng** một phần tử `dsDuongDan`.
-- `du-an.json` (bản đầu): `{ "ten": "DQTV", "phien_ban_goi": "2026-11-03", "duong_dan_xac_thuc": ["/api/session", "/api/search"], "cau_hinh": { "slowMs": 3000 } }`
-- Thứ tự trong `dist`: `05-thuan.js` phải đứng **trước** `10-la-chan.js`, vì lá chắn cài ngay khi nạp.
+### Bước 9 (người dùng yêu cầu 05/11): quy trình còn thiếu theo bộ rà soát toàn bộ (RA-QT-TOAN-BO, báo cáo 196–235)
 
-- [ ] **B1: Viết test** `laPostDuocPhep`:
-  - Cho qua: `POST /api/session`, `POST https://dqtv.linksafe.vn/api/search?q=a`, `POST /api/search/`.
-  - Chặn: `POST /api/duty-registrations/1/extend-age`, `POST /api/x/extend-deadline`, `POST /api/session/extend`, `POST /api/search-index/rebuild`, `PUT /api/session`, `DELETE /api/search`.
-- [ ] **B2: Chạy** `node --test kiem/test_thuan.mjs` → FAIL.
-- [ ] **B3: Viết** `laPostDuocPhep`. Trong `ghiChat` của lá chắn và trong `cauHinh`, dùng hàm này với `window.__dqtvDuAn.duong_dan_xac_thuc`. Thiếu gói thì dùng danh sách rỗng, tức là chặn mọi POST.
-- [ ] **B4: Ép chỉ đọc (CT-03):** trong `cauHinh`, sau `Object.assign`, nếu `mucQuyTrinh > 1` thì đặt về 1 và `console.warn('[dqtv] 3.31 chỉ chạy chỉ đọc; mucQuyTrinh 2/3 chưa làm (CT-11)')`.
-- [ ] **B5: Chép T4, T5** đúng như hunk 3.30 (đối chiếu bằng `diff` hai tệp 3.26/3.30, các hunk có `[3.30]`). `chuanDS`: `coChuToiDa: 8`, `khoangCach: [2, 6, 10, 18, 30, 42]`.
-- [ ] **B6: Chạy** test node → PASS. Chạy lại `test_dong_goi.py` (bỏ test byte, vì bộ máy đã đổi có chủ đích) và `node --check dist/x.js`.
+Lý do: bộ rà soát chỉ ra tài liệu 05/11 và app lệch nhau ở mức quy trình và bước (235 mục 3; 234 mục 3; 207 A-13; 214; 230; 204; 226…). Tool chấm theo tài liệu thì TC rơi vào các chỗ ấy ra kết quả giả.
 
-### Việc 3: Gói TC v7 trong bước đóng gói (CT-04, CT-05)
+| # | Việc | Cách chứng minh |
+|---|---|---|
+| 9a | `cong-cu/sinh_trang_thai_qt.py`: so tài liệu `du-an/<dự án>/quy-trinh/` với `core/processes/*/workflow/*.yaml` của app (theo tên bước app, hoặc `useCase: sổ <mã> · step:<mã bước>`) → `du-an/dqtv/trang-thai-quy-trinh.json`: tài liệu app không còn khai báo, bước không có trong khai báo app, «Từ chặng» khác app, tệp khai báo app chưa có tài liệu; mỗi mục kèm số báo cáo rà soát nhắc tới (đọc thẳng zip / thư mục báo cáo) | Kết quả khớp kết luận của rà soát: 3 tài liệu app đã gỡ (196, 214, 230), 5 tệp app chưa có tài liệu (= 6 mã bước của 235 mục 3), `markDecisionUsed` (204), `issueReissueOrder` (226), 2.submission (207 A-13) |
+| 9b | `bo-doc/90`: nhận `gop.trang_thai_qt`; TC của tài liệu app không còn, bước không có trong khai báo app → không chạy, nhóm QUY TRÌNH, ghi lý do + số báo cáo; TC sai chặng ở bước có «Từ chặng» khác app → không chạy; bước ấy không giao chặng cho phần đối chiếu | `kiem/test_buoc9.py` |
+| 9c | Báo cáo: mục «Độ phủ quy trình — tài liệu × app × TC v7» (tài liệu chưa có TC v7, tài liệu app không còn, app chưa có tài liệu, số bước lệch); mục «Phủ danh mục TC» dùng danh mục v7 sau ghép, TC không chạy ghi đúng lý do của phần ghép | `kiem/test_buoc9.py` |
 
-**Tệp:**
-- Sửa: `cong-cu/dong_goi.py`, `kiem/test_dong_goi.py`
-- Tạo: `goi-du-an/dqtv/hieu-nang.json` (chép nguyên)
+## Trạng thái
 
-**Giao diện:**
-- Sinh ra: `dong_goi.py --goi goi-du-an/dqtv --tc <tc_all.csv> --ra dist/dqtv-kiem-tra-3.31.js`
-- Dạng `window.__dqtvDanhMucTC` (bản 2):
-  ```
-  { "phien_ban": 2,
-    "meta": { "tep": "tc_all.csv", "so_tc": 44124, "bam": "<sha256 12 ký tự>" },
-    "vai": [ "<tên vai chuẩn>", … ],
-    "loai_ca": [ "<cột Loại ca tool>", … ],
-    "bo_chay": [ "<cột Bộ chạy đích>", … ],
-    "tc": [ [ma, ma_uc, txx, uu_tien(0 Cao|1 Trung bình|2 Thấp), bo_chay_idx, loai_ca_idx, [vai_idx…], nhom(0 tính|1 chờ PM) ], … ] }
-  ```
-- `nhom = 1` khi cột «Trạng thái TC» có chữ `chờ PM quyết`.
-- Chuẩn hoá vai: `AC-XXX (Tên)` → `Tên`; `tài khoản cùng đơn vị, KHÔNG giữ vai: …` → giữ nguyên chuỗi (vai phủ định, không khớp tài khoản); nhiều vai ngăn bằng `;` hoặc `, ` khi mỗi phần là một vai đã biết → tách.
-- Kiểm khuôn khi đóng gói: thiếu cột nào trong `Mã TC, Mã UC, Loại kiểm thử, Ưu tiên, Vai, Bộ chạy đích, Loại ca tool, Trạng thái TC` thì dừng và in tên cột. Mã TC trùng thì dừng và in mã.
-- Mã băm: sha256 của từng tệp nguồn (`tc_all.csv`, `du-an.json`, `dac-ta.json`, `quy-tac.json`, `hieu-nang.json`) ghi vào `window.__dqtvDuAn.bam`.
-
-- [ ] **B1: Viết test:**
-  - `test_dem_tc`: `so_tc == 44124`, `len(tc) == 44124`, số `nhom==1` == **8710**.
-  - `test_giu_6`: 6 TC trạng thái `GIỮ đến khi lỗi đóng` có `nhom==0`.
-  - `test_vai_m1`: mọi TC có `bo_chay` bắt đầu `M1`, cột Vai không rỗng, có ít nhất 1 `vai_idx`.
-  - `test_thieu_cot`: CSV mẫu bỏ cột `Mã UC` → script thoát mã ≠ 0, thông báo có chữ `Mã UC`.
-- [ ] **B2: Chạy** → FAIL.
-- [ ] **B3: Viết** phần đọc CSV (`csv.DictReader`, `encoding='utf-8-sig'`), chuẩn hoá vai, nén, mã băm.
-- [ ] **B4: Chạy** → PASS. In kích thước `dist`. Dự kiến 6–8 MB. Quá 12 MB thì báo người dùng trước khi làm tiếp.
-
-### Việc 4: Hàm thuần chấm theo ma trận (CT-06, CT-07, CT-08, CT-15)
-
-**Tệp:**
-- Sửa: `may/05-thuan.js`, `kiem/test_thuan.mjs`, `goi-du-an/dqtv/du-an.json` (thêm `anh_xa_ket_qua`, `luat_khung_chung`)
-
-**Giao diện (đều trong `05-thuan.js`):**
-- `vaiCuaTaiKhoan(taiKhoan: string, dm) → number[]`: chỉ số vai khớp tài khoản. Dùng cách khớp của 3.26 (`chuanDT`: bỏ `*`, gộp khoảng trắng, chữ thường; tài khoản chứa tên vai, tên vai dài hơn 3 ký tự).
-- `chamTheoMaTran(ketQuaTool: {ma, kq, dg, nhom?, nguyen_nhan?}[], dm, duAn, taiKhoan: string, loc?: {loai_kiem?: string[], uu_tien?: string[], bo_chay?: string[], quy_trinh?: string[]}) → { dong: DongMaTran[], ngoai_danh_muc: {ma, kq}[], dem: {[ket_qua]: number} }`
-  - `DongMaTran = { ma_tc, ma_uc, loai_kiem, ket_qua, phan_loai, ly_do }`
-  - Chỉ xét TC thuộc vai của tài khoản (hoặc không ghi vai), có `bo_chay` M1, khớp `loc`.
-  - `nhom==1` → `ket_qua: "Chờ PM quyết"`, không đưa vào `dem` phủ.
-  - Có kết quả tool cùng mã → đổi chữ theo `duAn.anh_xa_ket_qua`. Không có → `Chưa chạy được`, lý do «công cụ không sinh được kết quả».
-  - Mã `.DUNG` và `dg` bắt đầu bằng `không thấy` → `Không đạt (chờ phân loại)`, `phan_loai: "cần xác nhận trên giao diện"`.
-  - `phan_loai` cho dòng không đạt (CT-08), theo nhóm của 3.26: `ỨNG DỤNG`, `AUTO` → `lỗi app`; `QUY TRÌNH`, `TC` → `lệch tài liệu Bên B`; `CÔNG CỤ` → `dương tính giả`; `THIẾU` → `môi trường`.
-  - Kết quả tool có mã không thuộc v7 → `ngoai_danh_muc`.
-- `chamKhungChung(dongMan: object[], timThu: object[], duAn) → {ma, kq, dg}[]`: với mỗi mục trong `duAn.luat_khung_chung` (`{ "ma": "KHUNG-CHUNG.CHU_CAT", "khoa": ["cat_chu_khong_tooltip", "tieu_de_bi_cat"] }`):
-  - Không có màn nào đã kiểm → `CHƯA KIỂM`.
-  - Có màn mà một khoá không rỗng → `LỆCH`, `dg` = tên các màn (tối đa 5).
-  - Còn lại → `ĐẠT`.
-  - TC `KHUNG-CHUNG` không có trong bảng ánh xạ → `CHƯA KIỂM`, `dg: "công cụ chưa có phép kiểm"`.
-  - Khoá có giá trị mà không thuộc TC nào (`phan_tram_vo_ly`, `nghi_ngo_so_lech`, `chuoi_dai_khong_ngat`, `dinh_dang_so_tron`) → trả thêm dạng `{ma: null, khoa, man}` để vào `ngoai_danh_muc`.
-- `gopKetQua(...dsDong: DongMaTran[][]) → DongMaTran[]`: gộp theo `ma_tc`. Ưu tiên `Không đạt` > `Không đạt (chờ phân loại)` > `Đạt` > `Chưa chạy được` > `Chờ PM quyết`. Không trùng, không sót.
-
-**Bảng `luat_khung_chung` ghi vào `du-an.json`** (khoá = tên trường dòng màn của 3.26):
-
-| Mã TC | Khoá |
-|---|---|
-| `KHUNG-CHUNG.MAN_KHONG_SAP` | màn trong danh sách sập (`SAP`) |
-| `KHUNG-CHUNG.LOI_API` | `api_loi`, `rong_nhung_api_loi` |
-| `KHUNG-CHUNG.KHONG_TREO_TAI` | `van_dang_tai` |
-| `KHUNG-CHUNG.MA_CHUA_DICH` | `ma_enum_lo`, `chu_la` |
-| `KHUNG-CHUNG.CHU_CAT` | `cat_chu_khong_tooltip`, `tieu_de_bi_cat` |
-| `KHUNG-CHUNG.TIEU_DE_MENU` | `tieu_de_lech_menu` |
-| `KHUNG-CHUNG.MOT_NUT_CHINH` | `nut_chinh_nhieu` |
-| `KHUNG-CHUNG.THOI_DIEM` | `dinh_dang_ngay_tron` |
-| `KHUNG-CHUNG.LO_LOT` | `du_lieu_nhay_cam` |
-| `KHUNG-CHUNG.O_CO_NHAN` | `o_khong_nhan` |
-| `KHUNG-CHUNG.TRAN_NGANG` | `tran_ngang` |
-| `KHUNG-CHUNG.DEM_KHOP` | `so_dong_vuot_tong` |
-| `KHUNG-CHUNG.THOI_GIAN_PHAN_HOI` | `api_cham` |
-| `KHUNG-CHUNG.QUY_CHUAN_GIAO_DIEN` | tổng hợp thiết kế vượt `chuanDS` (cỡ chữ, màu, bo góc, đổ bóng, lệch lưới) |
-| `KHUNG-CHUNG.TIM.KHONG_CO` / `.KHOANG_TRANG` / `.KHONG_DAU` | lần thử ô tìm `không tồn tại` / `thừa khoảng trắng` / `không dấu` (giá trị `ten` trong `giaTriTim`; tên trường kết quả xem `tryInputs` trong `30-loi-kiem.js`) |
-
-- [ ] **B1: Viết test** (dữ liệu giả nhỏ dựng ngay trong test, không đọc gói thật):
-  - `cho_pm_khong_cham`: TC `nhom 1` có kết quả ĐẠT → `Chờ PM quyết`, không có trong `dem`.
-  - `dung_khong_thay`: `{ma:"1.B1.DUNG", kq:"LỆCH", dg:"không thấy nút …"}` → `Không đạt (chờ phân loại)`.
-  - `anh_xa_chu`: LỆCH → `Không đạt`, CẢNH BÁO → `Không đạt (chờ phân loại)`, LỚP 4 → `Chuyển bộ chạy R2/R3`.
-  - `ngoai_danh_muc`: mã `9.B9.DUNG` không có trong dm → nằm trong `ngoai_danh_muc`.
-  - `vai_khong_co`: tài khoản `BC Ban Chỉ huy Phòng thủ khu vực Tỉnh Hà Tĩnh` → `dong` không có TC theo vai, nhưng `chamKhungChung` vẫn trả đủ TC KHUNG-CHUNG đã ánh xạ.
-  - `khung_chung`: 2 màn, một màn có `tran_ngang: "30px"` → `TRAN_NGANG` LỆCH. 0 màn → CHƯA KIỂM. Màn có `phan_tram_vo_ly` → `ma: null`.
-  - `loc`: `loc.loai_kiem=["T07"]` → chỉ còn TC T07.
-  - `gop`: cùng mã, một lần `Đạt`, một lần `Không đạt` → `Không đạt`. Tổng số mã sau gộp bằng hợp các mã.
-- [ ] **B2: Chạy** `node --test kiem/test_thuan.mjs` → FAIL.
-- [ ] **B3: Viết** bốn hàm. Thêm `anh_xa_ket_qua` (chép đúng chữ sheet «Ánh xạ kết quả») và `luat_khung_chung` vào `du-an.json`.
-- [ ] **B4: Chạy** → PASS.
-
-### Việc 5: Nối vào tool, báo cáo, lệnh xuất (CT-02, CT-07, CT-15)
-
-**Tệp:**
-- Sửa: `may/50-doi-chieu-dac-ta.js` (thay ruột `phuDanhMucTC`, giữ tên; `CO_TC` đọc dm bản 2), `may/60-bao-cao.js` (mục báo cáo mới), `may/40-bang-dieu-khien.js` (lệnh), `may/10-la-chan.js` (tự kiểm), `may/90-khoi-dong.js` (kiểm gói khi nạp)
-
-**Giao diện:**
-- Dùng: `chamTheoMaTran`, `chamKhungChung`, `gopKetQua`, `laPostDuocPhep` của Việc 2 và 4.
-- Sinh ra:
-  - `ketQua.ma_tran = { dong, ngoai_danh_muc, dem, bam: window.__dqtvDuAn.bam, ban_tool: "3.31" }` gắn vào kết quả lần chạy, cạnh `phu_danh_muc_tc`.
-  - `dqtv.xuat('ket-qua-ma-tran')` → CSV BOM UTF-8, cột: `Mã TC, Mã UC, Loại kiểm thử, Kết quả chạy, Phân loại, Lý do, Thời điểm, Tài khoản, Bản tool, Mã băm gói`.
-  - `dqtv.gopKetQua(...chuoiCSV)` → CSV gộp bằng `gopKetQua`.
-  - `dqtv.keHoach(loc)` → lưu `loc` cho lần chạy sau. `dqtv.keHoach()` in bộ lọc đang dùng.
-  - `dqtv.tuKiemChan() → {dat: boolean, chi_tiet: {kenh, bi_chan}[]}`: thử `fetch`, `XMLHttpRequest`, `form.submit`, `navigator.sendBeacon`, `WebSocket.send` tới đường dẫn giả `/__dqtv_tu_kiem__`, kèm kiểm `navigator.serviceWorker.controller` (có thì cảnh báo). Tự chạy khi nạp. `dat=false` thì nút Chạy bị khoá, có dòng lý do.
-- Kiểm gói khi nạp: thiếu `window.__dqtvDuAn`, hoặc `__dqtvDanhMucTC.phien_ban !== 2` → bảng điều khiển ghi «chưa nạp gói dự án / gói cũ». Phần ma trận tắt, phần luật giao diện vẫn chạy.
-- Báo cáo HTML: thay mục «Phủ danh mục TC của PM» bằng «Kết quả theo ma trận v7» gồm:
-  - Bảng đếm theo `Kết quả chạy`.
-  - Bảng `KHUNG-CHUNG`.
-  - Mục «Chờ PM quyết» (chỉ đếm).
-  - Mục «Ngoài danh mục — đề nghị PM thêm TC».
-  - Dòng mã băm gói.
-
-- [ ] **B1:** Viết phần nối. `phuDanhMucTC` giữ tên và chỗ gọi; ruột gọi `chamTheoMaTran` + `chamKhungChung`.
-- [ ] **B2: Chốt máy:** `python3 cong-cu/dong_goi.py …` rồi `node --check dist/dqtv-kiem-tra-3.31.js`. Chạy `python3 -I kiem/test_dong_goi.py` và `node --test kiem/test_thuan.mjs` → đều PASS.
-- [ ] **B3: Chốt kích thước bộ máy:** tổng `may/*.js` dưới 300 KB (`du -cb may/*.js`).
-- [ ] **B4: Soát chữ:** `grep -c "DanhMucTC_DQTV_30102026_tu-sinh" dist/*.js` phải ra 0.
-
-### Việc 6: Chạy thật trên giao diện (người dùng chạy, agent đọc báo cáo)
-
-Agent không đăng nhập được `dqtv.linksafe.vn`, nên **việc này chưa xong cho tới khi người dùng chạy và gửi báo cáo**. Không được coi là đạt khi chưa chạy.
-
-- [ ] **B1:** Người dùng đăng nhập tài khoản **BC Ban Chỉ huy Phòng thủ khu vực Tỉnh Hà Tĩnh** (cùng tài khoản với báo cáo mẫu 01/11), dán `dist/dqtv-kiem-tra-3.31.js`, gõ `dqtv.tuKiemChan()`. Mong đợi `dat: true`, cả 5 kênh `bi_chan: true`.
-- [ ] **B2:** Bấm Chạy, tải báo cáo HTML và CSV `ket-qua-ma-tran`.
-- [ ] **B3: Agent so với báo cáo mẫu** `~/Downloads/31-10-2026 test/dqtv-bc-ban-chi-huy-phong-thu-khu-vuc-tinh-ha-2026-11-01-17-19.html`:
-  - Lỗi `4580,3%` có trong mục «ngoài danh mục».
-  - `TIEU_DE_MENU` và `THOI_DIEM` ra `Không đạt`.
-  - `MAN_KHONG_SAP` ra `Không đạt` (báo cáo mẫu có 1 màn sập).
-  - Không còn báo lệch lưới cho 6px, 10px, 18px.
-  - Mọi dòng CSV có mã nằm trong `tc_all.csv` (agent kiểm bằng python).
-- [ ] **B4:** Chạy thêm một tài khoản **có vai trong v7**, ví dụ Chỉ huy trưởng Ban CHQS xã. Mong đợi: số «TC theo vai» > 0, và không có dòng `.DUNG` nào ghi thẳng `Không đạt` chỉ vì "không thấy".
-
----
-
-## Không làm vòng này (ghi lại để khỏi sót)
-
-- Đo hiệu năng M4 (CT-09, CT-10). `hieu-nang.json` đã có trong gói, chờ dùng.
-- Ghi dữ liệu M2, ghi lại/phát lại M3, tải nhẹ M5, chạy nối tiếp nhiều tài khoản (CT-11 đến CT-14). Mã `kichBan` / mức 2 của 3.26 để nguyên, không gọi tới được vì đã ép chỉ đọc.
-- Gói ngôn ngữ tiếng Anh của kiemui-v4: chưa có dự án tiếng Anh. Chữ riêng của DQTV đè qua `du-an.json` → `cau_hinh` (thành `DQTV_CONFIG`, 3.26 đã đọc sẵn).
-- Mobile: chạy cùng tệp trong chế độ thiết bị của trình duyệt. Chưa cần gì riêng.
-- TC `KHUNG-CHUNG` chưa có phép kiểm (`CCCD_12`, `DANH_MUC_VAI`, `GHI_CHU_THEO_CHANG`, `KHONG_CAP_HUYEN`, `LUA_CHON_TRUNG`, `VAN_BAN_KY_NGOAI_HE`; một phần `DAU_SAO_BAT_BUOC`, `KHONG_CHON_SAN`, `NUT_KHOA_LY_DO`): ghi `Chưa chạy được — công cụ chưa có phép kiểm`. Thêm sau (CT-16).
-
-## Khi một bước hỏng hai lần
-
-Dừng. Ghi vào đây: bước nào, đã thử gì, lỗi gì. Rồi lập lại kế hoạch cho bước đó trước khi làm tiếp.
+- 05/11/2026: đã tạo các thư mục và tệp này.
+- 05/11/2026: **xong bước 1 và 2.**
+  - Bước 1: `cong-cu/tach.py` (lấy từ `tach_326.py` của 3.31, bỏ phần ghi dữ liệu) cắt 3.26 thành 8 tệp trong `may/`. Ghép 5 dòng đầu của 3.26 với `may/*.js` ra đúng sha256 `b099c7e5…cf02` của 3.26.
+  - Bước 2: `du-an/dqtv/loi-da-biet.json` chỉ giữ `loi_sap` (UI-01). Bỏ `tc_dong` (6 ca gắn mã TC tự sinh) và `nguon_da_duyet`. Không có tệp đặc tả hay danh mục TC nào.
+  - Bước 2, sửa thêm 8 dòng trong `may/` để dữ liệu cũ trong trình duyệt không quay lại: khoá lưu `.v325` đổi thành `.v3261`; `KHOA_CU` thêm v325 để `dqtv.donBoNho()` xoá được khoá của 3.25/3.26; `PHIEN_BAN` = `3.26.1`.
+  - `cong-cu/dong_goi.py` ra `dist/dqtv-kiem-tra-3.26.1.js` (284 KB).
+  - `kiem/test_dong_goi.py`: 5/5 đạt (không còn dữ liệu tự sinh; sổ lỗi chỉ UI-01; khoá mới; `node --check`; `may/` khác 3.26 đúng 8 dòng đã định).
+  - Nạp thử trong Chrome chạy ngầm, trang mẫu file://: có `dqtv`, bảng điều khiển hiện ra, 0 bảng đặc tả, không có danh mục TC, sổ lỗi có UI-01, không có lỗi JS. Chưa chạy trên site thật.
+  - Chưa làm: chặn ghi vẫn như 3.26 (`extend`, `renew` vẫn lọt), đó là bước 4. **Chưa dán `dist` lên site thật trước khi xong bước 4.**
+- 05/11/2026: **xong bước 3.**
+  - Tạo `du-an/dqtv/ho-so.json`. Mã đọc hồ sơ qua `window.__dqtvHoSo` (biến `DU_AN` trong `20-cau-hinh.js`; tên `HO_SO` đã có sẵn trong 3.26 cho bộ cấu hình nhanh/đầy đủ nên không dùng).
+  - Đổi 25 dòng: `20-cau-hinh.js` (đọc hồ sơ, khoá tên miền, `boGoc`), `30-loi-kiem.js` (tên màn bỏ gốc đường dẫn), `50-doi-chieu-dac-ta.js` (màn việc chung, tiền tố tài khoản, mã YC).
+  - Không có hồ sơ: in cảnh báo, không khoá tên miền, không có màn việc chung, không bỏ tiền tố tài khoản, không ghi mã YC.
+  - Chưa đụng: danh sách chữ đoán «ô quyết định nghiệp vụ» (`50-doi-chieu-dac-ta.js`, dòng có `kết luận|thẩm quyền|…`). Đây là luật người viết tự đặt, để bước 5 xử lý.
+  - `kiem/test_dong_goi.py` 7/7 đạt: thêm (6) dòng mã trong `may/` không còn `linksafe`, `viec-cua-toi`, `Việc của tôi`, `YC-…`, `/dqtv`, mẫu tiền tố; (7) nạp trong Chrome chạy ngầm bằng `kiem/thu_trinh_duyet.html`, có hồ sơ: khoá `dqtv.linksafe.vn`, nhận vai «PK Phòng Kế hoạch tổng hợp» = PK; không hồ sơ: không khoá, vai = «ngoài đặc tả»; cả hai không lỗi JS.
+  - `may/` khác 3.26 tổng 33 dòng (8 của bước 2 + 25 của bước 3).
+- 05/11/2026: **xong bước 4.** Từ đây dán `dist` lên site thật được (chỉ đọc).
+  - Căn cứ trong mã app: `POST /api/session` = đăng nhập (`libs/http/serve.mjs:451`); `POST /api/search` = tìm, app đánh dấu `readOnly` (`core/platform/server/mount.mjs:78`, `clients/staff-web/src/api.js:190`); `/api/auth/*` đều là GET; app không có POST giữ phiên. `extend-age` (`core/processes/militia-enlistment/server/routes.mjs:399`) và `extend-deadline` (`core/processes/discipline/server/routes.mjs:289`) là lệnh ghi nghiệp vụ thật, 3.26 để lọt.
+  - `ho-so.json` thêm `post_cho_qua: ["/api/session", "/api/search"]`. Hàm `postDuocDi` (`10-la-chan.js`) so đúng đường dẫn, cùng tên miền, chỉ với POST. Lá chắn (`ghiChat`) và lõi kiểm (`isWrite`) cùng dùng hàm này. Không có hồ sơ thì không POST nào đi.
+  - Bỏ `choPhepPost` (cấu hình, kiểu, phép kiểm «quá rộng», `MAU_GHI`): không ai đặt lại được bằng `dqtv.dat`.
+  - Luôn chỉ đọc (người dùng đã chốt 04/11): `30-loi-kiem.js` ép `chanGhi = true`, `choGhiMoiTruong = false`; truyền `chanGhi:false`, `mucQuyTrinh` 2/3, `moiTruongKiemThu` thì in cảnh báo và bỏ qua. Báo cáo ghi `muc_quy_trinh: 1`.
+  - `kiem/test_dong_goi.py` 8/8 đạt. Phép (8) chạy máy chủ thử 127.0.0.1 + `kiem/thu_chan_ghi.html` trong Chrome chạy ngầm: 12 ca quyết định đúng; gửi thật: `/api/session` đi qua (máy chủ trả 501), `extend-age` bị chặn; đang chạy kiểm với `chanGhi:false, mucQuyTrinh:3, moiTruongKiemThu:[127.0.0.1]` vẫn chặn PUT và POST nghiệp vụ; không hồ sơ thì `/api/session`, `/api/search` cũng bị chặn.
+  - Lần thử đầu báo `extend-age` đi qua: do trang thử bật lá chắn trước khi tool khởi động xong (lúc khởi động không có lượt chạy dở, tool nhả lá chắn: `nhaLaChan`). Sửa trang thử, không phải lỗi tool.
+  - `may/` khác 3.26 tổng 51 dòng (8 + 25 + 18). `dist` 287 KB.
+  - Chưa chạy trên site thật.
+- 05/11/2026: **xong bước 5.** Sao lưu trước bước 5: `~/Downloads/dqtv-kiem-tra-sao-luu-sau-buoc4/`.
+  - Phép kiểm giao diện chung: bảng `CAN_CU_KIEM` (`10-la-chan.js`) gắn mỗi phép một loại căn cứ: «sự việc» (api_loi, js_loi, du_lieu_nhay_cam, rong_nhung_api_loi, so_dong_vuot_tong, chu_la khi là NaN/undefined/[object Object]…), «chuẩn» (o_khong_nhan: WCAG 2.2 SC 1.3.1, 4.1.2; tran_ngang chỉ khi khổ ≤ 320px: SC 1.4.10), «đặc tả» (quy_trinh_loi từ cấu hình dacTa). Còn lại «tự đặt». Không bỏ phép kiểm nào.
+  - `30-loi-kiem.js`: mức (cao / trung bình / thấp) chỉ tính phép có căn cứ; màn chỉ có phép tự đặt ghi «ghi nhận». Mỗi dòng vấn đề và mỗi mẫu lỗi có `can_cu`. Ô tìm / lọc: chỉ lỗi máy chủ, lỗi trang, số dòng vượt tổng được tính mức; kỳ vọng tìm kiếm do công cụ đặt → ghi nhận. Thiết kế và ngôn từ ghi rõ «ngưỡng công cụ», chỉ ghi nhận.
+  - `50-doi-chieu-dac-ta.js`: mọi dòng đi qua một chốt `them()`. Kết luận ĐẠT / LỆCH / CẢNH BÁO phải có căn cứ (tệp › bảng › mục › nguồn mục) và quan sát; thiếu căn cứ → GHI NHẬN; thiếu quan sát → CHƯA KIỂM. Bảng khung không là căn cứ.
+  - Bỏ mặc định ngầm: `nguon_da_duyet` không còn mặc định `['UC']` (chưa khai → không có LỆCH); bỏ luật đoán «ô quyết định nghiệp vụ» theo chữ trong nhãn và 4 luật nguyên nhân AUTO-ĐIỀN; ô có giá trị sẵn mà đặc tả không ghi mặc định → GHI NHẬN.
+  - Đặc tả không nói → GHI NHẬN: quyền xem không khai cho vai, trường thừa trên form, nút khoá không ghi lý do (khi đặc tả không có `khoa_khi`). Không so được → CHƯA KIỂM: trường đặc tả đòi mà chưa có nhãn, trường nối chưa xác định.
+  - Báo cáo HTML / CSV: thêm cột Căn cứ; GHI NHẬN để trong mục thu gọn riêng; dòng tóm tắt có số «ghi nhận». `ho-so.json`: bỏ 2 mã YC gắn với luật đoán đã bỏ (còn `buoc_he_thong`).
+  - `kiem/test_buoc5.py` + `kiem/thu_can_cu.html` (bảng đặc tả MẪU THỬ, không phải dữ liệu dự án) 5/5 đạt: căn cứ của phép kiểm chung; 12 dòng kết luận đều có căn cứ và quan sát; không khai nguồn đã duyệt thì không có LỆCH, khai `UC` thì có; quyền xem không khai, trường thừa, ô có giá trị sẵn, bảng khung → GHI NHẬN; báo cáo có cột Căn cứ; chạy thật trên trang mẫu (Chrome chạy ngầm, 127.0.0.1): màn có NaN + ô không nhãn → «thấp» kèm căn cứ, màn chỉ có 150% → «ghi nhận».
+  - `kiem/test_dong_goi.py` 8/8 đạt; `may/` khác 3.26 tổng 128 dòng (33 + 18 + 77).
+  - Hệ quả cần biết: chưa nạp tài liệu dự án thì phần lớn phát hiện giao diện chung (chữ cắt, tiêu đề cắt, lưới, cỡ chữ, ngôn từ, ô tìm…) chuyển sang «ghi nhận». Nạp quy cách dự án / TC có căn cứ (bước 6 trở đi) thì mới tính lại mức.
+  - Chưa chạy trên site thật.
+- 05/11/2026: **xong bước 6.** Bước 7 chờ lệnh.
+  - Tệp mới `may/70-nap.js`: danh sách bộ đọc `BO_DOC`; nút «⇪ Nạp tệp», «⇪ Nạp thư mục» trên thẻ Chạy (`40-bang-dieu-khien.js`); lệnh `dqtv.nap()`, `dqtv.napThuMuc()`, `dqtv.napTep(files)`, `dqtv.xemNap()`, `dqtv.xoaNap()`.
+  - Mỗi tệp đi qua `bo-doc/*.js`; bộ đọc nhận ra theo nội dung. Tệp nén (zip, xlsx, nhận qua 2 byte đầu `PK`) và tệp không bộ đọc nào nhận ra → «không nhận ra», không dùng, liệt kê trên bảng và Console.
+  - Tệp đã nhận lưu ở IndexedDB `dqtv-kiem-tra` (localStorage quá nhỏ); lúc khởi động `90-khoi-dong.js` đọc lại (`apDungNap`) trước khi chạy tiếp sau tải lại. Mỗi bảng mang `__tep` để cột Căn cứ trỏ về tệp.
+  - Bộ đọc đầu tiên `bo-doc/10-dac-ta-json.js` (`dac-ta-json-2.1`): JSON một bảng hoặc mảng bảng; MỌI bảng phải có `dinh_danh` kèm mã và một trong `buoc` / `ban_giao` / `vai`, không thì cả tệp không nhận. Bảng giữ nguyên, không sửa.
+  - Báo cáo HTML có dòng «Dữ liệu đã nạp» (tệp, bộ đọc, số bảng, mã băm, lúc nạp); không nạp gì thì ghi «chỉ kiểm giao diện chung». Kết quả JSON có `du_lieu_nap`.
+  - `cong-cu/dong_goi.py` gói kèm `bo-doc/*.js` giữa `may/` số < 90 và `90-khoi-dong.js`; thêm `--ra`.
+  - `kiem/test_buoc6.py` + `kiem/thu_nap.html` (bảng MẪU THỬ) 4/4 đạt, nạp 2 lần trên cùng hồ sơ Chrome: chưa nạp thì 0 bảng; có 2 nút; 1 tệp đặc tả được nhận, 5 tệp lạ (zip, csv, JSON khác khuôn, JSON hỏng, tệp có 1 bảng sai khuôn) bị báo không nhận ra; nạp xong chạy thật thì có `MAU.B1.DUNG` ĐẠT với căn cứ «tệp mau-thu.json › bảng MAU › B1.DUNG»; tải lại trang vẫn còn; `xoaNap()` xoá hết.
+  - Chế độ thời gian ảo của Chrome (`--dump-dom --virtual-time-budget`) làm `indexedDB.open()` treo (đã khoanh vùng bằng trang thử riêng). Phép kiểm bước 6 dùng `kiem/mo_chrome.mjs`: Node điều khiển Chrome bằng thời gian thật qua cổng gỡ lỗi, không cài thêm gì.
+  - `kiem/test_dong_goi.py` 8/8 (biết `70-nap.js` là tệp mới; dò chữ riêng DQTV cả `bo-doc/`); `kiem/test_buoc5.py` 5/5. `may/` khác 3.26 tổng 136 dòng (33 + 18 + 77 + 8) + tệp mới `70-nap.js`.
+  - Chưa kiểm: bấm nút thật để mở hộp chọn tệp / thư mục của trình duyệt (không tự động hoá được hộp chọn tệp); tên tệp khi chọn cả thư mục (`webkitRelativePath`). Chưa chạy trên site thật.
+  - Chưa có: bộ đọc cho v7 (zip, xlsx, csv) — chỉ làm khi có lệnh; cách để dữ liệu nạp khai `nguon_da_duyet` (hiện chỉ đọc từ sổ quy tắc đóng gói).
+- 05/11/2026: **xong bước 8 ở mã nguồn; CHƯA đóng gói lại `dist`.** Sao lưu trước bước 8: `~/Downloads/dqtv-kiem-tra-sao-luu-truoc-buoc8/`.
+  - Làm trong lúc bước 7 đang dở: `bo-doc/90-ghep-v7-tai-lieu.js` gọi `GHEP` mà `may/` chưa khai `GHEP`, nên chạy `dong_goi.py` lúc này ra tệp lỗi «GHEP is not defined». Vì vậy `dist/dqtv-kiem-tra-3.26.1.js` giữ nguyên bản 15:06 (chưa có bước 7, bước 8). Xong 7c/7d thì chạy lại `dong_goi.py` là có bước 8 (dong_goi đã kèm `gioi-han-o.json`).
+  - `du-an/dqtv/gioi-han-o.json`: 995 tên ô (3.641 chỗ khai), 31 tên có nhiều khai báo khác nhau; app `ux` @ `74cf68c0` (04/11). App đổi khai báo thì chạy lại `node cong-cu/sinh_gioi_han_o.mjs`.
+  - `kiem/test_buoc8.py` đạt: tự đóng gói bản thử bằng `dong_goi.py` trên bản chép (bỏ bộ đọc dùng `GHEP` khi `may/` chưa khai), không ghi đè `dist/`. Trên trang mẫu: không bấm Lưu, không lỗi JS, mọi ô trả lại giá trị cũ; ô đúng khai báo → ĐẠT; ô thiếu maxlength → KHÁC KHAI BÁO (gõ 4.001 ký tự vẫn nhận); ô số thiếu min / max → KHÁC KHAI BÁO (nhận -1, nhận 1.000.000.001); ô có maxlength cắt chữ khi gõ quá dài; số quyết định nhận 2 mẫu đúng, chặn 4 mẫu sai; ký tự đặc biệt giữ nguyên; báo cáo HTML có mục mới.
+  - Giới hạn đã biết: trình duyệt chỉ xét minlength khi chính người dùng gõ phím; gõ giả lập không đủ để nó báo. Ô mang đúng minlength mà không thấy báo → CHƯA KIỂM có lý do (không kết luận). Công cụ không bấm Lưu nên không thấy máy chủ từ chối.
+  - `kiem/test_dong_goi.py` 8/8 (thêm `SO_B8 = 121`: 120 dòng ở `30-loi-kiem.js`, 1 dòng ở `60-bao-cao.js`, chỉ thêm, không sửa dòng cũ); `test_buoc5.py` 5/5; `test_buoc6.py` 4/4. `may/` khác 3.26 tổng 257 dòng.
+  - Chưa chạy trên site thật.
+- 05/11/2026: **xong 7c (nối), 7d (đóng gói sẵn) và bước 9; đã đóng gói lại `dist`.** Phiên làm (khác phiên làm 7a–7c) theo yêu cầu người dùng «xem còn thiếu quy trình thì update vào tool để chạy cho đúng lại».
+  - 7c nối: `70-nap.js` khai `GHEP`; `apDungNap` gom mọi dữ liệu các bộ đọc trả về (trừ `dac_ta`) theo tên khoá, chạy hàm ghép, đưa bảng ghép vào đối chiếu; danh mục TC sau ghép → `DM_V7` (khuôn của `phuDanhMucTC`, kèm `khong_chay` có lý do và nhóm). `50-doi-chieu-dac-ta.js` đọc `window.__dqtvDanhMucTC || DM_V7`.
+  - 7d: `dong_goi.py` kèm sẵn `du-an/dqtv/quy-trinh/**/*.md` và `tc/**` (zip → `tc_all.csv`, chỉ giữ 14 cột tool đọc, đủ 44.124 dòng), gzip + base64 ở `window.__dqtvGoiSan`; `docGoiSan()` giải nén bằng `DecompressionStream`. Tệp đóng gói sẵn chỉ dùng cho loại (bộ đọc) người dùng chưa tự nạp. `dist` 3,86 MB. Chưa làm: xuất `dqtv.xuat('tc')` theo sheet «Ánh xạ kết quả».
+  - Bước 9: `trang-thai-quy-trinh.json` từ app `ux` @ `e6780ced` (phần `core/processes` = `origin/dev` `6017c8b0`), 119 tài liệu, báo cáo rà soát `RA-QT-TOAN-BO.zip`. Danh mục TC v7 sau ghép: 21.425 TC M1 6 loại; chạy 14.648; không chạy 6.777 (TC/chờ PM 6.376, công cụ 267, quy trình 134 = 87 TC của 3 tài liệu app không còn + 27 bước không có trong khai báo app + 20 ca sai chặng). Bảng đối chiếu 99 (102 trừ 3 quy trình app không còn).
+  - Phép kiểm: `test_buoc9.py` (mới) đạt — không bấm Nạp vẫn có 119 tài liệu + 44.124 TC, nạp xong ~1,5 giây; `test_dong_goi.py` 8/8 (`SO_B9 = 9`); `test_buoc5.py` 5/5; `test_buoc6.py` 4/4 (gỡ dòng dữ liệu đóng gói khỏi bản thử để kiểm riêng nút Nạp; danh sách bộ đọc thêm `quy-trinh-md`, `v7-tc-csv`); `test_buoc7.mjs` đạt; `test_buoc8.py` đạt. `may/` khác 3.26 tổng 266 dòng + tệp mới `70-nap.js`.
+  - App hoặc tài liệu đổi: chạy lại `cong-cu/sinh_trang_thai_qt.py`, `cong-cu/sinh_gioi_han_o.mjs`, rồi `cong-cu/dong_goi.py`.
+  - Chưa chạy trên site thật.

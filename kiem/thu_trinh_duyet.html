@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"></head>
+<!-- Trang mẫu để nạp thử tệp dist trong Chrome chạy ngầm. Chạy qua kiem/test_dong_goi.py, không mở tay. -->
+<body><header style="position:fixed;top:0;right:0;width:30%"><span>PK Phòng Kế hoạch tổng hợp</span></header>
+<main><h1>Trang mẫu</h1></main>
+<script>window.__loi = []; addEventListener('error', e => __loi.push(e.message));</script>
+<script src="TOOL"></script>
+<script>
+setTimeout(() => {
+  let vai = '';
+  try { dqtv.napDacTa({ dinh_danh: { ma: 'MAU' }, vai: [{ ma: 'PK', nhan_dang_nhap: 'Phòng Kế hoạch tổng hợp' }], buoc: [] }); vai = dqtv.vaiDacTa().join(','); dqtv.xoaDacTa(); } catch (e) { vai = 'lỗi: ' + e.message; }
+  const c = dqtv.cauHinh();
+  document.body.setAttribute('data-kq', JSON.stringify({
+    co_dqtv: typeof window.dqtv, bang_dieu_khien: !!document.getElementById('dqtv-panel-host'),
+    ten_mien: String(c.tenMienDuocChay), vai_nhan_ra: vai,
+    co_DacTaNap: typeof window.__dqtvDacTaNap, co_DanhMucTC: typeof window.__dqtvDanhMucTC,
+    loi_js: __loi.join(' | ') || 'không' }));
+}, 1500);
+</script></body></html>

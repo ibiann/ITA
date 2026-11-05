@@ -1,0 +1,917 @@
+{
+ "tai_lieu_app_khong_co": [
+  {
+   "ma": "ngoai63.curriculum-dossier",
+   "tep": "ngoai63.curriculum-dossier.md",
+   "tep_app": "curriculum-dossier/workflow/curriculum-dossier.yaml",
+   "so_buoc": 6,
+   "ra_soat": [
+    "196",
+    "230",
+    "234",
+    "235"
+   ]
+  },
+  {
+   "ma": "7.campaign-registration",
+   "tep": "qt-7.campaign-registration.md",
+   "tep_app": "award-campaign/workflow/campaign-registration.yaml",
+   "so_buoc": 3,
+   "ra_soat": [
+    "196",
+    "214",
+    "214 K-14",
+    "214 K-15",
+    "214 X-02",
+    "234"
+   ]
+  },
+  {
+   "ma": "8.bureau-receipt-notice",
+   "tep": "qt-8.bureau-receipt-notice.md",
+   "tep_app": "award/workflow/bureau-receipt-notice.yaml",
+   "so_buoc": 2,
+   "ra_soat": [
+    "196",
+    "202",
+    "202 K-45",
+    "214",
+    "214 K-17",
+    "214 X-01"
+   ]
+  }
+ ],
+ "buoc_app_khong_co": {
+  "dm.citizen": [
+   {
+    "so": "1",
+    "ma_buoc": "syncCitizenData",
+    "ten": "`syncCitizenData`",
+    "ra_soat": [
+     "218 A-08",
+     "218 K-47"
+    ]
+   }
+  ],
+  "dm.militia-unit": [
+   {
+    "so": "1",
+    "ma_buoc": "establishMilitiaUnit",
+    "ten": "`establishMilitiaUnit`",
+    "ra_soat": [
+     "233",
+     "233 K-01",
+     "233 K-02",
+     "233 L-08",
+     "234"
+    ]
+   },
+   {
+    "so": "2",
+    "ma_buoc": "disbandMilitiaUnit",
+    "ten": "`disbandMilitiaUnit`",
+    "ra_soat": [
+     "233",
+     "233 K-02",
+     "233 L-08",
+     "234"
+    ]
+   }
+  ],
+  "dm.mobilization-product": [
+   {
+    "so": "1",
+    "ma_buoc": "addMobilizationProduct",
+    "ten": "`addMobilizationProduct`",
+    "ra_soat": [
+     "224"
+    ]
+   },
+   {
+    "so": "2",
+    "ma_buoc": "seedMobilizationProducts",
+    "ten": "`seedMobilizationProducts`",
+    "ra_soat": [
+     "224"
+    ]
+   }
+  ],
+  "dm.org-unit": [
+   {
+    "so": "1",
+    "ma_buoc": "registerOrgUnit",
+    "ten": "`registerOrgUnit`",
+    "ra_soat": [
+     "233",
+     "233 K-06"
+    ]
+   }
+  ],
+  "dm.unit-staff": [
+   {
+    "so": "1",
+    "ma_buoc": "assignUserToUnit",
+    "ten": "`assignUserToUnit`",
+    "ra_soat": [
+     "233",
+     "233 K-10"
+    ]
+   },
+   {
+    "so": "2",
+    "ma_buoc": "mergeOrgUnit",
+    "ten": "`mergeOrgUnit`",
+    "ra_soat": [
+     "233",
+     "233 K-13",
+     "233 L-02",
+     "233 L-06",
+     "233 X-05"
+    ]
+   },
+   {
+    "so": "3",
+    "ma_buoc": "seedUnitStaff",
+    "ten": "`seedUnitStaff`",
+    "ra_soat": [
+     "233",
+     "233 K-15"
+    ]
+   }
+  ],
+  "ngoai63.cadre-qualification": [
+   {
+    "so": "7",
+    "ma_buoc": "recordQualificationFromGraduation",
+    "ten": "`recordQualificationFromGraduation`",
+    "ra_soat": [
+     "230",
+     "230 K-26",
+     "230 X-01",
+     "234"
+    ]
+   }
+  ],
+  "12b": [
+   {
+    "so": "29",
+    "ma_buoc": "authoriseClaimByBatch",
+    "ten": "`authoriseClaimByBatch`",
+    "ra_soat": [
+     "196",
+     "203",
+     "203 A-03",
+     "203 K-32"
+    ]
+   },
+   {
+    "so": "30",
+    "ma_buoc": "payClaimByBatch",
+    "ten": "`payClaimByBatch`",
+    "ra_soat": [
+     "196",
+     "203",
+     "203 K-32"
+    ]
+   },
+   {
+    "so": "31",
+    "ma_buoc": "unauthoriseClaimByBatch",
+    "ten": "`unauthoriseClaimByBatch`",
+    "ra_soat": [
+     "203 K-32"
+    ]
+   }
+  ],
+  "16.enlistment": [
+   {
+    "so": "16",
+    "ma_buoc": "applyDisciplineDecision",
+    "ten": "`applyDisciplineDecision`",
+    "ra_soat": [
+     "196",
+     "215",
+     "215 K-32"
+    ]
+   }
+  ],
+  "16": [
+   {
+    "so": "21",
+    "ma_buoc": "admitFromSelectionDrive",
+    "ten": "`admitFromSelectionDrive`",
+    "ra_soat": [
+     "215",
+     "215 K-19",
+     "218"
+    ]
+   },
+   {
+    "so": "23",
+    "ma_buoc": "releaseUnadmittedOnDriveClose",
+    "ten": "`releaseUnadmittedOnDriveClose`",
+    "ra_soat": [
+     "196",
+     "215",
+     "215 K-20"
+    ]
+   }
+  ],
+  "16.registration-decision": [
+   {
+    "so": "3",
+    "ma_buoc": "markDecisionUsed",
+    "ten": "`markDecisionUsed`",
+    "ra_soat": [
+     "196",
+     "204",
+     "204 K-16",
+     "204 L-02",
+     "215",
+     "234"
+    ]
+   }
+  ],
+  "2": [
+   {
+    "so": "36",
+    "ma_buoc": "markPlanApprovedBySuperior",
+    "ten": "`markPlanApprovedBySuperior`",
+    "ra_soat": [
+     "207",
+     "207 A-13",
+     "207 K-53"
+    ]
+   },
+   {
+    "so": "37",
+    "ma_buoc": "markPlanReturnedBySuperior",
+    "ten": "`markPlanReturnedBySuperior`",
+    "ra_soat": [
+     "207",
+     "207 A-13",
+     "207 K-54"
+    ]
+   }
+  ],
+  "22": [
+   {
+    "so": "10",
+    "ma_buoc": "openVehicleOwnerViolation",
+    "ten": "`openVehicleOwnerViolation`",
+    "ra_soat": [
+     "221"
+    ]
+   }
+  ],
+  "29.appraisal": [
+   {
+    "so": "1",
+    "ma_buoc": "openAppraisalOfDissolution",
+    "ten": "`openAppraisalOfDissolution`",
+    "ra_soat": []
+   },
+   {
+    "so": "2",
+    "ma_buoc": "openAppraisalOfEstablishment",
+    "ten": "`openAppraisalOfEstablishment`",
+    "ra_soat": [
+     "198 A-11"
+    ]
+   },
+   {
+    "so": "3",
+    "ma_buoc": "openAppraisalOfSubmission",
+    "ten": "`openAppraisalOfSubmission`",
+    "ra_soat": [
+     "202 L-15"
+    ]
+   }
+  ],
+  "D11.uniform": [
+   {
+    "so": "5",
+    "ma_buoc": "issueReissueOrder",
+    "ten": "`issueReissueOrder`",
+    "ra_soat": [
+     "196",
+     "226",
+     "226 K-43",
+     "226 L-01",
+     "234"
+    ]
+   }
+  ],
+  "D16.archive-file": [
+   {
+    "so": "1",
+    "ma_buoc": "recordArchiveFile",
+    "ten": "`recordArchiveFile`",
+    "ra_soat": [
+     "210 K-41",
+     "210 K-42",
+     "210 N-10",
+     "210 X-06"
+    ]
+   }
+  ],
+  "D16": [
+   {
+    "so": "9",
+    "ma_buoc": "listExpiredArchiveByClerk",
+    "ten": "`listExpiredArchiveByClerk`",
+    "ra_soat": [
+     "196",
+     "210 K-35"
+    ]
+   },
+   {
+    "so": "10",
+    "ma_buoc": "listExpiredArchiveByCommander",
+    "ten": "`listExpiredArchiveByCommander`",
+    "ra_soat": [
+     "210 K-35"
+    ]
+   }
+  ]
+ },
+ "chang_khac_app": {
+  "14": [
+   {
+    "so": "20",
+    "ma_buoc": "estimateTrainingFunding",
+    "tu_tai_lieu": [
+     "APPROVED",
+     "DAYS_LOCKED",
+     "DRAFT",
+     "IN_PROGRESS",
+     "PROGRAMME_PENDING",
+     "PROGRAMME_SUBMITTED",
+     "REPORTED",
+     "SUBMITTED",
+     "SUMMONED"
+    ],
+    "tu_app": [
+     "APPROVED",
+     "DRAFT",
+     "IN_PROGRESS",
+     "PROGRAMME_PENDING",
+     "PROGRAMME_SUBMITTED",
+     "REPORTED",
+     "SIGNED",
+     "SIGNING",
+     "SUBMITTED",
+     "SUMMONED"
+    ],
+    "tep_app": "training/workflow/training.yaml",
+    "ra_soat": [
+     "228",
+     "228 A-02",
+     "228 L-05"
+    ]
+   }
+  ],
+  "16.registration-decision": [
+   {
+    "so": "1",
+    "ma_buoc": "recordDecisionRow",
+    "tu_tai_lieu": [],
+    "tu_app": [
+     "EXAMINED",
+     "IN_POOL"
+    ],
+    "tep_app": "militia-enlistment/workflow/duty-registration.yaml",
+    "ra_soat": [
+     "204",
+     "204 K-03",
+     "204 K-04",
+     "204 K-05",
+     "204 K-06",
+     "204 K-20"
+    ]
+   },
+   {
+    "so": "2",
+    "ma_buoc": "verifyDecisionRow",
+    "tu_tai_lieu": [
+     "RECORDED"
+    ],
+    "tu_app": [
+     "EXAMINED",
+     "IN_POOL"
+    ],
+    "tep_app": "militia-enlistment/workflow/duty-registration.yaml",
+    "ra_soat": [
+     "204",
+     "204 K-12",
+     "204 K-13",
+     "204 K-14",
+     "215",
+     "215 K-17"
+    ]
+   }
+  ],
+  "2": [
+   {
+    "so": "8",
+    "ma_buoc": "returnToDraft",
+    "tu_tai_lieu": [
+     "CO_SIGNED",
+     "SUBMITTED"
+    ],
+    "tu_app": [
+     "APPRAISED",
+     "CO_SIGNED",
+     "SUBMITTED"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "207 A-13"
+    ]
+   },
+   {
+    "so": "31",
+    "ma_buoc": "namePlanSecretReaders",
+    "tu_tai_lieu": [
+     "APPROVED",
+     "CO_SIGNED",
+     "DRAFT",
+     "DRAFT_READY",
+     "IN_FORCE",
+     "SUBMITTED",
+     "UNDER_REVIEW"
+    ],
+    "tu_app": [
+     "APPRAISED",
+     "APPROVED",
+     "CO_SIGNED",
+     "DRAFT",
+     "DRAFT_READY",
+     "IN_FORCE",
+     "SUBMITTED",
+     "UNDER_REVIEW"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "196",
+     "207 A-05",
+     "207 K-37"
+    ]
+   },
+   {
+    "so": "32",
+    "ma_buoc": "viewPlanSecretContent",
+    "tu_tai_lieu": [
+     "APPROVED",
+     "CO_SIGNED",
+     "DRAFT",
+     "DRAFT_READY",
+     "IN_FORCE",
+     "SUBMITTED",
+     "UNDER_REVIEW"
+    ],
+    "tu_app": [
+     "APPRAISED",
+     "APPROVED",
+     "CO_SIGNED",
+     "DRAFT",
+     "DRAFT_READY",
+     "IN_FORCE",
+     "SUBMITTED",
+     "UNDER_REVIEW"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "196",
+     "207 K-41"
+    ]
+   },
+   {
+    "so": "33",
+    "ma_buoc": "viewPlanSecretContentAsSigner",
+    "tu_tai_lieu": [
+     "APPROVED",
+     "CO_SIGNED",
+     "DRAFT",
+     "DRAFT_READY",
+     "IN_FORCE",
+     "SUBMITTED",
+     "UNDER_REVIEW"
+    ],
+    "tu_app": [
+     "APPRAISED",
+     "APPROVED",
+     "CO_SIGNED",
+     "DRAFT",
+     "DRAFT_READY",
+     "IN_FORCE",
+     "SUBMITTED",
+     "UNDER_REVIEW"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "196",
+     "207 K-44"
+    ]
+   },
+   {
+    "so": "34",
+    "ma_buoc": "viewPlanSecretContentAsClerk",
+    "tu_tai_lieu": [
+     "APPROVED",
+     "CO_SIGNED",
+     "DRAFT",
+     "DRAFT_READY",
+     "IN_FORCE",
+     "SUBMITTED",
+     "UNDER_REVIEW"
+    ],
+    "tu_app": [
+     "APPRAISED",
+     "APPROVED",
+     "CO_SIGNED",
+     "DRAFT",
+     "DRAFT_READY",
+     "IN_FORCE",
+     "SUBMITTED",
+     "UNDER_REVIEW"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "196",
+     "207 K-42"
+    ]
+   },
+   {
+    "so": "35",
+    "ma_buoc": "viewPlanSecretContentAsReader",
+    "tu_tai_lieu": [
+     "APPROVED",
+     "CO_SIGNED",
+     "DRAFT",
+     "DRAFT_READY",
+     "IN_FORCE",
+     "SUBMITTED",
+     "UNDER_REVIEW"
+    ],
+    "tu_app": [
+     "APPRAISED",
+     "APPROVED",
+     "CO_SIGNED",
+     "DRAFT",
+     "DRAFT_READY",
+     "IN_FORCE",
+     "SUBMITTED",
+     "UNDER_REVIEW"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "196",
+     "207 K-43"
+    ]
+   }
+  ],
+  "2.submission": [
+   {
+    "so": "1",
+    "ma_buoc": "returnPlanByReceiver",
+    "tu_tai_lieu": [
+     "RECEIVED"
+    ],
+    "tu_app": [
+     "SUBMITTED"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "207 A-06",
+     "207 K-18"
+    ]
+   },
+   {
+    "so": "2",
+    "ma_buoc": "appraisePlan",
+    "tu_tai_lieu": [
+     "RECEIVED"
+    ],
+    "tu_app": [
+     "SUBMITTED"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "207 A-13",
+     "207 K-19"
+    ]
+   },
+   {
+    "so": "3",
+    "ma_buoc": "recordPlanApproval",
+    "tu_tai_lieu": [
+     "APPRAISED",
+     "RECEIVED"
+    ],
+    "tu_app": [
+     "APPRAISED",
+     "SUBMITTED"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "207 K-20"
+    ]
+   },
+   {
+    "so": "4",
+    "ma_buoc": "approveCommunePlan",
+    "tu_tai_lieu": [
+     "RECEIVED"
+    ],
+    "tu_app": [
+     "SUBMITTED"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "207",
+     "207 A-01",
+     "207 A-13",
+     "207 K-21"
+    ]
+   },
+   {
+    "so": "5",
+    "ma_buoc": "requestReturnCommunePlanSignature",
+    "tu_tai_lieu": [
+     "APPRAISED",
+     "RECEIVED"
+    ],
+    "tu_app": [
+     "APPRAISED",
+     "SUBMITTED"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "207"
+    ]
+   },
+   {
+    "so": "6",
+    "ma_buoc": "returnCommunePlan",
+    "tu_tai_lieu": [
+     "APPRAISED",
+     "RECEIVED"
+    ],
+    "tu_app": [
+     "APPRAISED",
+     "SUBMITTED"
+    ],
+    "tep_app": "planning/workflow/plan-document.yaml",
+    "ra_soat": [
+     "207 A-06",
+     "207 K-23"
+    ]
+   }
+  ],
+  "29": [
+   {
+    "so": "47",
+    "ma_buoc": "flagEstablishmentOverdue",
+    "tu_tai_lieu": [
+     "ESTABLISHED",
+     "PROPOSED",
+     "SUBMITTED",
+     "VALIDATED"
+    ],
+    "tu_app": [
+     "ESTABLISHED",
+     "SUBMITTED",
+     "VALIDATED"
+    ],
+    "tep_app": "unit-organisation/workflow/establishment.yaml",
+    "ra_soat": [
+     "198",
+     "198 K-36"
+    ]
+   }
+  ],
+  "30": [
+   {
+    "so": "26",
+    "ma_buoc": "requestDismissalDecisionSignature",
+    "tu_tai_lieu": [
+     "DEMOTED",
+     "SERVING"
+    ],
+    "tu_app": [
+     "DEMOTED",
+     "DISMISSAL_DOSSIER_ACCEPTED",
+     "SERVING"
+    ],
+    "tep_app": "command-tenure/workflow/command-tenure.yaml",
+    "ra_soat": [
+     "199",
+     "199 K-14"
+    ]
+   },
+   {
+    "so": "64",
+    "ma_buoc": "flagTenureOverdue",
+    "tu_tai_lieu": [
+     "APPOINTMENT_DOSSIER_ACCEPTED",
+     "AWAITING_CONSENT",
+     "AWAITING_SUPERIOR_DECISION",
+     "DEMOTED",
+     "DISMISSAL_DOSSIER_ACCEPTED",
+     "DISMISSAL_PROPOSED",
+     "PLANNED",
+     "SERVING"
+    ],
+    "tu_app": [
+     "APPOINTMENT_DOSSIER_ACCEPTED",
+     "AWAITING_CONSENT",
+     "AWAITING_SUPERIOR_DECISION",
+     "DEMOTED",
+     "PLANNED",
+     "SERVING"
+    ],
+    "tep_app": "command-tenure/workflow/command-tenure.yaml",
+    "ra_soat": [
+     "199",
+     "199 L-04"
+    ]
+   }
+  ],
+  "31": [
+   {
+    "so": "5",
+    "ma_buoc": "recordDisbandConsent",
+    "tu_tai_lieu": [
+     "SUBMITTED"
+    ],
+    "tu_app": [
+     "ACCEPTED",
+     "SUBMITTED"
+    ],
+    "tep_app": "unit-organisation/workflow/dissolution.yaml",
+    "ra_soat": []
+   },
+   {
+    "so": "6",
+    "ma_buoc": "recordProvinceDisbandConsent",
+    "tu_tai_lieu": [
+     "SUBMITTED"
+    ],
+    "tu_app": [
+     "ACCEPTED",
+     "SUBMITTED"
+    ],
+    "tep_app": "unit-organisation/workflow/dissolution.yaml",
+    "ra_soat": []
+   },
+   {
+    "so": "11",
+    "ma_buoc": "requestDisbandDecisionSignatureForCommune",
+    "tu_tai_lieu": [
+     "SUBMITTED"
+    ],
+    "tu_app": [
+     "ACCEPTED",
+     "SUBMITTED"
+    ],
+    "tep_app": "unit-organisation/workflow/dissolution.yaml",
+    "ra_soat": []
+   },
+   {
+    "so": "16",
+    "ma_buoc": "disbandUnit",
+    "tu_tai_lieu": [
+     "SUBMITTED",
+     "UNDER_APPRAISAL"
+    ],
+    "tu_app": [
+     "ACCEPTED",
+     "SUBMITTED",
+     "UNDER_APPRAISAL"
+    ],
+    "tep_app": "unit-organisation/workflow/dissolution.yaml",
+    "ra_soat": [
+     "200",
+     "200 A-01",
+     "200 A-06",
+     "200 K-18",
+     "200 L-21"
+    ]
+   },
+   {
+    "so": "18",
+    "ma_buoc": "requestDisbandRefusalSignatureForCommune",
+    "tu_tai_lieu": [
+     "SUBMITTED"
+    ],
+    "tu_app": [
+     "ACCEPTED",
+     "SUBMITTED"
+    ],
+    "tep_app": "unit-organisation/workflow/dissolution.yaml",
+    "ra_soat": []
+   },
+   {
+    "so": "22",
+    "ma_buoc": "refuseDisband",
+    "tu_tai_lieu": [
+     "SUBMITTED",
+     "UNDER_APPRAISAL"
+    ],
+    "tu_app": [
+     "ACCEPTED",
+     "SUBMITTED",
+     "UNDER_APPRAISAL"
+    ],
+    "tep_app": "unit-organisation/workflow/dissolution.yaml",
+    "ra_soat": [
+     "200",
+     "200 A-01",
+     "200 A-06",
+     "200 K-19",
+     "200 L-21"
+    ]
+   }
+  ]
+ },
+ "app_chua_co_tai_lieu": [
+  {
+   "tep_app": "gdqp-refresher/workflow/gdqp-trainee.yaml",
+   "entity": "GdqpTrainee",
+   "buoc": [
+    "registerFromTrainingList",
+    "registerFromPosition",
+    "linkGdqpTraineeCitizen"
+   ],
+   "ra_soat": [
+    "196",
+    "215",
+    "215 K-03",
+    "216",
+    "235"
+   ]
+  },
+  {
+   "tep_app": "gdqp-refresher/workflow/refresher-quota.yaml",
+   "entity": "RefresherQuota",
+   "buoc": [
+    "setRefresherQuota",
+    "removeRefresherQuota"
+   ],
+   "ra_soat": [
+    "207 K-38",
+    "207 K-39"
+   ]
+  },
+  {
+   "tep_app": "gdqp-refresher/workflow/refresher-schedule.yaml",
+   "entity": "RefresherSchedule",
+   "buoc": [
+    "setRefresherSchedule",
+    "replaceRefresherSchedule"
+   ],
+   "ra_soat": [
+    "196",
+    "207 K-40",
+    "235"
+   ]
+  },
+  {
+   "tep_app": "superior-report/workflow/superior-report-request.yaml",
+   "entity": "SuperiorReportRequest",
+   "buoc": [
+    "markSuperiorReportResponded",
+    "linkReportDocument",
+    "rejectSuperiorReportResponse"
+   ],
+   "ra_soat": [
+    "196",
+    "235"
+   ]
+  },
+  {
+   "tep_app": "unit-organisation/workflow/unit.yaml",
+   "entity": "MilitiaUnit",
+   "buoc": [
+    "setReadiness",
+    "moveSubUnitOnDisband"
+   ],
+   "ra_soat": [
+    "196",
+    "222",
+    "222 K-29",
+    "222 K-30",
+    "222 L-09"
+   ]
+  }
+ ],
+ "_nguon": {
+  "app": "dqtv-app nhánh ux @ e6780ced (2026-11-05)",
+  "app_core_processes_giong_dev": "6017c8b0",
+  "tai_lieu": "du-an/dqtv/quy-trinh (119 tài liệu có bảng bước)",
+  "ra_soat": "RA-QT-TOAN-BO.zip",
+  "sinh_luc": "2026-11-05T17:09:56",
+  "ghi_chu": "So máy móc hai bên. «Không có trong khai báo app» chưa chứng minh app không làm việc ấy (vd bước hệ thống app làm bằng mã riêng); dùng để tool không chấm các TC đó, không phải kết luận lỗi."
+ }
+}

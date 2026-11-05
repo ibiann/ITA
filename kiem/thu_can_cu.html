@@ -1,0 +1,49 @@
+<!doctype html><html><head><meta charset="utf-8"></head>
+<!-- Trang mẫu kiểm bước 5 (quy tắc căn cứ). Chạy qua kiem/test_buoc5.py, không mở tay.
+     Bảng đặc tả dưới đây là MẪU THỬ do người viết phép kiểm soạn, không phải dữ liệu dự án. -->
+<body><header style="position:fixed;top:0;right:0;width:30%"><span>TQ Trợ lý mẫu</span></header>
+<aside style="position:fixed;left:0;top:0;width:200px;height:100vh"><a href="#/mau">Danh sách mẫu</a><br><a href="#/mau-2">Mẫu hai</a><br><a href="#/mau-3">Mẫu ba</a></aside>
+<main style="margin-left:220px"><h1>Danh sách mẫu</h1><p>Tỉ lệ hoàn thành: 150%</p><p>Tổng tiền: NaN</p><input type="text"></main>
+<script>window.__loi = []; addEventListener('error', e => __loi.push(e.message)); window.__log = []; for (const m of ['log', 'info', 'warn', 'error']) { const g = console[m]; console[m] = (...a) => { __log.push(m + ': ' + a.map(String).join(' ').slice(0, 200)); return g.apply(console, a); }; }</script>
+<script>   // màn «Mẫu ba» chỉ có phép kiểm tự đặt (phần trăm > 100): phải ra mức «ghi nhận»
+addEventListener('hashchange', () => { if (location.hash === '#/mau-3') document.querySelector('main').innerHTML = '<h1>Mẫu ba</h1><p>Tăng trưởng: 150%</p>'; });</script>
+<script src="tool.js"></script>
+<script>
+addEventListener('load', () => setTimeout(async () => {
+  const T = window.__dqtvThu, kq = {};
+  // 1. căn cứ của phép kiểm giao diện chung
+  kq.can_cu_kiem = Object.fromEntries([['api_loi', '500 /api/x'], ['o_khong_nhan', '1 ô'], ['phan_tram_vo_ly', '150%'], ['chu_la', 'NaN'], ['chu_la', 'firstName'], ['tran_ngang', '40px'], ['nut_chinh_nhieu', '3']]
+    .map(([k, v]) => [k + '=' + v, T.canCuKiem(k, v)[0]]));
+  // 2. chấm theo đặc tả MẪU THỬ trên dữ liệu quan sát dựng sẵn
+  const dacTa = [{ mau: { ten: 'MẪU THỬ — không phải dữ liệu dự án' }, __tep: 'mau-thu.json', dinh_danh: { ma: 'MAU', ten: 'MẪU THỬ' },
+      vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
+      truong: [{ ma: 'ho_ten', nhan: 'Họ tên', bat_buoc: true, nguon: 'B' }, { ma: 'loai', nhan: 'Loại', lua_chon: ['A', 'B'], nguon: 'B' }, { ma: 'so_cccd', nhan: 'Số CCCD', bat_buoc: true, nguon: 'UC' }],
+      buoc: [{ ma: 'B1', ten: 'Lập', nut: 'Thêm mới', vai: ['TQ'], xac_nhan: 'form', truong_phai_nhap: ['ho_ten', 'loai', 'so_cccd'], duong_dan_man: '/mau', nguon: 'B' },
+             { ma: 'B2', ten: 'Duyệt', nut: 'Phê duyệt', vai: ['TP'], duong_dan_man: '/mau', nguon: 'B' }] },
+    { mau: { loai_bang: 'khung' }, dinh_danh: { ma_ben_b: 'KHUNG-mau' }, vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
+      buoc: [{ ma: 'B1', nut: 'Thêm mới', vai: ['TQ'], duong_dan_man: '/mau', nguon: 'GD' }] }];
+  const quanSat = { tai_khoan: 'TQ Trợ lý mẫu', man_da_kiem: [{ tab: 'Mẫu', url: '/mau', nut_tren_man: 'Thêm mới · Xuất Excel' }],
+    form_da_mo: ['Mẫu | form «Thêm mới»'], bo_qua_khong_bam: [],
+    danh_muc_truong: [{ man: 'Mẫu', vung: 'form «Thêm mới»', nhan: 'Họ tên', loai: 'chữ', bat_buoc: 'Có', gia_tri: 'Nguyễn Văn A' },
+      { man: 'Mẫu', vung: 'form «Thêm mới»', nhan: 'Loại', loai: 'chọn', bat_buoc: 'Không', lua_chon: 'A; B', gia_tri: '' },
+      { man: 'Mẫu', vung: 'form «Thêm mới»', nhan: 'Ghi chú', loai: 'chữ', bat_buoc: 'Không', gia_tri: '' }] };
+  const gon = d => d.ket_qua.map(k => ({ ma: k.ma, kq: k.kq, can_cu: k.can_cu, dg: k.dg, loai_bang: k.loai_bang }));
+  const d0 = T.doiChieuDacTa(quanSat, dacTa);
+  kq.dong = gon(d0);
+  window.__dqtvQuyTac = Object.assign({}, window.__dqtvQuyTac, { nguon_da_duyet: ['UC'] });   // dữ liệu tự khai nguồn đã duyệt
+  kq.dong_khi_khai_uc = gon(T.doiChieuDacTa(quanSat, dacTa));
+  delete window.__dqtvQuyTac.nguon_da_duyet;
+  // 3. báo cáo HTML có cột căn cứ và mục ghi nhận
+  const html = T.sangHTML({ tai_khoan: 'TQ Trợ lý mẫu', van_de: [{ tab: 'Mẫu', url: '/mau', muc_do: 'ghi nhận', can_cu: 'phan_tram_vo_ly: tự đặt', phan_tram_vo_ly: '150%' }], danh_muc_truong: [], doi_chieu_dac_ta: d0 });
+  kq.html = { cot_can_cu: html.includes('<th>Căn cứ</th>'), muc_ghi_nhan: html.includes('GHI NHẬN — không có căn cứ'), chu_mau_thu: html.includes('mau-thu.json') };
+  // 4. chạy thật trên trang này (chỉ đọc), đọc kết quả lần chạy vừa xong
+  let loiChay = '';
+  try { await dqtv.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
+  kq.go_loi = { loi_chay: loiChay, khoa: Object.keys(localStorage), nk: (localStorage.getItem('dqtv.nk.v3261') || '').slice(-900), log: __log.slice(-25) };
+  const khoa = Object.keys(localStorage).find(k => k.startsWith('dqtv.last.v3261'));
+  const kqChay = khoa ? JSON.parse(localStorage.getItem(khoa)) : null;
+  kq.chay = kqChay ? (kqChay.van_de || []).map(r => ({ muc_do: r.muc_do, can_cu: r.can_cu })) : 'không có kết quả lần chạy';
+  kq.loi_js = __loi.join(' | ') || 'không';
+  document.body.setAttribute('data-kq', JSON.stringify(kq));
+}, 800));
+</script></body></html>

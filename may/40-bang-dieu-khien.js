@@ -1,10 +1,10 @@
 /* ============================================================= *
- * 5. BẢNG ĐIỀU KHIỂN (Shadow DOM) + CÁC LỆNH ita.* (tên phụ dqtv.*)             *
+ * 5. BẢNG ĐIỀU KHIỂN (Shadow DOM) + CÁC LỆNH dqtv.*             *
  * ============================================================= */
 let host, root;
 function moBang() {
   if (host) { host.style.display = host.style.display === 'none' ? 'block' : 'none'; return; }
-  host = document.createElement('div'); host.id = 'ita-panel-host';
+  host = document.createElement('div'); host.id = 'dqtv-panel-host';
   // "all:initial" phải đứng TRƯỚC, nếu đứng sau sẽ xoá position/top/right/z-index → bảng nằm ngoài màn hình
   host.style.cssText = 'all:initial;position:fixed;top:12px;right:12px;z-index:2147483647;display:block';
   (document.documentElement || document.body).appendChild(host);
@@ -36,7 +36,7 @@ function moBang() {
     select,input{font:inherit;padding:4px;border:1px solid #ccc;border-radius:4px}
   </style>
   <div class="w">
-    <div class="h" id="h"><b>ITA · kiểm giao diện v5</b><button id="min" title="Thu gọn (Alt+Shift+D)">▁</button></div>
+    <div class="h" id="h"><b>DQTV · kiểm giao diện v3</b><button id="min" title="Thu gọn (Alt+Shift+D)">▁</button></div>
     <div class="tabs">
       <button data-t="run" class="on">Chạy</button>
       <button data-t="cfg">Cấu hình</button>
@@ -71,29 +71,29 @@ function veThe(t) {
         <button class="g" id="r-tay" title="Tự mở form / hồ sơ / hộp thoại rồi bấm để quét trường của nó">⌖ Quét màn này</button>
         <button class="g" id="r-dau" title="Bỏ điểm dừng của tài khoản này, chạy lại toàn bộ">⟲ Chạy lại từ đầu</button>
         <button class="g" id="r-nk" title="Tải nhật ký các thao tác gần nhất (giữ qua tải lại trang)">☰ Nhật ký</button>
+        <button class="g" id="r-nap" title="Chọn tệp quy trình / UC / TC để đối chiếu. Tệp công cụ không nhận ra sẽ được báo, không dùng">⇪ Nạp tệp</button>
+        <button class="g" id="r-napthu" title="Chọn cả một thư mục; công cụ đọc từng tệp bên trong">⇪ Nạp thư mục</button>
       </div>
       <div class="r"><label>Bộ cấu hình:
         <select id="r-hoso"><option value="">(đang dùng)</option><option value="nhanh">nhanh</option><option value="day-du">đầy đủ</option><option value="bao-mat">bảo mật</option><option value="kiem-ke-truong">chỉ kiểm kê trường</option></select></label>
       </div>
       <div class="prog" id="r-prog">Chưa chạy.</div>
       <div class="muted" id="r-note"></div>
-      <div class="prog" id="r-goi" style="color:#b3261e;white-space:pre-line"></div>
     </div>`));
-    { const t = KQ_TU_KIEM, g = kiemGoi(window.__itaDuAn, window.__itaDanhMucTC), lo = t && !t.dat;   // 3.31
-      root.getElementById('r-goi').textContent = [g && g + ': phần ma trận v7 tắt, luật giao diện vẫn chạy.', lo && 'Khoá nút Chạy: ' + t.ly_do + '. Xem ita.tuKiemChan().'].concat(t ? t.canh_bao : []).filter(Boolean).join('\n');
-      if (lo) for (const id of ['r-chay', 'r-loi', 'r-dau']) root.getElementById(id).disabled = true; }
-    root.getElementById('r-chay').onclick = () => { const h = root.getElementById('r-hoso').value; if (h) ita.hoSo(h); ita.chay(); };
+    root.getElementById('r-chay').onclick = () => { const h = root.getElementById('r-hoso').value; if (h) dqtv.hoSo(h); dqtv.chay(); };
     root.getElementById('r-tham').onclick = async () => {   // 3.6
-      const rows = await ita.thamDo(); if (!rows) return;
+      const rows = await dqtv.thamDo(); if (!rows) return;
       let box = root.getElementById('r-thamdo'); if (!box) { box = document.createElement('div'); box.id = 'r-thamdo'; root.getElementById('r-tham').closest('div').parentElement.appendChild(box); }
       box.innerHTML = '<table><thead><tr><th></th><th>Mục</th><th>Công cụ nhận ra</th></tr></thead><tbody>' + rows.map(r => '<tr><td>' + esc(r['']) + '</td><td>' + esc(r.muc) + '</td><td>' + esc(r.ket_qua) + (r.goi_y ? '<div class="muted">' + esc(r.goi_y) + '</div>' : '') + '</td></tr>').join('') + '</tbody></table>';
     };
-    root.getElementById('r-tam').onclick = () => { if (CO.tamDung) { ita.tiep(); root.getElementById('r-tam').textContent = '⏸ Tạm dừng'; } else { ita.tamDung(); root.getElementById('r-tam').textContent = '▶ Tiếp'; } };
-    root.getElementById('r-dung').onclick = () => ita.dung();
-    root.getElementById('r-loi').onclick = () => ita.chayLaiLoi();
-    root.getElementById('r-nk').onclick = () => { const ds = docNK(); taiTep('ita-nhat-ky-' + slugTK() + '-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.csv', '\ufeffgiờ,tài khoản,loại,nội dung,url\n' + ds.map(x => [x.t, x.tk, x.loai, x.nd, x.url].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(',')).join('\n'), 'text/csv'); ita.nhatKy(); };
-    root.getElementById('r-dau').onclick = () => { const h = root.getElementById('r-hoso').value; if (h) ita.hoSo(h); ita.chayLaiTuDau(); };
-    root.getElementById('r-tay').onclick = async () => { const n = root.getElementById('r-note'); n.textContent = 'Đang quét màn này…'; const ds = await ita.quetManNay(); n.textContent = 'Quét tay: ' + (ds ? ds.length : 0) + ' trường. Gom được ' + docTay().length + ' trường. Xuất: ita.xuat("truong-tay")'; };
+    root.getElementById('r-tam').onclick = () => { if (CO.tamDung) { dqtv.tiep(); root.getElementById('r-tam').textContent = '⏸ Tạm dừng'; } else { dqtv.tamDung(); root.getElementById('r-tam').textContent = '▶ Tiếp'; } };
+    root.getElementById('r-dung').onclick = () => dqtv.dung();
+    root.getElementById('r-loi').onclick = () => dqtv.chayLaiLoi();
+    root.getElementById('r-nk').onclick = () => { const ds = docNK(); taiTep('dqtv-nhat-ky-' + slugTK() + '-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.csv', '\ufeffgiờ,tài khoản,loại,nội dung,url\n' + ds.map(x => [x.t, x.tk, x.loai, x.nd, x.url].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(',')).join('\n'), 'text/csv'); dqtv.nhatKy(); };
+    root.getElementById('r-nap').onclick = () => dqtv.nap();
+    root.getElementById('r-napthu').onclick = () => dqtv.napThuMuc();
+    root.getElementById('r-dau').onclick = () => { const h = root.getElementById('r-hoso').value; if (h) dqtv.hoSo(h); dqtv.chayLaiTuDau(); };
+    root.getElementById('r-tay').onclick = async () => { const n = root.getElementById('r-note'); n.textContent = 'Đang quét màn này…'; const ds = await dqtv.quetManNay(); n.textContent = 'Quét tay: ' + (ds ? ds.length : 0) + ' trường. Gom được ' + docTay().length + ' trường. Xuất: dqtv.xuat("truong-tay")'; };
     // gợi ý tiếp tục nếu có điểm dừng
     TK = taiKhoan();
     let note = 'Tài khoản: ' + (TK || '(không nhận ra)') + '.';
@@ -116,15 +116,15 @@ function veThe(t) {
     </div>`));
     root.getElementById('c-txt').value = jsLiteral(show);
     root.getElementById('c-ap').onclick = () => {
-      try { const o = new Function('return (' + root.getElementById('c-txt').value + ')')(); const err = []; for (const k in o) { const e = kiemKieu(k, o[k]); if (e) err.push(e); } if (err.length) { root.getElementById('c-msg').textContent = '⚠ ' + err.join('; '); return; } ita.dat(o); root.getElementById('c-msg').textContent = '✔ Đã lưu.'; } catch (e) { root.getElementById('c-msg').textContent = '⚠ Sai cú pháp: ' + e.message; }
+      try { const o = new Function('return (' + root.getElementById('c-txt').value + ')')(); const err = []; for (const k in o) { const e = kiemKieu(k, o[k]); if (e) err.push(e); } if (err.length) { root.getElementById('c-msg').textContent = '⚠ ' + err.join('; '); return; } dqtv.dat(o); root.getElementById('c-msg').textContent = '✔ Đã lưu.'; } catch (e) { root.getElementById('c-msg').textContent = '⚠ Sai cú pháp: ' + e.message; }
     };
-    root.getElementById('c-lai').onclick = () => { ita.datLai(); veThe('cfg'); };
-    root.getElementById('c-xuat').onclick = () => { root.getElementById('c-txt').value = ita.xuatCauHinh(); root.getElementById('c-msg').textContent = 'Đã đưa cấu hình ra ô trên, copy để chuyển máy.'; };
-    root.getElementById('c-nhap').onclick = () => { try { ita.nhapCauHinh(root.getElementById('c-txt').value); root.getElementById('c-msg').textContent = '✔ Đã nhập.'; veThe('cfg'); } catch (e) { root.getElementById('c-msg').textContent = '⚠ ' + e.message; } };
+    root.getElementById('c-lai').onclick = () => { dqtv.datLai(); veThe('cfg'); };
+    root.getElementById('c-xuat').onclick = () => { root.getElementById('c-txt').value = dqtv.xuatCauHinh(); root.getElementById('c-msg').textContent = 'Đã đưa cấu hình ra ô trên, copy để chuyển máy.'; };
+    root.getElementById('c-nhap').onclick = () => { try { dqtv.nhapCauHinh(root.getElementById('c-txt').value); root.getElementById('c-msg').textContent = '✔ Đã nhập.'; veThe('cfg'); } catch (e) { root.getElementById('c-msg').textContent = '⚠ ' + e.message; } };
   }
   if (t === 'res') {
     let kq; try { kq = doChuoi(localStorage.getItem(KEY_LAST) || 'null'); } catch (e) {}
-    kq = (window.__ITA_AUDIT && window.__ITA_AUDIT.ketQua) || kq;
+    kq = (window.__DQTV_AUDIT && window.__DQTV_AUDIT.ketQua) || kq;
     if (!kq) { body.appendChild(el('<div class="muted">Chưa có kết quả.</div>')); return; }
     const head = el(`<div>
       <div class="r muted">${esc(kq.luc)} · ${kq.so_man_da_kiem} màn · cao ${kq.man_cao}, TB ${kq.man_trung_binh} · ô lỗi ${kq.o_nhap_co_loi}</div>
@@ -169,17 +169,17 @@ function veThe(t) {
           r.chuoi_dai_khong_ngat && 'Chuỗi dài không ngắt: ' + r.chuoi_dai_khong_ngat, r.dinh_dang_ngay_tron && 'Ngày trộn: ' + r.dinh_dang_ngay_tron, r.dinh_dang_so_tron && 'Số trộn: ' + r.dinh_dang_so_tron,
           r.tieu_de_lech_menu && 'Tiêu đề lệch menu: ' + r.tieu_de_lech_menu, r.nut_chinh_nhieu && 'Nhiều nút chính: ' + r.nut_chinh_nhieu, r.can_xac_nhan && 'Cần xác nhận: ' + r.can_xac_nhan].filter(Boolean).map(esc).join('<br>');   // 3.5: escape dữ liệu lấy từ trang
         const tr = el(`<tr class="row ${cls}"><td>${esc(r.tab)}</td><td><span class="pill ${pill}">${esc(r.muc_do)}</span></td><td>${van}</td></tr>`);
-        tr.onclick = () => ita.moMan(r.url, r.tab);
+        tr.onclick = () => dqtv.moMan(r.url, r.tab);
         body2.appendChild(tr);
       });
       wrap.appendChild(tb);
     };
     root.getElementById('f-muc').onchange = render;
-    root.getElementById('x-json').onclick = () => ita.xuat('json');
-    root.getElementById('x-csv').onclick = () => ita.xuat('csv');
-    root.getElementById('x-html').onclick = () => ita.xuat('html');
-    root.getElementById('x-mau').onclick = () => ita.xuat('mau');
-    root.getElementById('x-truong').onclick = () => ita.xuat('truong');
+    root.getElementById('x-json').onclick = () => dqtv.xuat('json');
+    root.getElementById('x-csv').onclick = () => dqtv.xuat('csv');
+    root.getElementById('x-html').onclick = () => dqtv.xuat('html');
+    root.getElementById('x-mau').onclick = () => dqtv.xuat('mau');
+    root.getElementById('x-truong').onclick = () => dqtv.xuat('truong');
     render();
   }
 }
@@ -205,7 +205,7 @@ function taiTep(ten, noiDung, kieu) {
   (document.body || document.documentElement).appendChild(a); a.click(); a.remove();
 }
 function sangCSV(kq) {
-  const rows = kq.van_de || []; const cols = ['tab', 'url', 'muc_do', 'du_lieu_nhay_cam', 'api_loi', 'js_loi', 'quy_trinh_loi', 'quy_trinh_trang_thai', 'rong_nhung_api_loi', 'o_khong_nhan', 'tieu_de_bi_cat', 'chu_la', 'phan_tram_vo_ly', 'so_dong_vuot_tong', 'van_dang_tai', 'tran_ngang', 'chan_ghi', 'nghi_ngo_so_lech',
+  const rows = kq.van_de || []; const cols = ['tab', 'url', 'muc_do', 'can_cu', 'du_lieu_nhay_cam', 'api_loi', 'js_loi', 'quy_trinh_loi', 'quy_trinh_trang_thai', 'rong_nhung_api_loi', 'o_khong_nhan', 'tieu_de_bi_cat', 'chu_la', 'phan_tram_vo_ly', 'so_dong_vuot_tong', 'van_dang_tai', 'tran_ngang', 'chan_ghi', 'nghi_ngo_so_lech',
     'ma_enum_lo', 'cat_chu_khong_tooltip', 'chuoi_dai_khong_ngat', 'dinh_dang_ngay_tron', 'dinh_dang_so_tron', 'tieu_de_lech_menu', 'nut_chinh_nhieu', 'can_xac_nhan'];
   const q = v => '"' + cheChuoi(v == null ? '' : v).replace(/"/g, '""') + '"';
   return '\ufeff' + cols.join(',') + '\n' + rows.map(r => cols.map(c => q(r[c])).join(',')).join('\n');
