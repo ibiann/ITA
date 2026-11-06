@@ -121,7 +121,7 @@ function cheChuoi(s) {
   return t;
 }
 
-const PHIEN_BAN = '3.26.1';
+const PHIEN_BAN = '3.26.6';
 const KEY_CFG = 'dqtv.cfg.v3261', KEY_CKPT = 'dqtv.ckpt.v3261', KEY_LAST = 'dqtv.last.v3261', KEY_TAY = 'dqtv.truongtay.v3261', KEY_SAP = 'dqtv.sap.v3261';
 // khóa của các bản trước (v3, v3.6, 3.17–3.26): dqtv.donBoNho() xoá để trả chỗ cho trình duyệt
 const KHOA_CU = /^dqtv\.(cfg|ckpt|last|truongtay|run|nk|sap)\.v3(24|25)?(\||$)|^dqtv\.dacta\.v(1|324|325)$/;
@@ -177,6 +177,16 @@ const slugTK = () => (TK || 'khong-ro-tai-khoan').normalize('NFD').replace(/[̀-
 function docTay() { try { return doChuoi(localStorage.getItem(KEY_TAY) || '[]') || []; } catch (e) { return []; } }
 
 // Chuyển RegExp <-> dạng lưu được {$re, f}
+// [10b] chữ nút gần tên bước: các từ của chữ ngắn hơn nằm đúng thứ tự trong chữ dài hơn (mỗi bên ≥ 2 từ, không trùng hẳn).
+// Vd «Ghi nhận nhiệm vụ» ~ «Ghi nhận nhiệm vụ được giao», «Lập buổi tuyên truyền» ~ «Lập kế hoạch buổi tuyên truyền». Chỉ là ứng viên: kết luận cần máy chủ xác nhận mã bước.
+const tuNut = s => String(s || '').toLowerCase().normalize('NFC').replace(/[«»"“”'().,:;!?…\/]/g, ' ').split(/\s+/).filter(Boolean);
+function ganChu(x, y) {
+  const a = tuNut(x), b = tuNut(y);
+  if (a.length < 2 || b.length < 2 || a.join(' ') === b.join(' ')) return false;
+  const [n, d] = a.length <= b.length ? [a, b] : [b, a]; let i = 0;
+  for (const w of d) if (w === n[i]) i++;
+  return i === n.length;
+}
 function hoaChuoi(o) {
   return JSON.stringify(o, (k, v) => v instanceof RegExp ? { $re: v.source, f: v.flags } : v);
 }
@@ -198,7 +208,7 @@ const KIEU = {
   moNutNghiepVu: 'boolean', boQuaNut: 'RegExp', moHoSoMoiTrangThai: 'boolean', maxTrangThai: 'number', tuTaiBaoCao: 'boolean', dungKhiMatPhien: 'boolean', mauManLoi: 'RegExp?', thuLaiLoiDaBiet: 'boolean',
   moDropdownTuyBien: 'boolean', maxMoChon: 'number', maxLuaChon: 'number', moRongMuc: 'boolean',
   truongMongDoi: 'object?',
-  kiemThietKe: 'boolean', kiemNgonTu: 'boolean', cauTrongThem: 'object', chuanDS: 'object',
+  kiemThietKe: 'boolean', kiemNgonTu: 'boolean', kiemTroNang: 'boolean', cauTrongThem: 'object', chuanDS: 'object',
 };
 function kiemKieu(k, v) {
   const t = KIEU[k]; if (!t) return 'không có khóa cấu hình tên "' + k + '"';

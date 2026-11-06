@@ -1,0 +1,58 @@
+<!doctype html><html><head><meta charset="utf-8"></head>
+<!-- Trang mẫu kiểm bước 11 (axe-core WCAG 2.2 AA, TC KHUNG-CHUNG / TRO_NANG / O_TIM). Chạy qua kiem/test_buoc11.py, không mở tay.
+     Trang cố ý có lỗi: chữ tương phản thấp, nút chỉ có biểu tượng không tên, ảnh không chữ thay thế, giờ ISO thô, mã camelCase, tiêu đề khác mục menu.
+     Bảng đặc tả, dữ liệu quan sát dưới đây là MẪU THỬ, không phải dữ liệu dự án. -->
+<body><header style="position:fixed;top:0;right:0;width:30%"><span>TQ Trợ lý mẫu</span></header>
+<aside style="position:fixed;left:0;top:0;width:200px;height:100vh"><a href="#/mau">Danh sách mẫu</a><br><a href="#/mau-2">Mẫu hai</a><br><a href="#/mau-3">Mẫu ba</a></aside>
+<main style="margin-left:220px"></main>
+<script>
+window.__loi = []; addEventListener('error', e => __loi.push(e.message)); window.__log = []; for (const m of ['log', 'info', 'warn', 'error']) { const g = console[m]; console[m] = (...a) => { __log.push(m + ': ' + a.map(String).join(' ').slice(0, 200)); return g.apply(console, a); }; }
+const MAN = {
+  '#/mau': '<h1>Danh sách mẫu</h1><p style="color:#c8c8c8;background:#fff">Chữ mờ khó đọc trên nền trắng</p><button class="nut-icon"><svg width="16" height="16"><rect width="16" height="16"/></svg></button>'
+    + '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="20" height="20"><p>Cập nhật lúc 2026-11-06T10:00:00Z</p><p>Loại: unitKind</p>',
+  '#/mau-2': '<h1>Tiêu đề khác hẳn</h1><p>Tổng: 3</p>', '#/mau-3': '<h1>Mẫu ba</h1><p>Tổng: 3</p>' };
+const ve = () => { document.querySelector('main').innerHTML = MAN[location.hash] || MAN['#/mau']; };
+addEventListener('hashchange', ve); ve();
+</script>
+<script src="tool.js"></script>
+<script>
+function phanChamSan() {
+  const T = window.__dqtvThu;
+  const dacTa = [{ mau: { ten: 'MẪU THỬ' }, __tep: 'TC v7', dinh_danh: { ma_ben_b: 'KHUNG', ten: 'Khung chung' }, vai: [], buoc: [],
+      ca_gd: ['CHU_CAT', 'THOI_DIEM', 'DEM_KHOP', 'DANH_MUC_VAI', 'TIM.KHONG_CO', 'TRAN_NGANG', 'O_CO_NHAN', 'TIM.KHONG_DAU', 'TIEU_DE_MENU', 'CCCD_12'].map(k => ({ ma: 'KHUNG-CHUNG.' + k, loai: 'KHUNG_CHUNG', vai: ['*'], man: '' })) },
+    { mau: { ten: 'MẪU THỬ' }, __tep: 'mau-thu.json', dinh_danh: { ma_ben_b: 'MAU', ten: 'MẪU THỬ' }, vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
+      buoc: [{ ma: 'B1', nut: 'Lập mẫu', ma_app: 'openX', vai: ['TQ'], duong_dan_man: '/mau/{id}', nguon: 'v7' }],
+      ca_gd: [{ ma: 'MAU.TRO_NANG', loai: 'TRO_NANG', vai: ['TQ'], man: '' }, { ma: 'MAU.O_TIM', loai: 'O_TIM', vai: ['TQ'], man: '' }, { ma: 'MAU.KHUNG_CHUNG', loai: 'KHUNG_CHUNG', vai: ['TQ'], man: '' }] },
+    { mau: { ten: 'MẪU THỬ' }, __tep: 'mau-thu.json', dinh_danh: { ma_ben_b: 'MAUB', ten: 'MẪU THỬ B' }, vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
+      buoc: [{ ma: 'B1', nut: 'Lập mẫu B', vai: ['TQ'], duong_dan_man: '/maub/{id}', nguon: 'v7' }], ca_gd: [{ ma: 'MAUB.TRO_NANG', loai: 'TRO_NANG', vai: ['TQ'], man: '' }] }];
+  const quanSat = { tai_khoan: 'TQ Trợ lý mẫu', form_da_mo: [], bo_qua_khong_bam: [], danh_sach_menu: ['Mẫu'], cua_so: '1450×943 (tỉ lệ 1)',
+    danh_muc_truong: [{ man: 'Mẫu › [hồ sơ đầu]', vung: 'trường hiển thị', nhan: 'Ngày cấp CCCD', loai: 'hiển thị', gia_tri: '01/02/2020' }],
+    man_da_kiem: [{ tab: 'Mẫu', url: '/mau', tieu_de_man: '—' }, { tab: 'Mẫu › [hồ sơ đầu]', url: '/mau/1', nut_tren_man: 'Lập mẫu' }, { tab: 'Mẫu B › [hồ sơ đầu]', url: '/maub/1', nut_tren_man: 'Lập mẫu B' }],
+    van_de: [{ tab: 'Mẫu › [hồ sơ đầu]', url: '/mau/1', cat_chu_khong_tooltip: '1 chỗ: Tên rất dài…' }],
+    ngon_tu: { dinh_dang_ngay_dung: [{ gia_tri: 'dd/mm/yyyy', lan: 4, so_man: 2 }] },
+    thu_o_nhap: [{ man: 'Mẫu › [hồ sơ đầu]', o: 'Tìm', loai: 'tìm · không tồn tại', loi: '' }, { man: 'Mẫu › [hồ sơ đầu]', o: 'Tìm', loai: 'tìm · có dấu', loi: 'API lỗi: 500 /api/tim' }, { man: 'Mẫu › [hồ sơ đầu]', o: 'Tìm', loai: 'tìm · không dấu', loi: '' }],
+    kiem_tro_nang: { cong_cu: 'axe-core mẫu', ds: [
+      { man: 'Mẫu › [hồ sơ đầu]', url: '/mau/1', vi_pham: [{ id: 'color-contrast', muc: 'serious', sc: ['1.4.3'], help: 'h', so: 2, vd: [] }], can_xem: [] },
+      { man: 'Mẫu B › [hồ sơ đầu]', url: '/maub/1', vi_pham: [{ id: 'region', muc: 'moderate', sc: [], help: 'h', so: 1, vd: [] }], can_xem: [] },
+      { man: 'Màn khác › form «Ghi»', url: '/khac/1', vi_pham: [{ id: 'select-name', muc: 'critical', sc: ['4.1.2'], help: 'h', so: 1 }], can_xem: [] },
+      { man: 'Việc của tôi', url: '/dqtv/viec-cua-toi', vi_pham: [{ id: 'color-contrast', muc: 'serious', sc: ['1.4.3'], help: 'h', so: 1 }], can_xem: [] }] },
+    buoc_may_chu: [{ tuyen: '/dqtv/viec-cua-toi', action: 'openX', label: 'Lập mẫu', allowed: true, ready: true, kind: '' }] };
+  window.__dqtvDanhMucTC = { tc: [['KHUNG-CHUNG.CHU_CAT', 0, [0]]], loai: ['KHUNG_CHUNG'], vai: ['*'], meta: { tep: 'mẫu' }, khong_chay: {} };
+  const d = T.doiChieuDacTa(quanSat, dacTa);
+  const P = T.phuDanhMucTC(quanSat, d); delete window.__dqtvDanhMucTC;
+  const dDung = T.doiChieuDacTa(Object.assign({}, quanSat, { dung_giua_chung: true }), dacTa);   // lần chạy dừng giữa chừng
+  return { dong: d.ket_qua.filter(k => k.loai_bang === 'đặc tả' && /TRO_NANG|O_TIM|KHUNG/.test(k.ma)).map(k => ({ ma: k.ma, kq: k.kq, dg: k.dg, nhom: k.nhom || '', mx: k.mat_xich == null ? null : String(k.mat_xich) })),
+    phu: { ap_dung: P.ap_dung, co_ket_qua: P.co_ket_qua }, dung_giua_chung: dDung.ket_qua.filter(k => /^KHUNG-CHUNG\./.test(k.ma)).map(k => k.ma + '=' + k.kq) };
+}
+addEventListener('load', () => setTimeout(async () => {
+  const kq = { cham: phanChamSan() };
+  let loiChay = ''; const t0 = Date.now();
+  try { await dqtv.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
+  const r = (window.__DQTV_AUDIT || {}).ketQua || {};
+  kq.chay = { loi_chay: loiChay, giay: Math.round((Date.now() - t0) / 1000), tro_nang: r.kiem_tro_nang ? { cong_cu: r.kiem_tro_nang.cong_cu, ds: r.kiem_tro_nang.ds.map(x => ({ man: x.man, loi: x.loi || '', vi_pham: (x.vi_pham || []).map(v => v.id + '|' + v.muc + '|' + v.sc.join('/')) })) } : null,
+    van_de: (r.van_de || []).map(v => ({ tab: v.tab, wcag_loi: v.wcag_loi || '', gio: v.gio_khong_chuan || '', menu: v.tieu_de_lech_menu || '', chu_la: v.chu_la || '', ma_enum: v.ma_enum_lo || '', can_cu: v.can_cu, muc: v.muc_do })),
+    html: (() => { const h = window.__dqtvThu.sangHTML(r); return { tro_nang: h.includes('Kiểm trợ năng tự động — axe-core'), tuong_phan: h.includes('1.4.3 tương phản chữ') }; })() };
+  kq.log = __log.slice(-30); kq.loi_js = __loi.join(' | ') || 'không';
+  document.body.setAttribute('data-kq', JSON.stringify(kq));
+}, 800));
+</script></body></html>

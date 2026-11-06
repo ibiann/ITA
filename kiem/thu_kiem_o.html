@@ -3,13 +3,16 @@
      Tên ô (name) là tên thật trong du-an/dqtv/gioi-han-o.json; form và thuộc tính trên ô là MẪU THỬ do người viết phép kiểm soạn. -->
 <body><header style="position:fixed;top:0;right:0;width:30%"><span>TQ Trợ lý mẫu</span></header>
 <aside style="position:fixed;left:0;top:0;width:200px;height:100vh"><a href="#/mau">Hồ sơ mẫu</a><br><a href="#/mau-2">Mẫu hai</a><br><a href="#/mau-3">Mẫu ba</a></aside>
-<main style="margin-left:220px"><h1>Hồ sơ mẫu</h1><button type="button" id="mo">Thêm mới</button></main>
+<main style="margin-left:220px"><h1>Hồ sơ mẫu</h1><button type="button" id="mo">Thêm mới</button><button type="button" id="mo2" style="display:none">Thêm mới</button></main>
+<!-- [12] form thứ hai cùng chữ nút «Thêm mới» ở màn khác: chỉ form này có ô «Ô sau» (ca nhập ô không thấy ở form đầu phải được chạy lại ở đây) -->
+<div id="dlg2" role="dialog" style="display:none;position:fixed;top:40px;left:260px;background:#fff;border:1px solid #999;padding:12px;width:520px">
+<p><label for="s">Ô sau</label><input id="s"></p><button type="button" id="huy2">Huỷ</button></div>
 <div id="dlg" role="dialog" style="display:none;position:fixed;top:40px;left:260px;background:#fff;border:1px solid #999;padding:12px;width:520px">
 <form onsubmit="window.__guiForm = true; return false">
 <!-- đúng khai báo: title maxLength 300 -->
 <p><label for="a">Tiêu đề</label><input id="a" name="title" maxlength="300" value="Tiêu đề cũ"></p>
 <!-- thiếu maxlength: note khai báo maxLength 4000 -->
-<p><label for="b">Ghi chú</label><textarea id="b" name="note">Ghi chú cũ</textarea></p>
+<p><label for="b">Ghi chú<span class="fos-hint"> · không bắt buộc</span></label><textarea id="b" name="note">Ghi chú cũ</textarea></p>
 <!-- tên có 3 khai báo; ô mang maxlength 40 + pattern → khớp khai báo số quyết định -->
 <p><label for="c">Số quyết định</label><input id="c" name="decisionNumber" maxlength="40" pattern="^[0-9]+[\/\-][^@#]+$"></p>
 <!-- có minlength 10 (khai báo DeploymentOrder.resultSummary) -->
@@ -24,13 +27,21 @@
 </form></div>
 <script>window.__loi = []; addEventListener('error', e => __loi.push(e.message)); window.__log = []; for (const m of ['log', 'info', 'warn', 'error']) { const g = console[m]; console[m] = (...a) => { __log.push(m + ': ' + a.map(String).join(' ').slice(0, 300)); g.apply(console, a); }; }
 document.getElementById('mo').onclick = () => { document.getElementById('dlg').style.display = 'block'; };
-addEventListener('hashchange', () => { const o = location.hash === '#/mau' || location.hash === ''; document.getElementById('mo').style.display = o ? '' : 'none'; document.querySelector('main h1').textContent = o ? 'Hồ sơ mẫu' : 'Mẫu khác'; });
-document.getElementById('huy').onclick = () => { document.getElementById('dlg').style.display = 'none'; };</script>
+addEventListener('hashchange', () => { const o = location.hash === '#/mau' || location.hash === ''; document.getElementById('mo').style.display = o ? '' : 'none'; document.getElementById('mo2').style.display = location.hash === '#/mau-2' ? '' : 'none'; document.querySelector('main h1').textContent = o ? 'Hồ sơ mẫu' : 'Mẫu khác'; });
+document.getElementById('huy').onclick = () => { document.getElementById('dlg').style.display = 'none'; };
+document.getElementById('mo2').onclick = () => { document.getElementById('dlg2').style.display = 'block'; };
+document.getElementById('huy2').onclick = () => { document.getElementById('dlg2').style.display = 'none'; };</script>
 <script src="tool.js"></script>
 <script>
 addEventListener('load', () => setTimeout(async () => {
   const kq = {};
   let loiChay = '';
+  // [12] bảng đặc tả MẪU THỬ có ca nhập ô của nút «Thêm mới» (đợi bộ nạp dữ liệu gói sẵn chạy xong rồi mới đặt, để không bị ghi đè)
+  for (let n = 0; n < 50 && !Array.isArray(window.__dqtvDacTaBoNho); n++) await new Promise(r => setTimeout(r, 100));
+  window.__dqtvDacTaBoNho = [{ mau: { ten: 'MẪU THỬ' }, __tep: 'mau-thu.json', dinh_danh: { ma_ben_b: 'MAU', ten: 'MẪU THỬ' }, vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
+    buoc: [{ ma: 'B1', nut: 'Thêm mới', ten: 'Thêm mới', vai: ['TQ'] }], truong: [],
+    tc_nhap: [{ ma: 'MAU.B1.NHAP.note.HOP_LE', buoc: 'B1', nut: 'Thêm mới', nhan: 'ghi chú', gia_tri: 'Kiểm thử tự động', mong_doi: 'hop_le', nguon: 'v7' },
+      { ma: 'MAU.B1.NHAP.o_sau.HOP_LE', buoc: 'B1', nut: 'Thêm mới', nhan: 'ô sau', gia_tri: 'abc', mong_doi: 'hop_le', nguon: 'v7' }] }];
   try { await dqtv.chay({ tenMienDuocChay: null, kiemKeTruong: true, moFormDeKiemKe: true, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
   const khoa = Object.keys(localStorage).find(k => k.startsWith('dqtv.last.'));
   const kqChay = khoa ? JSON.parse(localStorage.getItem(khoa)) : null;
@@ -38,6 +49,8 @@ addEventListener('load', () => setTimeout(async () => {
   kq.go_loi = { khoa: Object.keys(localStorage), log: __log.slice(-20) };
   kq.kiem_o = kqChay ? kqChay.kiem_o : 'không có kết quả lần chạy';
   kq.form_da_mo = kqChay ? kqChay.form_da_mo : [];
+  kq.tc_nhap = kqChay ? (kqChay.tc_nhap_kq || []).map(x => ({ ma: x.ma, kq: x.kq, dg: x.dg, man: x.man })) : [];
+  kq.nhan_o = kqChay ? (kqChay.danh_muc_truong || []).map(f => f.nhan) : [];
   kq.html_co_muc = kqChay && window.__dqtvThu ? window.__dqtvThu.sangHTML(kqChay).includes('Kiểm ô theo khai báo giới hạn của app') : 'không dựng được HTML';
   kq.gia_tri_sau = { title: document.getElementById('a').value, note: document.getElementById('b').value, decisionNumber: document.getElementById('c').value, quantity: document.getElementById('f').value };
   kq.gui_form = !!window.__guiForm;

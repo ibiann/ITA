@@ -3,6 +3,7 @@
 # nén gzip + base64 vào window.__dqtvGoiSan; lúc khởi động tool giải nén và cho qua bộ đọc như tệp đã nạp.
 # Thư mục du-an/<dự án>/ trống thì vẫn ra tệp chạy được.
 # Thứ tự ghép: may/ có số < 90, rồi bo-doc/*.js (bộ đọc, nằm trong cùng khối mã), rồi may/ từ 90 (khởi động, đóng khối).
+# [bước 11] thu-vien/axe-core-<bản>/axe.min.js (Deque, MPL-2.0, giữ nguyên dòng giấy phép) đặt trước khối mã: kiểm trợ năng WCAG 2.2 AA, không tải gì từ mạng lúc chạy.
 # Chạy: python3 -I cong-cu/dong_goi.py [--du-an dqtv] [--ra <tệp ra>]
 import argparse, base64, csv, datetime, gzip, hashlib, io, json, pathlib, re, sys, zipfile
 
@@ -73,6 +74,9 @@ def main():
             dl = json.loads(tep.read_text(encoding='utf-8'))
             dau.append('window.%s = %s;\n' % (bien, json.dumps(dl, ensure_ascii=False, separators=(',', ':'))))
             print('kèm', tep.relative_to(GOC))
+    for axe in sorted((GOC / 'thu-vien').glob('axe-core-*/axe.min.js'))[-1:]:
+        dau.append('if (!window.axe) {\n' + axe.read_text(encoding='utf-8') + '\n}\n')   # dán lại lần nữa: không nạp axe hai lần
+        print('kèm', axe.relative_to(GOC))
     if gs:
         dau.append('window.__dqtvGoiSan = %s;\n' % json.dumps(gs, separators=(',', ':')))
         print('kèm sẵn %d tệp quy trình / TC (nén %d byte)' % (len(gs), sum(len(x['gz']) for x in gs)))

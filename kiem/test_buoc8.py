@@ -71,3 +71,12 @@ assert kq[('resultSummary', 'QUA_NGAN')] == 'CHƯA KIỂM' and 'minlength=10 đ�
 print('đạt: ô có maxlength cắt chữ khi gõ quá dài (cả ô số quyết định, chuỗi dài vẫn đúng mẫu); ô thiếu maxlength nhận quá dài → KHÁC KHAI BÁO; quá ngắn trên ô có minlength đúng → CHƯA KIỂM có lý do')
 assert k['html_co_muc'] is True
 print('đạt: báo cáo HTML có mục «Kiểm ô theo khai báo giới hạn của app»')
+# [12] ca nhập ô (TC) tìm ô theo nhãn: bỏ đuôi «· không bắt buộc» app ghi sau nhãn ô tuỳ chọn; «không thấy ô» không khoá ca
+print('ca nhập ô:', k['tc_nhap'])
+tn = {x['ma']: x for x in k['tc_nhap']}
+assert tn['MAU.B1.NHAP.note.HOP_LE']['kq'] == 'ĐẠT', tn
+assert 'Ghi chú' in k['nhan_o'] and not any('không bắt buộc' in (n or '') for n in k['nhan_o']), k['nhan_o']
+print('đạt: nhãn «Ghi chú · không bắt buộc» khớp ô «ghi chú» của TC; danh mục trường ghi nhãn không kèm đuôi')
+assert tn['MAU.B1.NHAP.o_sau.HOP_LE']['kq'] == 'ĐẠT' and 'Mẫu hai' in tn['MAU.B1.NHAP.o_sau.HOP_LE']['man'], tn
+assert sum(1 for x in k['tc_nhap'] if x['ma'] == 'MAU.B1.NHAP.o_sau.HOP_LE') == 1
+print('đạt: form đầu không có ô → không khoá; form sau cùng chữ nút có ô → chạy lại, thay dòng «không thấy ô», không trùng dòng')

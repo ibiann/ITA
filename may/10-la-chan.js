@@ -63,14 +63,14 @@ const NGUYEN_TAC = {
   rong_nhung_api_loi: 'Trạng thái lỗi phải khác trạng thái trống', van_dang_tai: 'Hiển thị trạng thái hệ thống: không treo ở "đang tải"',
   tran_ngang: 'Không cuộn ngang cả trang (WCAG 1.4.10 chỉ xét ở khổ 320px)', tieu_de_bi_cat: 'Không mất thông tin: tiêu đề bị cắt phải xem được đầy đủ',
   cat_chu_khong_tooltip: 'Không mất thông tin: chữ bị cắt "…" cần tooltip hoặc xuống dòng', chuoi_dai_khong_ngat: 'Layout chịu được dữ liệu xấu: chuỗi dài phải ngắt dòng',
-  o_khong_nhan: 'WCAG 1.3.1 / 4.1.2: ô nhập cần nhãn', truong_loi: 'Kiểm kê trường: xem danh mục trường',
+  o_khong_nhan: 'WCAG 1.3.1 / 4.1.2: ô nhập cần nhãn', wcag_loi: 'WCAG 2.2 A/AA (axe-core): mỗi luật vi phạm một dòng, kèm mục WCAG', gio_khong_chuan: 'Nhất quán: ngày giờ dạng dd/mm/yyyy hh:mm, không hiện chuỗi máy', truong_loi: 'Kiểm kê trường: xem danh mục trường',
   dinh_dang_ngay_tron: 'Nhất quán: một định dạng ngày trong toàn hệ thống', dinh_dang_so_tron: 'Nhất quán: một kiểu phân cách hàng nghìn',
   tieu_de_lech_menu: 'Nhất quán điều hướng: tiêu đề màn khớp mục menu', nut_chinh_nhieu: 'Một hành động chính mỗi màn',
   chan_ghi: 'Màn chỉ xem không nên tự gửi lệnh ghi', o_nhap: 'Tìm kiếm/lọc phải trả đúng kết quả và báo trống rõ ràng',
 };
 // [3.26.1] Căn cứ của từng phép kiểm giao diện chung. Chỉ «sự việc», «chuẩn», «đặc tả» được tính mức (cao / trung bình / thấp).
 // «tự đặt» = ngưỡng hay luật do người viết công cụ đặt, chưa có tài liệu dự án nào nói: chỉ GHI NHẬN, không tính là lỗi.
-const SU_VIEC = 'sự việc', CHUAN = 'chuẩn', DAC_TA = 'đặc tả', TU_DAT = 'tự đặt';
+const SU_VIEC = 'sự việc', CHUAN = 'chuẩn', DAC_TA = 'đặc tả', TU_DAT = 'tự đặt', TC_PM = 'TC v7';   // [11b] TC_PM: phép kiểm làm đúng thao tác + kết quả mong đợi của một TC KHUNG-CHUNG
 const CHU_LOI_MAY = /\b(NaN|undefined|null|\[object Object\]|Infinity|Invalid Date)\b/;
 const CAN_CU_KIEM = {
   api_loi: [SU_VIEC, 'máy chủ trả mã lỗi (HTTP ≥ 400) hoặc lỗi mạng'],
@@ -78,10 +78,17 @@ const CAN_CU_KIEM = {
   du_lieu_nhay_cam: [SU_VIEC, 'màn hiện thông tin hạ tầng, câu lệnh, mật khẩu hoặc khoá'],
   rong_nhung_api_loi: [SU_VIEC, 'máy chủ báo lỗi nhưng màn hiện «trống»'],
   so_dong_vuot_tong: [SU_VIEC, 'số dòng hiện ra lớn hơn tổng do chính màn đó ghi'],
-  chu_la: v => CHU_LOI_MAY.test(v) ? [SU_VIEC, 'màn hiện giá trị lỗi của máy (NaN, undefined, [object Object]…)'] : [TU_DAT, 'chữ giống tên biến (camelCase, {…}): công cụ đoán'],
+  chu_la: v => CHU_LOI_MAY.test(v) ? [SU_VIEC, 'màn hiện giá trị lỗi của máy (NaN, undefined, [object Object]…)'] : /[a-z][A-Z]|\b[A-Z]+_[A-Z]/.test(v) ? [TC_PM, 'KHUNG-CHUNG.MA_CHUA_DICH: không có giá trị dạng mã máy (CHỮ_HOA_GẠCH, camelCase)'] : [TU_DAT, 'chữ giống tên biến ({…}): công cụ đoán'],
+  ma_enum_lo: [TC_PM, 'KHUNG-CHUNG.MA_CHUA_DICH: không có giá trị dạng mã máy (CHỮ_HOA_GẠCH, camelCase)'],
+  cat_chu_khong_tooltip: [TC_PM, 'KHUNG-CHUNG.CHU_CAT: chữ bị cắt «…» phải rê chuột thấy đủ, hoặc xuống dòng'],
+  tieu_de_lech_menu: [TC_PM, 'KHUNG-CHUNG.TIEU_DE_MENU: tiêu đề màn trùng tên mục menu'],
+  van_dang_tai: [TC_PM, 'KHUNG-CHUNG.KHONG_TREO_TAI: không còn phần tử đang tải sau 10 giây'],
+  dinh_dang_ngay_tron: [TC_PM, 'KHUNG-CHUNG.THOI_DIEM: ngày giờ dạng dd/mm/yyyy hh:mm'],
+  gio_khong_chuan: [TC_PM, 'KHUNG-CHUNG.THOI_DIEM: ngày giờ dạng dd/mm/yyyy hh:mm, không có chuỗi ISO thô'],
   quy_trinh_loi: [DAC_TA, 'luật khai trong cấu hình dacTa'],
   o_khong_nhan: [CHUAN, 'WCAG 2.2 SC 1.3.1, 4.1.2: ô nhập phải có tên đọc được bằng máy (label, aria-label, title)'],
-  tran_ngang: () => innerWidth <= 320 ? [CHUAN, 'WCAG 2.2 SC 1.4.10 (khổ ' + innerWidth + 'px)'] : [TU_DAT, 'cuộn ngang ở khổ ' + innerWidth + 'px; WCAG 1.4.10 chỉ xét ở khổ 320px'],
+  wcag_loi: () => [CHUAN, 'WCAG 2.2 mức A/AA, đo bằng axe-core ' + ((window.axe || {}).version || '') + ' (bộ luật wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa)'],
+  tran_ngang: () => innerWidth <= 320 ? [CHUAN, 'WCAG 2.2 SC 1.4.10 (khổ ' + innerWidth + 'px)'] : [1366, 1920].includes(innerWidth) ? [TC_PM, 'KHUNG-CHUNG.TRAN_NGANG: trang không rộng hơn cửa sổ (khổ ' + innerWidth + 'px)'] : [TU_DAT, 'cuộn ngang ở khổ ' + innerWidth + 'px; WCAG 1.4.10 xét ở 320px, TC KHUNG-CHUNG.TRAN_NGANG ở 1366 và 1920px'],
 };
 const canCuKiem = (k, v) => { const x = CAN_CU_KIEM[k]; return (typeof x === 'function' ? x(v) : x) || [TU_DAT, 'ngưỡng hoặc luật do công cụ đặt, chưa có tài liệu dự án']; };
 const coCanCu = (k, v) => canCuKiem(k, v)[0] !== TU_DAT;

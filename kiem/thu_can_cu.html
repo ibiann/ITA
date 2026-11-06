@@ -38,7 +38,7 @@ addEventListener('load', () => setTimeout(async () => {
   kq.html = { cot_can_cu: html.includes('<th>Căn cứ</th>'), muc_ghi_nhan: html.includes('GHI NHẬN — không có căn cứ'), chu_mau_thu: html.includes('mau-thu.json') };
   // 4. chạy thật trên trang này (chỉ đọc), đọc kết quả lần chạy vừa xong
   let loiChay = '';
-  try { await dqtv.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
+  try { await dqtv.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false, kiemTroNang: false }); /* bước 11: tắt axe (trang mẫu thiếu lang, title), phép thử này chỉ xét căn cứ của bước 5 */ } catch (e) { loiChay = e.message; }
   kq.go_loi = { loi_chay: loiChay, khoa: Object.keys(localStorage), nk: (localStorage.getItem('dqtv.nk.v3261') || '').slice(-900), log: __log.slice(-25) };
   const khoa = Object.keys(localStorage).find(k => k.startsWith('dqtv.last.v3261'));
   const kqChay = khoa ? JSON.parse(localStorage.getItem(khoa)) : null;

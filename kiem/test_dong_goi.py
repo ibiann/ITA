@@ -48,9 +48,12 @@ for x in khac:
 # bước 8: SO_B8 dòng thêm (kiểm ô theo khai báo giới hạn của app: 120 dòng ở 30-loi-kiem.js, 1 dòng mục báo cáo ở 60-bao-cao.js)
 # bước 7c + 9: SO_B9 dòng (30-loi-kiem.js 1 dòng do_phu_quy_trinh; 50-doi-chieu-dac-ta.js 7 dòng: danh mục TC v7 sau ghép và lý do TC không chạy; 60-bao-cao.js 1 dòng mục «Độ phủ quy trình»);
 # phần còn lại của 7c/7d nằm ở 70-nap.js (tệp mới) và bo-doc/
-SO_B4, SO_B5, SO_B6, SO_B8, SO_B9 = 18, 77, 8, 121, 9
+# bước 10: SO_B10 dòng (điểm dừng đầy đủ ở IndexedDB, danh sách bước máy chủ, nút theo mã bước, mắt xích; 20-cau-hinh.js, 30-loi-kiem.js, 50-doi-chieu-dac-ta.js, 60-bao-cao.js)
+# bước 11: SO_B11 dòng (axe-core WCAG 2.2 AA, chấm TC TRO_NANG / KHUNG-CHUNG / O_TIM, căn cứ TC v7 cho phép kiểm chung khớp TC)
+# bước 12: SO_B12 dòng (30-loi-kiem.js: nhãn ô bỏ đuôi «· không bắt buộc» của app; ca nhập ô «không thấy ô» không khoá, chạy lại ở form sau)
+SO_B4, SO_B5, SO_B6, SO_B8, SO_B9, SO_B10, SO_B11, SO_B12 = 18, 77, 8, 121, 9, 129, 167, 5
 assert moi == ['70-nap.js'], 'tệp mới trong may/: %s' % moi
-assert len(khac) == 33 + SO_B4 + SO_B5 + SO_B6 + SO_B8 + SO_B9, 'số dòng đổi so với 3.26 là %d' % len(khac)
+assert len(khac) == 33 + SO_B4 + SO_B5 + SO_B6 + SO_B8 + SO_B9 + SO_B10 + SO_B11 + SO_B12, 'số dòng đổi so với 3.26 là %d' % len(khac)
 print('đạt: may/ khác 3.26 %d dòng đã định, thêm tệp mới %s' % (len(khac), ', '.join(moi)))
 
 # 6. dòng mã (không tính chú thích) trong may/ không còn chữ riêng DQTV

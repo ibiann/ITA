@@ -18,7 +18,8 @@
     const hoc = new Map();
     for (const r of gop.tc_v7 || []) for (const p of String(r['Vai'] || '').split(';')) { const m = /^\s*(.+?)\s*\(`([^`]+)`\)\s*$/.exec(p); if (m) { if (!hoc.has(m[2])) hoc.set(m[2], new Set()); hoc.get(m[2]).add(m[1].trim()); } }
     const tenMa = new Map([...hoc].filter(([, v]) => v.size === 1).map(([k, v]) => [k, [...v][0]]));
-    const vaiTC = s => String(s || '').split(';').map(x => { const t = tenVai(x); return tenMa.get(t) || t; }).filter(Boolean);
+    // bộ TC đề xuất 05/11 (PM cho tự duyệt) ghi điều kiện đơn vị ngay trong cột Vai, vd «Trợ lý Tác huấn (thuộc cấp trên của chủ hồ sơ)»: bỏ điều kiện, điều kiện lấy từ tài liệu như TC v7
+    const vaiTC = s => String(s || '').split(';').map(x => { const t = tenVai(x).replace(/\s*\(thuộc [^()]*\)$/, ''); return tenMa.get(t) || t; }).filter(Boolean);
     // tên bước → tài liệu đang chứa bước ấy (để báo bước đã chuyển sang tài liệu khác)
     const buocO = new Map(); for (const d of gop.quy_trinh_tl || []) for (const b of d.buoc) if (!buocO.has(b.ten)) buocO.set(b.ten, d.tep);
     const buocO2 = new Map(); for (const d of gop.quy_trinh_tl || []) for (const b of d.buoc) if (!buocO2.has(b.ten)) buocO2.set(b.ten, { ma: d.ma, buoc: b.ma });
@@ -30,8 +31,39 @@
     // vai cùng tên hiển thị nhưng khác mã trong sổ (vd approver, commander cùng «Chỉ huy trưởng Ban CHQS xã»): công cụ nhận vai theo tên hiển thị nên không phân biệt được
     const tenTrung = d => { const m = new Map(); for (const v of d.vai) if (v.ten && v.ma && v.ma !== '—') { if (!m.has(v.ten)) m.set(v.ten, new Set()); m.get(v.ten).add(v.ma); } return new Map([...m].filter(([, x]) => x.size > 1)); };
     const trungCua = new Map();
-    const bang = new Map(), tc = [];
+    // [10e] TC theo tài liệu (quy trình) — để nối TC v7 của bước đã dời sang tài liệu cùng họ (qt-8 → qt-8.revocation) với TC đề xuất của tài liệu mới
+    const tcTheoQT = new Map(); for (const r of gop.tc_v7 || []) if (/^M1/.test(r['Bộ chạy đích'] || '')) { const q = r['Quy trình']; if (!tcTheoQT.has(q)) tcTheoQT.set(q, []); tcTheoQT.get(q).push(r); }
+    const tuongUng = (r, loai, nut, dich, vai) => (tcTheoQT.get(dich) || []).find(x => x['Loại ca tool'] === loai && cacO(x['Thao tác'])[0] === nut
+      && vaiTC(x['Vai']).some(v => vai.includes(v))
+      && (loai !== 'TRUONG' || cacO(x['Kết quả mong đợi'])[0] === cacO(r['Kết quả mong đợi'])[0])
+      && (loai !== 'NHAP' || (cacO(x['Thao tác'])[1] === cacO(r['Thao tác'])[1] && x['Dữ liệu nhập'] === r['Dữ liệu nhập'])));
+    const bang = new Map(), tc = [], troNang = [];
+    const bangCua = (qt, d) => {
+      let dt = bang.get(qt);
+      if (!dt) {
+        dt = { mau: { ten: 'ghép v7 × tài liệu quy trình' }, dinh_danh: { ma_ben_b: qt, ten: d ? d.ten : qt }, __tep: d ? d.tep : 'TC v7', __v7: true,
+          vai: d ? [...new Set(d.vai.map(v => v.ten).filter(v => v && v !== '—'))].map(v => ({ ma: v, ten: v, nhan_dang_nhap: v })) : [],   // một vai có thể nhiều dòng (kèm điều kiện); «—» = không ghi vai
+          trang_thai: d ? d.chang.filter(c => c.ma).map(c => ({ ma: c.ma, nhan: c.nhan, ket_thuc: c.ket_thuc })) : [], truong: [], buoc: [], tc_nhap: [] };
+        bang.set(qt, dt);
+      }
+      return dt;
+    };
     for (const r of gop.tc_v7 || []) {
+      // [11a] TC trợ năng (TRO_NANG), [11b] khung chung (KHUNG_CHUNG) và ô tìm (DAU_VAO): mỗi quy trình một TC (KHUNG-CHUNG.* dùng chung mọi vai);
+      // chấm bằng phép kiểm giao diện chung trên màn của quy trình, không qua phần ghép bước
+      const loaiGD = /^TRO_NANG/.test(r['Loại ca tool'] || '') ? 'TRO_NANG' : /^KHUNG_CHUNG/.test(r['Loại ca tool'] || '') ? 'KHUNG_CHUNG' : /^DAU_VAO/.test(r['Loại ca tool'] || '') ? 'O_TIM' : '';
+      if (/^M1/.test(r['Bộ chạy đích'] || '') && loaiGD) {
+        const qt = r['Quy trình'], o = { ma: r['Mã TC'], ma_uc: r['Mã UC'], quy_trinh: qt, loai: loaiGD, vai: vaiTC(r['Vai']), trang_thai: r['Trạng thái TC'], can_cu_ben_b: r['Căn cứ đặc tả Bên B'], uu_tien: r['Ưu tiên'] };
+        tc.push(o);
+        if (/chờ PM quyết/.test(o.trang_thai)) { o.khong_chay = 'TC chờ PM quyết'; continue; }
+        const go = goApp.get(qt);
+        if (go) { o.khong_chay = 'tài liệu ' + go.tep + ' tả quy trình mà ' + appBan + ' không còn khai báo (' + go.tep_app + ')' + rs(go); o.nhom = 'QUY TRÌNH'; continue; }
+        const d = tl.get(qt);
+        if (/^KHUNG-CHUNG\./.test(o.ma)) o.vai = ['*'];   // «mọi vai có tài khoản»
+        o.can_cu = (d ? d.tep : 'TC v7') + ' (TC ' + loaiGD + '; kết quả mong đợi: ' + (r['Kết quả mong đợi'] || '') + ')';
+        troNang.push({ o, d, man: /^\//.test((r['Màn'] || '').trim()) ? r['Màn'].trim() : '' });
+        continue;
+      }
       if (!/^M1/.test(r['Bộ chạy đích'] || '') || !LOAI.includes(r['Loại ca tool'])) continue;
       const qt = r['Quy trình'], ma = r['Mã TC'], loai = r['Loại ca tool'];
       const o = { ma, ma_uc: r['Mã UC'], quy_trinh: qt, loai, vai: vaiTC(r['Vai']), trang_thai: r['Trạng thái TC'], can_cu_ben_b: r['Căn cứ đặc tả Bên B'], uu_tien: r['Ưu tiên'] };
@@ -48,9 +80,14 @@
         khop = d.buoc.filter(b => b.ten === nut);
         if (!khop.length) {
           const app = (d.buoc_app || []).find(b => b.ten === nut && b.so === '—'), khac = buocO.get(nut);
+          const dich = (gop.quy_trinh_tl || []).find(x => x.ma.startsWith(qt + '.') && x.buoc.some(b => b.ten === nut));
+          if (dich) {
+            const x = tuongUng(r, loai, nut, dich.ma, o.vai);
+            if (x) { o.khong_chay = 'bước «' + nut + '» đã dời sang ' + dich.tep + '; kết quả lấy theo TC đề xuất ' + x['Mã TC'] + ' (cùng bước, loại ca, vai)'; o.chay_duoi = x['Mã TC']; o.nhom = 'TC'; continue; }
+          }
           o.khong_chay = d.buoc.some(b => b.ma === nut) ? 'TC ghi mã bước «' + nut + '» thay cho chữ trên nút'
             : app ? 'TC lệch tài liệu: bước «' + nut + '» chỉ có trong khai báo của app (' + d.tep + ' dòng ' + app.dong + '), sổ nghiệp vụ không ghi, tài liệu không ghi vai làm' + (khac && khac !== d.tep ? '; sổ nay để bước này ở ' + khac + (() => { const o2 = buocO2.get(nut), ck = o2 && changCua(o2.ma, o2.buoc); return ck ? rs(ck) : ''; })() : '')
-            : khac ? 'TC lệch tài liệu: bước «' + nut + '» nay ở ' + khac + ', không còn ở ' + d.tep
+            : khac ? 'TC lệch tài liệu: bước «' + nut + '» nay ở ' + khac + ', không còn ở ' + d.tep + (dich ? '; bộ đề xuất chưa có TC tương ứng' : '')
               + (() => { const o2 = buocO2.get(nut), ck = o2 && changCua(o2.ma, o2.buoc); return ck ? '; nhưng ' + appBan + ' vẫn để bước ' + ck.ma_buoc + ' ở ' + ck.tep_app + ', từ chặng ' + ck.tu_app.join(', ') + rs(ck) : ''; })()
             : 'TC lệch tài liệu: ' + d.tep + ' không còn bước «' + nut + '»';
           o.cho_pm = true; continue;
@@ -71,17 +108,11 @@
         o.can_cu = d.tep + ' dòng ' + khop[0].dong + ' (mục 7, bước «' + nut + '»' + (dk.length ? '; tài liệu ghi điều kiện: ' + dk.join('; ') : '') + ')';
       } else o.can_cu = 'không có tài liệu quy trình «' + qt + '» để đối chiếu; chỉ theo TC';
       // bảng của quy trình: vai và chặng lấy từ tài liệu; bước, ô, ca nhập ô lấy từ TC
-      let dt = bang.get(qt);
-      if (!dt) {
-        dt = { mau: { ten: 'ghép v7 × tài liệu quy trình' }, dinh_danh: { ma_ben_b: qt, ten: d ? d.ten : qt }, __tep: d ? d.tep : 'TC v7', __v7: true,
-          vai: d ? [...new Set(d.vai.map(v => v.ten).filter(v => v && v !== '—'))].map(v => ({ ma: v, ten: v, nhan_dang_nhap: v })) : [],   // một vai có thể nhiều dòng (kèm điều kiện); «—» = không ghi vai
-          trang_thai: d ? d.chang.filter(c => c.ma).map(c => ({ ma: c.ma, nhan: c.nhan, ket_thuc: c.ket_thuc })) : [], truong: [], buoc: [], tc_nhap: [] };
-        bang.set(qt, dt);
-      }
+      const dt = bangCua(qt, d);
       if (!d) for (const v of o.vai) if (!dt.vai.some(x => x.ma === v)) dt.vai.push({ ma: v, ten: v, nhan_dang_nhap: v });
       let b = dt.buoc.find(x => x.ma === bm[1]);
       if (!b) {
-        b = { ma: bm[1], ten: nut, nut, vai: khop ? [...new Set(khop.map(x => tachAi(x.ai).ten))] : [], nguon: 'v7' };
+        b = { ma: bm[1], ten: nut, nut, vai: khop ? [...new Set(khop.map(x => tachAi(x.ai).ten))] : [], nguon: 'v7', ma_app: (khop && khop[0] && khop[0].ma) || '' };   // [10b] «Mã bước» của tài liệu = mã bước app
         const k = khop && khop[0];
         // chặng của bước trong tài liệu khác app: không giao chặng cho phần đối chiếu (không kiểm sai chặng, không đòi nhãn chặng)
         if (k && k.tu.length && !changCua(qt, k.ma)) { b.tu = k.tu[0]; b.tu_hop_le = k.tu; b.den = k.giu_nguyen ? k.tu[0] : (k.sang || k.tu[0]); }
@@ -90,7 +121,8 @@
       }
       if (!khop && loai === 'DUNG') for (const v of o.vai) if (!b.vai.includes(v)) b.vai.push(v);   // không có tài liệu: vai làm bước theo TC DUNG
       if (loai === 'XAC_NHAN') {
-        if (/^mở form$/.test(kqmd)) b.xac_nhan = 'form'; else if (/^mở hộp xác nhận$/.test(kqmd)) b.xac_nhan = 'hop_thoai';
+        // «…, chưa ghi gì»: câu của bộ đề xuất 05/11, cùng nghĩa với mẫu v7 (tool không bao giờ ghi)
+        if (/^mở form(, chưa ghi gì)?$/.test(kqmd)) b.xac_nhan = 'form'; else if (/^mở hộp xác nhận(, chưa ghi gì)?$/.test(kqmd)) b.xac_nhan = 'hop_thoai';
         else { o.khong_chay = 'kết quả mong đợi không theo mẫu «mở form» / «mở hộp xác nhận»'; continue; }
       } else if (loai === 'SAI_TRANG_THAI' && !b.duong_dan_man) o.ly_do = 'TC và tài liệu không ghi đường dẫn màn hồ sơ; công cụ chỉ kiểm sai chặng khi biết màn hồ sơ';
       else if (loai === 'TRUONG') {
@@ -112,6 +144,10 @@
         o.khong_chay = 'kết quả mong đợi không theo mẫu «thấy nút» / «không thấy nút»'; continue;
       }
     }
+    for (const { o, d, man } of troNang) { const dt = bangCua(o.quy_trinh, d); (dt.ca_gd = dt.ca_gd || []).push({ ma: o.ma, loai: o.loai, vai: o.vai, man }); }   // [11a][11b]
+    // [10e] TC đề xuất tương ứng mà chính nó không chạy được: TC v7 mang lý do của TC đề xuất, không trỏ tới kết quả không có
+    const theoMa = new Map(tc.map(o => [o.ma, o]));
+    for (const o of tc) { const o2 = o.chay_duoi && theoMa.get(o.chay_duoi); if (o2 && o2.khong_chay) { o.khong_chay = o.khong_chay.replace(/; kết quả lấy theo.*$/, '') + '; TC đề xuất tương ứng ' + o2.ma + ' không chạy được: ' + o2.khong_chay; o.nhom = o2.nhom; o.cho_pm = o2.cho_pm; o.chay_duoi = ''; } }
     // độ phủ: tài liệu chưa có TC v7 nào; từ trạng thái: tài liệu app không có, app chưa có tài liệu
     const coTC = new Set((gop.tc_v7 || []).map(r => r['Quy trình']));
     const do_phu = { chua_co_tc_v7: (gop.quy_trinh_tl || []).filter(d => !coTC.has(d.ma)).map(d => ({ ma: d.ma, tep: d.tep, so_buoc: d.buoc.length })),

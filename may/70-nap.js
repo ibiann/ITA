@@ -32,24 +32,36 @@ async function docGoiSan() {
 function lapDanhMucV7(ds, tep) {
   const loai = [], vai = [], li = x => { let i = loai.indexOf(x); if (i < 0) { i = loai.length; loai.push(x); } return i; }, vi = x => { let i = vai.indexOf(x); if (i < 0) { i = vai.length; vai.push(x); } return i; };
   const tc = [], khong_chay = {};
-  for (const o of ds) { tc.push([o.ma, li(o.loai), o.vai.map(vi)]); if (o.khong_chay) khong_chay[o.ma] = { ly_do: o.khong_chay, nhom: o.nhom || (o.cho_pm ? 'TC' : /chờ PM/.test(o.khong_chay) ? 'TC' : 'CÔNG CỤ') }; }
+  for (const o of ds) { tc.push([o.ma, li(o.loai), o.vai.map(vi)]); if (o.khong_chay) khong_chay[o.ma] = { ly_do: o.khong_chay, nhom: o.nhom || (o.cho_pm ? 'TC' : /chờ PM/.test(o.khong_chay) ? 'TC' : 'CÔNG CỤ'), chay_duoi: o.chay_duoi || '' }; }
   return { tc, loai, vai, khong_chay, meta: { tep } };
 }
 
-function moKho() {
+function moKho(ten = 'dqtv-kiem-tra') {
   return new Promise((ok, loi) => {
-    const r = indexedDB.open('dqtv-kiem-tra', 1);
+    const r = indexedDB.open(ten, 1);
     r.onupgradeneeded = () => r.result.createObjectStore('tep', { keyPath: 'ten' });
     r.onsuccess = () => ok(r.result); r.onerror = () => loi(r.error);
   });
 }
-async function kho(che, viec) {
-  const db = await moKho();
+async function kho(che, viec, ten) {
+  const db = await moKho(ten);
   return new Promise((ok, loi) => {
     const tx = db.transaction('tep', che), r = viec(tx.objectStore('tep'));
     tx.oncomplete = () => { db.close(); ok(r && r.result); };
     tx.onerror = () => { db.close(); loi(tx.error); };
   });
+}
+// [10a] điểm dừng đầy đủ khi localStorage hết chỗ: kho riêng, không lẫn với tệp đã nạp. Chạy tiếp chỉ dùng bản của đúng lượt chạy.
+const KHO_CKPT = 'dqtv-kiem-tra-ckpt';
+const luuCkptLon = (khoa, chu) => kho('readwrite', st => st.put({ ten: khoa, chu }), KHO_CKPT);
+const xoaCkptLon = khoa => kho('readwrite', st => st.delete(khoa), KHO_CKPT).catch(() => {});
+async function docCkptLon(ck) {
+  let day = null; try { const x = await kho('readonly', st => st.get(ckptKey()), KHO_CKPT); day = x && doChuoi(x.chu); } catch (e) {}
+  if (!day || day.luot !== ck.luot || day.tk !== ck.tk || day.origin !== ck.origin) return ck;   // không có bản đúng lượt: giữ bản gọn, báo cáo ghi mục mất kết quả
+  // bản đầy đủ có thể cũ hơn bản gọn vài mục (trang tải lại khi chưa ghi xong): các mục ấy chạy lại, không mất gì
+  day.sap = ck.sap; day.boQuaDoTaiLai = ck.boQuaDoTaiLai; day.matKq = ck.matKq;
+  for (const m of ck.boQuaDoTaiLai || []) if (!day.xong.includes(m)) day.xong.push(m);
+  return day;
 }
 const boDocCua = (ten, chu) => BO_DOC.find(b => { try { return b.nhan(ten, chu); } catch (e) { return false; } });
 

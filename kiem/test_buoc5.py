@@ -26,7 +26,7 @@ k = json.loads(html.unescape(m.group(1)))
 
 print('căn cứ phép kiểm chung:', k['can_cu_kiem'])
 assert k['can_cu_kiem'] == {'api_loi=500 /api/x': 'sự việc', 'o_khong_nhan=1 ô': 'chuẩn', 'phan_tram_vo_ly=150%': 'tự đặt', 'chu_la=NaN': 'sự việc',
-                            'chu_la=firstName': 'tự đặt', 'tran_ngang=40px': 'tự đặt', 'nut_chinh_nhieu=3': 'tự đặt'}
+                            'chu_la=firstName': 'TC v7', 'tran_ngang=40px': 'tự đặt', 'nut_chinh_nhieu=3': 'tự đặt'}
 print('đạt: phép kiểm chung có căn cứ rõ; ngưỡng tự đặt không tính là lỗi')
 
 for d in k['dong']: print('  ', d['kq'].ljust(10), d['ma'].ljust(26), '| căn cứ:', d['can_cu'] or '—')
