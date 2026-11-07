@@ -1,12 +1,12 @@
 # Kiểm bước 5 (quy tắc căn cứ). Chạy: python3 -I kiem/test_buoc5.py
-# Dựng bản thử = dist + một dòng xuất hàm nội bộ ra window.__dqtvThu (chỉ trong bản thử, không có trong dist),
+# Dựng bản thử = dist + một dòng xuất hàm nội bộ ra window.__itaThu (chỉ trong bản thử, không có trong dist),
 # nạp kiem/thu_can_cu.html trên máy chủ thử 127.0.0.1 trong Chrome chạy ngầm.
 import html, json, pathlib, re, socket, subprocess, sys, tempfile, time
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-dist = sorted((GOC / 'dist').glob('dqtv-kiem-tra-*.js'))[-1].read_text(encoding='utf-8')
+dist = sorted((GOC / 'dist').glob('ita-dqtv.js'))[-1].read_text(encoding='utf-8')
 assert dist.rstrip().endswith('})();'), 'dist không kết thúc bằng })();'
-thu = dist.rstrip()[:-len('})();')] + 'window.__dqtvThu = { doiChieuDacTa, sangHTML, canCuKiem };\n})();\n'
+thu = dist.rstrip()[:-len('})();')] + 'window.__itaThu = { doiChieuDacTa, sangHTML, canCuKiem };\n})();\n'
 
 with tempfile.TemporaryDirectory() as t:
     t = pathlib.Path(t)

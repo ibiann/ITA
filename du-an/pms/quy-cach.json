@@ -1,0 +1,13 @@
+{
+  "loai": "quy-cach-giao-dien",
+  "nguon": "openslides-client/CLAUDE.md §3 «Tiêu chí đối chiếu — số của chính LPM»",
+  "chuanDS": { "luoi": 2 },
+  "co_chu_px": [12, 14, 16, 18, 20, 24],
+  "bo_goc_px": [8, 10, 9999],
+  "_ghi_chu": {
+    "luoi": "khoảng cách theo thang Tailwind tw-*-{0.5…8}: bội của 2px (0.5 = 2px, 1.5 = 6px); không gõ [Npx]",
+    "co_chu_px": "chỉ cỡ có tên tw-text-xs/sm/base/lg/xl/2xl = 12/14/16/18/20/24px (tailwind.config.js không đổi mặc định); ⛔ không thêm cỡ mới",
+    "bo_goc_px": "nút / ô nhập 10px, nút nhỏ 8px, tw-rounded-full (9999px) chỉ cho ảnh đại diện, chấm trạng thái, viên đếm",
+    "chua_dua_vao": "màu chỉ dùng tên (không đếm được bằng số), chiều cao nút biểu tượng 36px, vùng bấm ≥ 44px ở màn trong phiên họp, mốc bề ngang 500/960/1280/1536: máy kiểm chưa có phép đo tương ứng"
+  }
+}

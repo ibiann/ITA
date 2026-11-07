@@ -17,7 +17,7 @@ addEventListener('hashchange', ve); ve();
 <script src="tool.js"></script>
 <script>
 function phanChamSan() {
-  const T = window.__dqtvThu;
+  const T = window.__itaThu;
   const dacTa = [{ mau: { ten: 'MẪU THỬ' }, __tep: 'TC v7', dinh_danh: { ma_ben_b: 'KHUNG', ten: 'Khung chung' }, vai: [], buoc: [],
       ca_gd: ['CHU_CAT', 'THOI_DIEM', 'DEM_KHOP', 'DANH_MUC_VAI', 'TIM.KHONG_CO', 'TRAN_NGANG', 'O_CO_NHAN', 'TIM.KHONG_DAU', 'TIEU_DE_MENU', 'CCCD_12'].map(k => ({ ma: 'KHUNG-CHUNG.' + k, loai: 'KHUNG_CHUNG', vai: ['*'], man: '' })) },
     { mau: { ten: 'MẪU THỬ' }, __tep: 'mau-thu.json', dinh_danh: { ma_ben_b: 'MAU', ten: 'MẪU THỬ' }, vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
@@ -37,9 +37,9 @@ function phanChamSan() {
       { man: 'Màn khác › form «Ghi»', url: '/khac/1', vi_pham: [{ id: 'select-name', muc: 'critical', sc: ['4.1.2'], help: 'h', so: 1 }], can_xem: [] },
       { man: 'Việc của tôi', url: '/dqtv/viec-cua-toi', vi_pham: [{ id: 'color-contrast', muc: 'serious', sc: ['1.4.3'], help: 'h', so: 1 }], can_xem: [] }] },
     buoc_may_chu: [{ tuyen: '/dqtv/viec-cua-toi', action: 'openX', label: 'Lập mẫu', allowed: true, ready: true, kind: '' }] };
-  window.__dqtvDanhMucTC = { tc: [['KHUNG-CHUNG.CHU_CAT', 0, [0]]], loai: ['KHUNG_CHUNG'], vai: ['*'], meta: { tep: 'mẫu' }, khong_chay: {} };
+  window.__itaDanhMucTC = { tc: [['KHUNG-CHUNG.CHU_CAT', 0, [0]]], loai: ['KHUNG_CHUNG'], vai: ['*'], meta: { tep: 'mẫu' }, khong_chay: {} };
   const d = T.doiChieuDacTa(quanSat, dacTa);
-  const P = T.phuDanhMucTC(quanSat, d); delete window.__dqtvDanhMucTC;
+  const P = T.phuDanhMucTC(quanSat, d); delete window.__itaDanhMucTC;
   const dDung = T.doiChieuDacTa(Object.assign({}, quanSat, { dung_giua_chung: true }), dacTa);   // lần chạy dừng giữa chừng
   return { dong: d.ket_qua.filter(k => k.loai_bang === 'đặc tả' && /TRO_NANG|O_TIM|KHUNG/.test(k.ma)).map(k => ({ ma: k.ma, kq: k.kq, dg: k.dg, nhom: k.nhom || '', mx: k.mat_xich == null ? null : String(k.mat_xich) })),
     phu: { ap_dung: P.ap_dung, co_ket_qua: P.co_ket_qua }, dung_giua_chung: dDung.ket_qua.filter(k => /^KHUNG-CHUNG\./.test(k.ma)).map(k => k.ma + '=' + k.kq) };
@@ -47,11 +47,11 @@ function phanChamSan() {
 addEventListener('load', () => setTimeout(async () => {
   const kq = { cham: phanChamSan() };
   let loiChay = ''; const t0 = Date.now();
-  try { await dqtv.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
-  const r = (window.__DQTV_AUDIT || {}).ketQua || {};
+  try { await ita.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
+  const r = (window.__ITA_AUDIT || {}).ketQua || {};
   kq.chay = { loi_chay: loiChay, giay: Math.round((Date.now() - t0) / 1000), tro_nang: r.kiem_tro_nang ? { cong_cu: r.kiem_tro_nang.cong_cu, ds: r.kiem_tro_nang.ds.map(x => ({ man: x.man, loi: x.loi || '', vi_pham: (x.vi_pham || []).map(v => v.id + '|' + v.muc + '|' + v.sc.join('/')) })) } : null,
     van_de: (r.van_de || []).map(v => ({ tab: v.tab, wcag_loi: v.wcag_loi || '', gio: v.gio_khong_chuan || '', menu: v.tieu_de_lech_menu || '', chu_la: v.chu_la || '', ma_enum: v.ma_enum_lo || '', can_cu: v.can_cu, muc: v.muc_do })),
-    html: (() => { const h = window.__dqtvThu.sangHTML(r); return { tro_nang: h.includes('Kiểm trợ năng tự động — axe-core'), tuong_phan: h.includes('1.4.3 tương phản chữ') }; })() };
+    html: (() => { const h = window.__itaThu.sangHTML(r); return { tro_nang: h.includes('Kiểm trợ năng tự động — axe-core'), tuong_phan: h.includes('1.4.3 tương phản chữ') }; })() };
   kq.log = __log.slice(-30); kq.loi_js = __loi.join(' | ') || 'không';
   document.body.setAttribute('data-kq', JSON.stringify(kq));
 }, 800));

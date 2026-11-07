@@ -1,5 +1,5 @@
 # Kiểm bước 7d + 9: đóng gói sẵn quy trình / TC v7 / trạng thái quy trình; không bấm Nạp vẫn có đủ. Chạy: python3 -I kiem/test_buoc9.py
-# Dựng bản thử bằng cong-cu/dong_goi.py (--ra, không ghi đè dist/) + một dòng xuất biến nội bộ ra window.__dqtvThu; chạy kiem/thu_goi_san.html
+# Dựng bản thử bằng cong-cu/dong_goi.py (--ra, không ghi đè dist/) + một dòng xuất biến nội bộ ra window.__itaThu; chạy kiem/thu_goi_san.html
 # trong Chrome thời gian thật (kiem/mo_chrome.mjs: IndexedDB treo ở chế độ thời gian ảo).
 import json, pathlib, socket, subprocess, sys, tempfile, time
 
@@ -10,11 +10,11 @@ assert tt['_nguon']['app'] and tt['tai_lieu_app_khong_co'] and tt['app_chua_co_t
 print('đạt: tệp trạng thái sinh từ', tt['_nguon']['app'])
 with tempfile.TemporaryDirectory() as t:
     t = pathlib.Path(t)
-    subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/dong_goi.py'), '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
+    subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/dong_goi.py'), '--du-an', 'dqtv', '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
     dist = (t / 'dist.js').read_text(encoding='utf-8')
-    assert 'window.__dqtvGoiSan = ' in dist and 'window.__dqtvTrangThaiQT = ' in dist
+    assert 'window.__itaGoiSan = ' in dist and 'window.__itaTrangThaiQT = ' in dist
     print('bản đóng gói: %.2f MB' % (len(dist.encode('utf-8')) / 1e6))
-    (t / 'tool.js').write_text(dist.rstrip()[:-len('})();')] + 'window.__dqtvThu = { sangHTML, docDacTa, NAP: () => NAP_DA_DUNG, DM: () => DM_V7, DP: () => DO_PHU };\n})();\n', encoding='utf-8')
+    (t / 'tool.js').write_text(dist.rstrip()[:-len('})();')] + 'window.__itaThu = { sangHTML, docDacTa, NAP: () => NAP_DA_DUNG, DM: () => DM_V7, DP: () => DO_PHU };\n})();\n', encoding='utf-8')
     (t / 'thu.html').write_text((GOC / 'kiem/thu_goi_san.html').read_text(encoding='utf-8'), encoding='utf-8')
     so = socket.socket(); so.bind(('127.0.0.1', 0)); cong = so.getsockname()[1]; so.close()
     mc = subprocess.Popen([sys.executable, '-I', '-m', 'http.server', str(cong), '--bind', '127.0.0.1', '--directory', str(t)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

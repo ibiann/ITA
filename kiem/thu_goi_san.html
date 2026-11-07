@@ -7,7 +7,7 @@
 <script src="tool.js"></script>
 <script>
 addEventListener('load', () => setTimeout(async () => {
-  const T = window.__dqtvThu, kq = {};
+  const T = window.__itaThu, kq = {};
   for (let i = 0; i < 240 && !T.NAP().length; i++) await new Promise(r => setTimeout(r, 250));   // chờ apDungNap lúc khởi động
   kq.giay_nap = Math.round((performance.now() - __t0) / 100) / 10;
   const nap = T.NAP();
@@ -16,8 +16,8 @@ addEventListener('load', () => setTimeout(async () => {
   kq.dm_mau = DM ? ['7.campaign-registration.B1.DUNG', '16.registration-decision.B3.DUNG'].map(m => DM.khong_chay[m] || null) : null;
   kq.so_bang_dac_ta = T.docDacTa().length;
   const P = T.DP(); kq.do_phu = P ? { chua_co_tc_v7: P.chua_co_tc_v7.map(x => x.ma), tai_lieu_app_khong_co: P.tai_lieu_app_khong_co.map(x => x.ma), app_chua_co_tai_lieu: P.app_chua_co_tai_lieu.length, bk: P.so_buoc_app_khong_co, ck: P.so_buoc_chang_khac } : null;
-  let loiChay = ''; try { await dqtv.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
-  const khoa = Object.keys(localStorage).find(k => k.startsWith('dqtv.last.')), kc = khoa ? JSON.parse(localStorage.getItem(khoa)) : null;
+  let loiChay = ''; try { await ita.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
+  const khoa = Object.keys(localStorage).find(k => k.startsWith('ita.last.')), kc = khoa ? JSON.parse(localStorage.getItem(khoa)) : null;
   kq.loi_chay = loiChay;
   kq.kq_co_do_phu = !!(kc && kc.do_phu_quy_trinh);
   const html = kc ? T.sangHTML(kc) : '';

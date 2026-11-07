@@ -49,7 +49,7 @@ console.log('đạt: 44.124 dòng, 40 cột, mã TC không trùng');
 const ra = ctx.GHEP[0]({ quy_trinh_tl: tl, tc_v7: rows });
 const dem = {}; for (const t of ra.tc) { const k = !t.khong_chay ? 'chạy' : t.khong_chay.replace(/«[^»]*»/g, '«…»').replace(/ \(.*$|: .*$/, '').replace(/ dòng \d+.*/, ''); dem[k] = (dem[k] || 0) + 1; }
 console.log('7c: TC M1 6 loại:', ra.tc.length, '| bảng:', ra.dac_ta.length); console.log('   ', dem);
-fs.writeFileSync(path.join(process.env.TMPDIR || '/tmp', 'dqtv-ghep-dem.json'), JSON.stringify(dem));
+fs.writeFileSync(path.join(process.env.TMPDIR || '/tmp', 'ita-ghep-dem.json'), JSON.stringify(dem));
 assert.ok(ra.dac_ta.every(d => d.dinh_danh.ma_ben_b && Array.isArray(d.buoc) && d.buoc.every(b => b.ma && b.nut)));
 assert.ok(ra.tc.every(t => t.khong_chay || t.can_cu), 'TC được chạy mà thiếu căn cứ');
 const t1 = ra.tc.find(t => t.ma === '1.B1.DUNG');

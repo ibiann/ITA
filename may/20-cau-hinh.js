@@ -1,14 +1,15 @@
 /* ============================================================= *
- * 1. CẤU HÌNH MẶC ĐỊNH — sửa bằng dqtv.dat(...) hoặc trên bảng   *
+ * 1. CẤU HÌNH MẶC ĐỊNH — sửa bằng ita.dat(...) hoặc trên bảng   *
  * ============================================================= */
-// Hồ sơ dự án: du-an/<dự án>/ho-so.json, đóng gói thành window.__dqtvHoSo. Mọi chữ riêng của dự án lấy từ đây.
-// Không có hồ sơ thì máy kiểm vẫn chạy: không khoá tên miền, không có màn việc chung, không bỏ tiền tố tài khoản.
-const DU_AN = window.__dqtvHoSo || {};
-if (!window.__dqtvHoSo) console.warn('[dqtv] Không có hồ sơ dự án: không khoá tên miền.');
+// Hồ sơ dự án: du-an/<dự án>/ho-so.json. Đóng gói sẵn thành window.__itaHoSo (dist/ita-<dự án>.js) hoặc nạp bằng «Nạp thư mục»
+// (bộ đọc ho-so → apHoSo, bước 13b). Mọi chữ riêng của dự án lấy từ đây. Chưa có hồ sơ: ita.chay không chạy, mọi lệnh ghi bị chặn.
+const DU_AN = Object.assign({}, window.__itaHoSo || {});
+let QUY_CACH = null;   // [13e] quy cách giao diện của dự án (du-an/<tên>/quy-cach.json, bộ đọc quy-cach): ngưỡng + giá trị được phép
+const reTenMien = t => t ? new RegExp('^' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') : null;
 const boGoc = s => DU_AN.goc_duong_dan && String(s).startsWith(DU_AN.goc_duong_dan) ? String(s).slice(DU_AN.goc_duong_dan.length) : s;
 const MAC_DINH = {
   /* --- phạm vi duyệt menu / tab --- */
-  tenMienDuocChay: DU_AN.ten_mien ? new RegExp('^' + DU_AN.ten_mien.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') : null,   // chỉ chạy trên tên miền khớp (môi trường kiểm thử); null = không khoá
+  tenMienDuocChay: reTenMien(DU_AN.ten_mien),   // chỉ chạy trên tên miền khớp (môi trường kiểm thử); null = không khoá
   cheNhayCam: true,             // che dữ liệu nhạy cảm (câu lệnh, IP nội bộ, đường dẫn máy chủ, SQL, khoá) khi in báo cáo
   chiMenu: null,                // RegExp: chỉ kiểm mục menu khớp, vd /Chiến sĩ|Đơn vị/
   boQuaMenu: null,              // RegExp: bỏ qua mục menu khớp
@@ -58,11 +59,11 @@ const MAC_DINH = {
   /* --- LỚP KIỂM QUY TRÌNH --- */
   // bản 3.26.1 luôn chỉ đọc: mucQuyTrinh, moiTruongKiemThu, chanGhi đặt gì cũng bỏ qua (xem 30-loi-kiem: chanGhi)
   mucQuyTrinh: 1,               // 1 = chỉ đọc (an toàn mọi nơi); 2/3 cần moiTruongKiemThu
-  moiTruongKiemThu: [],         // vd ['staging.dqtv.local','test.dqtv'] — mở ghi khi origin khớp
+  moiTruongKiemThu: [],         // vd ['staging.vidu.local','test.vidu'] — mở ghi khi origin khớp
   tienToKiemThu: '[KIEMTHU] ',  // chỉ thao tác trên hồ sơ mang tiền tố này (mức 2)
 
   // Đặc tả để đối chiếu. Để null thì bỏ qua kiểm quy trình, chỉ kiểm mã.
-  // Khai theo hệ thống thật rồi dán vào (dqtv.dat({ dacTa: {...} })).
+  // Khai theo hệ thống thật rồi dán vào (ita.dat({ dacTa: {...} })).
   dacTa: null,
   // dacTa = {
   //   trangThai: ['Dự thảo','Trình ký','Đã ký','Hoàn thành','Trả lại'], // danh mục trạng thái hợp lệ
@@ -88,6 +89,14 @@ const MAC_DINH = {
   thuLaiLoiDaBiet: false,      // [S16] true: vẫn mở màn đã biết là sập (khi Bên B báo đã sửa)
   dungKhiMatPhien: true,        // gặp mã 401 (mất phiên) thì dừng gọn, lưu điểm dừng, ghi lý do
 };
+// [13b] hồ sơ nạp bằng «Nạp thư mục» (70-nap.js) thay hồ sơ đóng gói sẵn: khoá tên miền, lệnh ghi được cho qua, chữ riêng dự án theo hồ sơ mới
+function apHoSo(h) {
+  window.__itaHoSo = h;
+  for (const k of Object.keys(DU_AN)) delete DU_AN[k];
+  Object.assign(DU_AN, h);
+  MAC_DINH.tenMienDuocChay = reTenMien(DU_AN.ten_mien);
+  apHoSoDoiChieu();
+}
 
 /* ============================================================= *
  * 2. LƯU / ĐỌC CẤU HÌNH (localStorage) — giữ được cả RegExp      *
@@ -110,7 +119,7 @@ function timNhayCam(text) {
 }
 const cheMot = x => x.length <= 8 ? x.slice(0, 2) + '…' : x.slice(0, 8) + '…(' + x.length + ' ký tự)';
 function cheChuoi(s) {
-  if (window.__dqtvKhongChe) return String(s);
+  if (window.__itaKhongChe) return String(s);
   let t = String(s);
   // che một lần: bỏ qua đoạn đã che (có "…" trong đoạn khớp hoặc ngay sau nó), để không che chồng
   for (const [, re] of MAU_NHAY_CAM) {
@@ -121,10 +130,10 @@ function cheChuoi(s) {
   return t;
 }
 
-const PHIEN_BAN = '3.26.6';
-const KEY_CFG = 'dqtv.cfg.v3261', KEY_CKPT = 'dqtv.ckpt.v3261', KEY_LAST = 'dqtv.last.v3261', KEY_TAY = 'dqtv.truongtay.v3261', KEY_SAP = 'dqtv.sap.v3261';
-// khóa của các bản trước (v3, v3.6, 3.17–3.26): dqtv.donBoNho() xoá để trả chỗ cho trình duyệt
-const KHOA_CU = /^dqtv\.(cfg|ckpt|last|truongtay|run|nk|sap)\.v3(24|25)?(\||$)|^dqtv\.dacta\.v(1|324|325)$/;
+const PHIEN_BAN = '1.0';
+const KEY_CFG = 'ita.cfg.v1', KEY_CKPT = 'ita.ckpt.v1', KEY_LAST = 'ita.last.v1', KEY_TAY = 'ita.truongtay.v1', KEY_SAP = 'ita.sap.v1';
+// khóa của công cụ cũ «DQTV kiểm tra» (mọi bản v3 … 3.26.6 đều bắt đầu bằng 'dqtv.'): ita.donBoNho() xoá để trả chỗ cho trình duyệt
+const KHOA_CU = /^dqtv\./;
 
 /* --- Nhận ra tài khoản đang đăng nhập, để điểm dừng và kết quả TÁCH RIÊNG theo tài khoản ---
  * Lý do: đổi tài khoản mà dùng chung một điểm dừng thì lần chạy mới bỏ qua các mục "đã xong"
@@ -133,22 +142,23 @@ let TK = '';
 function taiKhoan() {
   try {
     const d = (cfgHienTai().dacTa) || {};
-    if (d.vaiChon) { const e = document.querySelector(d.vaiChon); if (e && (e.innerText || '').trim()) return e.innerText.trim().replace(/\s+/g, ' ').slice(0, 140); }
+    const chon = d.vaiChon || DU_AN.chon_tai_khoan;   // [13d] hồ sơ dự án khai chỗ hiện tên tài khoản (PMS: os-account-button)
+    if (chon) { const e = document.querySelector(chon); if (e && (e.innerText || '').trim()) return e.innerText.trim().replace(/\s+/g, ' ').slice(0, 140); }
     // khối chữ ở góc phải trên cùng (thường là chức vụ + đơn vị người dùng), bỏ ô tìm kiếm và bảng điều khiển
     const W = innerWidth;
     const ds = [...document.querySelectorAll('header *, nav *, body > div *')].filter(e => {
-      if (e.closest('#dqtv-panel-host') || e.querySelector('input,svg + svg') || e.children.length > 4) return false;
+      if (e.closest('#ita-panel-host') || e.querySelector('input,svg + svg') || e.children.length > 4) return false;
       const r = e.getBoundingClientRect(); return r.top >= 0 && r.top < 90 && r.left > W * 0.6 && r.width > 0 && r.width < W * 0.35;
     }).map(e => (e.innerText || '').trim().replace(/\s+/g, ' ')).filter(t => /\p{L}{3,}/u.test(t) && t.length < 160);
     return ds.sort((a, b) => b.length - a.length)[0] || '';
   } catch (e) { return ''; }
 }
 // Cờ "đang chạy" — còn lại sau khi trang tự tải lại giữa chừng thì lần nạp sau tự chạy tiếp
-const KEY_RUN = 'dqtv.run.v3261';
+const KEY_RUN = 'ita.run.v1';
 
 /* --- Nhật ký lưu bền: giữ lại 300 thao tác gần nhất trong trình duyệt (không mất khi trang tải lại / bị đăng xuất).
  * Dùng để biết lần chạy trước dừng ở đâu, sau thao tác nào, có lỗi 401/403 hay lệnh ghi bị chặn nào. */
-const KEY_NK = 'dqtv.nk.v3261';
+const KEY_NK = 'ita.nk.v1';
 let NK_BO = null;
 function nk(loai, noiDung) {
   try {
@@ -164,7 +174,7 @@ let APP_SAP = '';     // có giá trị khi ứng dụng hiện màn hình hỏn
 // Mã có đang chạy trong chính trang không (thử chèn một thẻ script nhỏ rồi xem trang có thấy biến không)
 function laTrangThat() {
   try {
-    const k = '__dqtvKiem' + Math.random().toString(36).slice(2);
+    const k = '__itaKiem' + Math.random().toString(36).slice(2);
     const s = document.createElement('script'); s.textContent = 'window["' + k + '"]=1';
     (document.head || document.documentElement).appendChild(s); s.remove();
     const ok = window[k] === 1; try { delete window[k]; } catch (e) {} return ok;
@@ -230,9 +240,9 @@ const HO_SO = {
   'kiem-ke-truong': { moHoSoDau: true, thuOTim: false, thuOChon: 0, doSauTab: 2, kiemKeTruong: true, moFormDeKiemKe: true, moDropdownTuyBien: true, moRongMuc: true, maxFormMoiMan: 20 },
 };
 
-// Cấu hình đang dùng = mặc định ← đã lưu ← DQTV_CONFIG (nếu có)
+// Cấu hình đang dùng = mặc định ← đã lưu ← ITA_CONFIG (nếu có)
 function cfgHienTai(over) {
-  return Object.assign({}, MAC_DINH, docCfgLuu(), window.DQTV_MAC_DINH || {}, window.DQTV_CONFIG || {}, over || {});
+  return Object.assign({}, MAC_DINH, docCfgLuu(), window.ITA_MAC_DINH || {}, window.ITA_CONFIG || {}, over || {});
 }
 
 /* ============================================================= *

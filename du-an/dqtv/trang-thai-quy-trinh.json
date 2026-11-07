@@ -669,28 +669,6 @@
     ]
    }
   ],
-  "29": [
-   {
-    "so": "47",
-    "ma_buoc": "flagEstablishmentOverdue",
-    "tu_tai_lieu": [
-     "ESTABLISHED",
-     "PROPOSED",
-     "SUBMITTED",
-     "VALIDATED"
-    ],
-    "tu_app": [
-     "ESTABLISHED",
-     "SUBMITTED",
-     "VALIDATED"
-    ],
-    "tep_app": "unit-organisation/workflow/establishment.yaml",
-    "ra_soat": [
-     "198",
-     "198 K-36"
-    ]
-   }
-  ],
   "30": [
    {
     "so": "26",
@@ -907,11 +885,11 @@
   }
  ],
  "_nguon": {
-  "app": "dqtv-app nhánh ux @ e6780ced (2026-11-05)",
-  "app_core_processes_giong_dev": "6017c8b0",
+  "app": "dqtv-app nhánh ux @ ac4d25ee (2026-11-06)",
+  "app_core_processes_giong_dev": "e161695e",
   "tai_lieu": "du-an/dqtv/quy-trinh (119 tài liệu có bảng bước)",
   "ra_soat": "RA-QT-TOAN-BO.zip",
-  "sinh_luc": "2026-11-06T14:02:33",
+  "sinh_luc": "2026-11-07T11:28:42",
   "ghi_chu": "So máy móc hai bên. «Không có trong khai báo app» chưa chứng minh app không làm việc ấy (vd bước hệ thống app làm bằng mã riêng); dùng để tool không chấm các TC đó, không phải kết luận lỗi."
  }
 }

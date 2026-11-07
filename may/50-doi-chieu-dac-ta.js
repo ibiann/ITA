@@ -1,25 +1,26 @@
 /* ============================================================= *
  * ĐẶC TẢ QUY TRÌNH (UC) — nạp vào công cụ, đối chiếu ngay khi chạy
  *   Bảng đặc tả theo mẫu MauDacTa_QuyTrinh_DQTV (YAML → JSON).
- *   dqtv.napDacTa(...) lưu vào trình duyệt; mỗi lần chạy xong công cụ
+ *   ita.napDacTa(...) lưu vào trình duyệt; mỗi lần chạy xong công cụ
  *   tự đối chiếu và thêm mục "Đối chiếu đặc tả quy trình" vào báo cáo.
  * ============================================================= */
 /* <<DACTA-BAT-DAU>> */
-const KEY_DACTA = 'dqtv.dacta.v3261';
+const KEY_DACTA = 'ita.dacta.v1';
 // Màn mọi vai đều thấy (DQTV: «Việc của tôi»), tiền tố tên tài khoản, mã yêu cầu sửa: lấy từ hồ sơ dự án
-const VC = DU_AN.man_viec_chung || {};
+let VC = {}, TIEN_TO_TK = null;
+function apHoSoDoiChieu() { VC = DU_AN.man_viec_chung || {}; TIEN_TO_TK = DU_AN.tien_to_tai_khoan ? new RegExp(DU_AN.tien_to_tai_khoan) : null; }
+apHoSoDoiChieu();
 const laManVC = dd => !!VC.duong_dan && String(dd || '').includes(VC.duong_dan.replace(/^.*\//, ''));
 const maYC = k => (DU_AN.ma_yeu_cau || {})[k] ? ' (' + DU_AN.ma_yeu_cau[k] + ')' : '';
-const TIEN_TO_TK = DU_AN.tien_to_tai_khoan ? new RegExp(DU_AN.tien_to_tai_khoan) : null;
 // Bộ đặc tả lớn (hơn 100 bảng) có thể vượt hạn mức lưu của trình duyệt: khi đó giữ trong bộ nhớ của trang cho lần dán này.
 function docDacTa() {
-  if (Array.isArray(window.__dqtvDacTaBoNho)) return window.__dqtvDacTaBoNho;
+  if (Array.isArray(window.__itaDacTaBoNho)) return window.__itaDacTaBoNho;
   try { const x = JSON.parse(localStorage.getItem(KEY_DACTA) || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; }
 }
 function luuDacTa(ds) {
-  if (napDacTaVao.chiBoNho) { window.__dqtvDacTaBoNho = ds; return 'bo_nho'; }   // [S2] bộ đóng gói: chỉ giữ trong trang
-  try { localStorage.setItem(KEY_DACTA, JSON.stringify(ds)); window.__dqtvDacTaBoNho = null; return 'luu'; }
-  catch (e) { try { localStorage.removeItem(KEY_DACTA); } catch (e2) {} window.__dqtvDacTaBoNho = ds; return 'bo_nho'; }
+  if (napDacTaVao.chiBoNho) { window.__itaDacTaBoNho = ds; return 'bo_nho'; }   // [S2] bộ đóng gói: chỉ giữ trong trang
+  try { localStorage.setItem(KEY_DACTA, JSON.stringify(ds)); window.__itaDacTaBoNho = null; return 'luu'; }
+  catch (e) { try { localStorage.removeItem(KEY_DACTA); } catch (e2) {} window.__itaDacTaBoNho = ds; return 'bo_nho'; }
 }
 // Tài khoản khớp nhãn đăng nhập của vai. Bỏ chữ viết tắt ở đầu (BD, PK, TQ…) ở cả hai bên:
 // ứng dụng chỉ hiện chữ viết tắt này ở cửa sổ rộng, cửa sổ hẹp thì mất.
@@ -44,7 +45,7 @@ function napDacTaVao(x, thay) {
 // chữ thường, bỏ dấu *, gộp khoảng trắng (giữ dấu tiếng Việt)
 // [S5] nguồn đã được duyệt (khác điểm đã duyệt = LỆCH); còn lại là tài liệu Bên B chưa duyệt / đề xuất = CẢNH BÁO
 // [3.26.1] không mặc định nguồn nào là đã duyệt: dữ liệu nạp vào phải tự khai nguon_da_duyet. Chưa khai thì mọi chỗ khác đặc tả là CẢNH BÁO.
-const nguonDaDuyet = n => ((window.__dqtvQuyTac || {}).nguon_da_duyet || []).includes(n);
+const nguonDaDuyet = n => ((window.__itaQuyTac || {}).nguon_da_duyet || []).includes(n);
 // căn cứ của một dòng: tệp, bảng, mục trong bảng (phần mã ca sau mã bảng), nguồn của mục
 const canCuDT = (dt, maCa, nguon) => { const m = maQT(dt); return (dt.__tep ? 'tệp ' + dt.__tep + ' › ' : '') + 'bảng ' + m + ' › ' + (String(maCa).startsWith(m + '.') ? String(maCa).slice(m.length + 1) : maCa) + ' · nguồn mục: ' + (nguon || 'không ghi'); };
 const KET_LUAN = new Set(['ĐẠT', 'LỆCH', 'CẢNH BÁO']);
@@ -355,11 +356,11 @@ function doiChieuDacTa(kq, dsDT) {
     if (v) for (const x of (dt.kich_ban || [])) ghi('Kịch bản', ma + '.' + x.ma, 'LỚP 4', x.ten + ': ' + (x.chuoi || []).join(' → ') + (x.ket_qua_mong_doi ? ' · mong đợi: ' + x.ket_qua_mong_doi : ''), x.nguon);
   }
   // [S6] ca đã đóng trong sổ yêu cầu (Trạng thái «Đóng»): ghi ĐẠT kèm lý do, giữ nguyên quan sát
-  const DONG = (window.__dqtvQuyTac || {}).tc_dong || {};
+  const DONG = (window.__itaQuyTac || {}).tc_dong || {};
   for (const k of KQ) { const d = DONG[k.ma]; if (d && k.kq !== 'ĐẠT' && k.kq !== 'LỚP 4') { k.dg = 'đã đóng theo ' + d.ma + ': ' + d.ly_do + ' (quan sát: ' + k.dg + ')'; if (k.loai_bang !== 'khung') k.kq = 'ĐẠT'; k.da_dong = d.ma; k.can_cu = (k.can_cu ? k.can_cu + ' · ' : '') + 'sổ yêu cầu ' + d.ma; } }
   // [3.25] lần chạy dừng giữa chừng: "không thấy" chưa phải bằng chứng → không đánh ĐẠT
   if (kq.dung_giua_chung) for (const k of KQ) if (k.kq === 'ĐẠT' && !k.da_dong && (/^(không thấy|vai không mở được|đã mở màn[^,]*, không thấy)/.test(k.dg || '') || /\.(KHONG_VAO_MAN|SAI_CHE_DO)$/.test(k.ma) || ['Khung chung', 'Trợ năng', 'Ô tìm'].includes(k.muc))) { k.kq = 'CHƯA KIỂM'; k.dg += ' — lần chạy dừng giữa chừng, vắng mặt chưa đủ làm bằng chứng'; }
-  const DM = window.__dqtvDanhMucTC || DM_V7, CO_TC = DM ? new Set(DM.tc.map(t => t[0]).concat(DM.tc_khac || [])) : null;
+  const DM = window.__itaDanhMucTC || DM_V7, CO_TC = DM ? new Set(DM.tc.map(t => t[0]).concat(DM.tc_khac || [])) : null;
   for (const k of KQ) {
     if (k.kq === 'ĐẠT' || k.kq === 'GHI NHẬN') { delete k.nhom; delete k.nguyen_nhan; delete k.viec_tiep; delete k.mat_xich; }   // phân loại sẵn của dòng đã đổi thành ĐẠT / GHI NHẬN thì bỏ
     else if (!k.nhom) { const p = phanLoaiKQ(k); if (p) { k.nhom = p[0]; k.nguyen_nhan = p[1]; k.viec_tiep = p[2]; k.mat_xich = p[3]; } }   // [10d] dòng đã có mắt xích từ phép kiểm thì giữ
@@ -471,7 +472,7 @@ const mxNhom = (nhom, ly) => nhom === 'CÔNG CỤ' ? 1 : nhom === 'THIẾU' ? 0 
 const phanLoaiKQ = k => { if (k.kq === 'ĐẠT' || k.kq === 'GHI NHẬN') return null; const r = LUAT_NN.find(x => { try { return x[0](k); } catch (e) { return false; } }); return r ? [r[1], r[2], r[3], r[4]] : null; };
 /* [3.25] Phủ danh mục TC của PM: TC áp cho vai này mà công cụ không có kết quả → không coi là ĐẠT, ghi rõ vì sao */
 function phuDanhMucTC(kq, d) {
-  const DM = window.__dqtvDanhMucTC || DM_V7; if (!DM || !d) return null;   // DM_V7: danh mục TC v7 sau ghép với tài liệu (bước 7c)
+  const DM = window.__itaDanhMucTC || DM_V7; if (!DM || !d) return null;   // DM_V7: danh mục TC v7 sau ghép với tài liệu (bước 7c)
   const tk = chuanDT(kq.tai_khoan);
   const vaiKhop = DM.vai.map(v => !!v && v.length > 3 && tk.includes(chuanDT(v)));
   const vaiTheoQT = Object.fromEntries((d.vai_tai_khoan || []).map(x => [x.ma, x.vai]));

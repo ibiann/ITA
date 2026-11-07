@@ -7,12 +7,12 @@
 <script>
 setTimeout(() => {
   let vai = '';
-  try { dqtv.napDacTa({ dinh_danh: { ma: 'MAU' }, vai: [{ ma: 'PK', nhan_dang_nhap: 'Phòng Kế hoạch tổng hợp' }], buoc: [] }); vai = dqtv.vaiDacTa().join(','); dqtv.xoaDacTa(); } catch (e) { vai = 'lỗi: ' + e.message; }
-  const c = dqtv.cauHinh();
+  try { ita.napDacTa({ dinh_danh: { ma: 'MAU' }, vai: [{ ma: 'PK', nhan_dang_nhap: 'Phòng Kế hoạch tổng hợp' }], buoc: [] }); vai = ita.vaiDacTa().join(','); ita.xoaDacTa(); } catch (e) { vai = 'lỗi: ' + e.message; }
+  const c = ita.cauHinh();
   document.body.setAttribute('data-kq', JSON.stringify({
-    co_dqtv: typeof window.dqtv, bang_dieu_khien: !!document.getElementById('dqtv-panel-host'),
+    co_dqtv: typeof window.ita, bang_dieu_khien: !!document.getElementById('ita-panel-host'),
     ten_mien: String(c.tenMienDuocChay), vai_nhan_ra: vai,
-    co_DacTaNap: typeof window.__dqtvDacTaNap, co_DanhMucTC: typeof window.__dqtvDanhMucTC,
+    co_DacTaNap: typeof window.__itaDacTaNap, co_DanhMucTC: typeof window.__itaDanhMucTC,
     loi_js: __loi.join(' | ') || 'không' }));
 }, 1500);
 </script></body></html>

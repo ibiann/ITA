@@ -37,13 +37,13 @@ addEventListener('load', () => setTimeout(async () => {
   const kq = {};
   let loiChay = '';
   // [12] bảng đặc tả MẪU THỬ có ca nhập ô của nút «Thêm mới» (đợi bộ nạp dữ liệu gói sẵn chạy xong rồi mới đặt, để không bị ghi đè)
-  for (let n = 0; n < 50 && !Array.isArray(window.__dqtvDacTaBoNho); n++) await new Promise(r => setTimeout(r, 100));
-  window.__dqtvDacTaBoNho = [{ mau: { ten: 'MẪU THỬ' }, __tep: 'mau-thu.json', dinh_danh: { ma_ben_b: 'MAU', ten: 'MẪU THỬ' }, vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
+  for (let n = 0; n < 50 && !Array.isArray(window.__itaDacTaBoNho); n++) await new Promise(r => setTimeout(r, 100));
+  window.__itaDacTaBoNho = [{ mau: { ten: 'MẪU THỬ' }, __tep: 'mau-thu.json', dinh_danh: { ma_ben_b: 'MAU', ten: 'MẪU THỬ' }, vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
     buoc: [{ ma: 'B1', nut: 'Thêm mới', ten: 'Thêm mới', vai: ['TQ'] }], truong: [],
     tc_nhap: [{ ma: 'MAU.B1.NHAP.note.HOP_LE', buoc: 'B1', nut: 'Thêm mới', nhan: 'ghi chú', gia_tri: 'Kiểm thử tự động', mong_doi: 'hop_le', nguon: 'v7' },
       { ma: 'MAU.B1.NHAP.o_sau.HOP_LE', buoc: 'B1', nut: 'Thêm mới', nhan: 'ô sau', gia_tri: 'abc', mong_doi: 'hop_le', nguon: 'v7' }] }];
-  try { await dqtv.chay({ tenMienDuocChay: null, kiemKeTruong: true, moFormDeKiemKe: true, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
-  const khoa = Object.keys(localStorage).find(k => k.startsWith('dqtv.last.'));
+  try { await ita.chay({ tenMienDuocChay: null, kiemKeTruong: true, moFormDeKiemKe: true, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
+  const khoa = Object.keys(localStorage).find(k => k.startsWith('ita.last.'));
   const kqChay = khoa ? JSON.parse(localStorage.getItem(khoa)) : null;
   kq.loi_chay = loiChay;
   kq.go_loi = { khoa: Object.keys(localStorage), log: __log.slice(-20) };
@@ -51,7 +51,7 @@ addEventListener('load', () => setTimeout(async () => {
   kq.form_da_mo = kqChay ? kqChay.form_da_mo : [];
   kq.tc_nhap = kqChay ? (kqChay.tc_nhap_kq || []).map(x => ({ ma: x.ma, kq: x.kq, dg: x.dg, man: x.man })) : [];
   kq.nhan_o = kqChay ? (kqChay.danh_muc_truong || []).map(f => f.nhan) : [];
-  kq.html_co_muc = kqChay && window.__dqtvThu ? window.__dqtvThu.sangHTML(kqChay).includes('Kiểm ô theo khai báo giới hạn của app') : 'không dựng được HTML';
+  kq.html_co_muc = kqChay && window.__itaThu ? window.__itaThu.sangHTML(kqChay).includes('Kiểm ô theo khai báo giới hạn của app') : 'không dựng được HTML';
   kq.gia_tri_sau = { title: document.getElementById('a').value, note: document.getElementById('b').value, decisionNumber: document.getElementById('c').value, quantity: document.getElementById('f').value };
   kq.gui_form = !!window.__guiForm;
   kq.loi_js = __loi.join(' | ') || 'không';

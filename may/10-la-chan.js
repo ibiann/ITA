@@ -9,14 +9,14 @@
 const postDuocDi = (m, u) => {
   if (!/^POST$/i.test(m || '')) return false;
   let x; try { x = new URL(String(u), location.href); } catch (e) { return false; }
-  return x.origin === location.origin && ((window.__dqtvHoSo || {}).post_cho_qua || []).includes(x.pathname.replace(/\/+$/, ''));
+  return x.origin === location.origin && ((window.__itaHoSo || {}).post_cho_qua || []).includes(x.pathname.replace(/\/+$/, ''));
 };
-if (!window.__dqtvLaChan) (function caiLaChan() {
-  const LC = window.__dqtvLaChan = { som: document.readyState === 'loading', quyetDinh: null, chan: [], seen: new Set() };
+if (!window.__itaLaChan) (function caiLaChan() {
+  const LC = window.__itaLaChan = { som: document.readyState === 'loading', quyetDinh: null, chan: [], seen: new Set() };
   const abs = u => { try { return new URL(String(u), location.href).href; } catch (e) { return String(u); } };
   const ghiChat = (m, u) => (!/^(GET|HEAD|OPTIONS)$/i.test(m || 'GET') && !postDuocDi(m, u)) ? 'block' : 'ok';
   LC.ghiChat = ghiChat;
-  try { const r = JSON.parse(localStorage.getItem('dqtv.run.v3261') || 'null'); if (r && Date.now() - r.ts < 6 * 3600e3) LC.quyetDinh = ghiChat; } catch (e) {}
+  try { const r = JSON.parse(localStorage.getItem('ita.run.v1') || 'null'); if (r && Date.now() - r.ts < 6 * 3600e3) LC.quyetDinh = ghiChat; } catch (e) {}
   const xet = (m, u) => {
     LC.seen.add(abs(u)); const f = LC.quyetDinh; if (!f) return 'ok';
     let r; try { r = f(m || 'GET', String(u)); } catch (e) { r = 'block'; }
@@ -27,7 +27,7 @@ if (!window.__dqtvLaChan) (function caiLaChan() {
   const F0 = window.fetch;
   if (F0) window.fetch = function (input, init) {
     const url = String((input && input.url) || input), m = (init && init.method) || (input && input.method) || 'GET';
-    if (xet(m, url) === 'block') { const e = new TypeError('dqtvAudit: lá chắn chặn ' + m); e.__dqtv = true; return Promise.reject(e); }
+    if (xet(m, url) === 'block') { const e = new TypeError('itaAudit: lá chắn chặn ' + m); e.__ita = true; return Promise.reject(e); }
     return F0.apply(this, arguments);
   };
   const XO0 = XMLHttpRequest.prototype.open, XS0 = XMLHttpRequest.prototype.send;
@@ -47,7 +47,7 @@ if (!window.__dqtvLaChan) (function caiLaChan() {
   window.addEventListener('submit', e => { const f = e.target; if (!f || f.tagName !== 'FORM') return;
     if (xet(f.getAttribute('method') || 'get', f.action || location.href) === 'block') { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 })();
-const LC = window.__dqtvLaChan;
+const LC = window.__itaLaChan;
 
 // Chuẩn hoá chữ để so: NFC, chữ thường, kiểu bỏ dấu mới (xóa→xoá, hủy→huỷ, khóa→khoá)
 const DAU_CU_MOI = [['òa', 'oà'], ['óa', 'oá'], ['ỏa', 'oả'], ['õa', 'oã'], ['ọa', 'oạ'], ['òe', 'oè'], ['óe', 'oé'], ['ỏe', 'oẻ'], ['õe', 'oẽ'], ['ọe', 'oẹ'],

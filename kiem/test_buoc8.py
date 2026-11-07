@@ -1,6 +1,6 @@
 # Kiểm bước 8 (kiểm ô theo khai báo giới hạn của app). Chạy: python3 -I kiem/test_buoc8.py
 # 1. Sinh du-an/dqtv/gioi-han-o.json từ app thật (~/dqtv/dqtv-app); bộ sinh tự đối chiếu mẫu thử với pattern của app.
-# 2. Đóng gói, dựng bản thử (= dist + xuất sangHTML ra window.__dqtvThu), chạy thật trên kiem/thu_kiem_o.html
+# 2. Đóng gói, dựng bản thử (= dist + xuất sangHTML ra window.__itaThu), chạy thật trên kiem/thu_kiem_o.html
 #    (thời gian thật qua kiem/mo_chrome.mjs), đọc kết quả lần chạy.
 import json, pathlib, re, shutil, socket, subprocess, sys, tempfile, time
 
@@ -22,10 +22,10 @@ with tempfile.TemporaryDirectory() as t:
     for p in (t / 'goc/bo-doc').glob('*.js'):
         if 'GHEP' in p.read_text(encoding='utf-8') and not re.search(r'\b(const|let|var)\s+GHEP\b', ma_may):
             print('bỏ khỏi bản thử (chưa nối vào tool):', p.name); p.unlink()
-    subprocess.run([sys.executable, '-I', str(t / 'goc/cong-cu/dong_goi.py'), '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
+    subprocess.run([sys.executable, '-I', str(t / 'goc/cong-cu/dong_goi.py'), '--du-an', 'dqtv', '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
     dist = (t / 'dist.js').read_text(encoding='utf-8')
-    assert 'window.__dqtvGioiHanO = ' in dist, 'bản đóng gói chưa kèm gioi-han-o.json'
-    thu = dist.rstrip()[:-len('})();')] + 'window.__dqtvThu = { sangHTML };\n})();\n'
+    assert 'window.__itaGioiHanO = ' in dist, 'bản đóng gói chưa kèm gioi-han-o.json'
+    thu = dist.rstrip()[:-len('})();')] + 'window.__itaThu = { sangHTML };\n})();\n'
     (t / 'tool.js').write_text(thu, encoding='utf-8')
     (t / 'thu.html').write_text((GOC / 'kiem/thu_kiem_o.html').read_text(encoding='utf-8'), encoding='utf-8')
     so = socket.socket(); so.bind(('127.0.0.1', 0)); cong = so.getsockname()[1]; so.close()

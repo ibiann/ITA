@@ -1,16 +1,16 @@
 # Kiểm bước 11: axe-core (WCAG 2.2 A/AA) chạy thật trong lần chạy; TC TRO_NANG, KHUNG-CHUNG.*, <quy trình>.KHUNG_CHUNG, O_TIM chấm đúng.
 # Chạy: python3 -I kiem/test_buoc11.py
-# Dựng bản thử bằng cong-cu/dong_goi.py (--ra, không ghi đè dist/) + một dòng xuất hàm nội bộ ra window.__dqtvThu; chạy kiem/thu_buoc11.html
+# Dựng bản thử bằng cong-cu/dong_goi.py (--ra, không ghi đè dist/) + một dòng xuất hàm nội bộ ra window.__itaThu; chạy kiem/thu_buoc11.html
 # trong Chrome thời gian thật (kiem/mo_chrome.mjs). Trang mẫu cố ý có lỗi trợ năng và lỗi khung chung.
 import json, pathlib, socket, subprocess, sys, tempfile, time
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
 with tempfile.TemporaryDirectory() as t:
     t = pathlib.Path(t)
-    subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/dong_goi.py'), '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
+    subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/dong_goi.py'), '--du-an', 'dqtv', '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
     dist = (t / 'dist.js').read_text(encoding='utf-8')
     assert 'axe v4.14.0' in dist and 'if (!window.axe) {' in dist, 'tệp dán không kèm axe-core'
-    (t / 'tool.js').write_text(dist.rstrip()[:-len('})();')] + 'window.__dqtvThu = { doiChieuDacTa, phuDanhMucTC, sangHTML };\n})();\n', encoding='utf-8')
+    (t / 'tool.js').write_text(dist.rstrip()[:-len('})();')] + 'window.__itaThu = { doiChieuDacTa, phuDanhMucTC, sangHTML };\n})();\n', encoding='utf-8')
     (t / 'thu.html').write_text((GOC / 'kiem/thu_buoc11.html').read_text(encoding='utf-8'), encoding='utf-8')
     so = socket.socket(); so.bind(('127.0.0.1', 0)); cong = so.getsockname()[1]; so.close()
     mc = subprocess.Popen([sys.executable, '-I', '-m', 'http.server', str(cong), '--bind', '127.0.0.1', '--directory', str(t)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

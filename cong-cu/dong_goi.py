@@ -1,10 +1,10 @@
-# Ghép may/*.js (+ dữ liệu dự án, nếu có) thành một tệp dán Console: dist/dqtv-kiem-tra-<bản>.js
+# Ghép may/*.js (+ gói dự án, nếu có) thành một tệp dán Console: dist/ita.js (chỉ máy kiểm) hoặc dist/ita-<dự án>.js (gói sẵn dự án)
 # Đóng gói sẵn (bước 7d): du-an/<dự án>/quy-trinh/**/*.md và tc/** (*.csv; *.zip → các tệp .csv bên trong, chỉ giữ cột tool đọc),
-# nén gzip + base64 vào window.__dqtvGoiSan; lúc khởi động tool giải nén và cho qua bộ đọc như tệp đã nạp.
+# nén gzip + base64 vào window.__itaGoiSan; lúc khởi động tool giải nén và cho qua bộ đọc như tệp đã nạp.
 # Thư mục du-an/<dự án>/ trống thì vẫn ra tệp chạy được.
 # Thứ tự ghép: may/ có số < 90, rồi bo-doc/*.js (bộ đọc, nằm trong cùng khối mã), rồi may/ từ 90 (khởi động, đóng khối).
 # [bước 11] thu-vien/axe-core-<bản>/axe.min.js (Deque, MPL-2.0, giữ nguyên dòng giấy phép) đặt trước khối mã: kiểm trợ năng WCAG 2.2 AA, không tải gì từ mạng lúc chạy.
-# Chạy: python3 -I cong-cu/dong_goi.py [--du-an dqtv] [--ra <tệp ra>]
+# Chạy: python3 -I cong-cu/dong_goi.py [--du-an <tên thư mục trong du-an/>] [--ra <tệp ra>]
 import argparse, base64, csv, datetime, gzip, hashlib, io, json, pathlib, re, sys, zipfile
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
@@ -49,8 +49,8 @@ def goi_san(du_an):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--du-an', default='dqtv')
-    ap.add_argument('--ra', help='tệp ra; mặc định dist/dqtv-kiem-tra-<bản>.js')
+    ap.add_argument('--du-an', default='', help='không ghi: chỉ máy kiểm, nạp gói dự án bằng nút «Nạp thư mục»')
+    ap.add_argument('--ra', help='tệp ra; mặc định dist/ita.js hoặc dist/ita-<dự án>.js')
     a = ap.parse_args()
     may = sorted((GOC / 'may').glob('*.js'))
     if not may:
@@ -64,13 +64,13 @@ def main():
         sys.exit('Không thấy PHIEN_BAN trong may/')
     ban = ban.group(1)
     luc = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')
-    gs = goi_san(a.du_an)
-    dau = ['// DQTV — công cụ kiểm giao diện, bản %s (nền 3.26), đóng gói %s; kèm sẵn %d tệp quy trình / TC của dự án (nén)\n' % (ban, luc, len(gs))]
+    gs = goi_san(a.du_an) if a.du_an else []
+    dau = ['// ITA — máy kiểm giao diện, bản %s, đóng gói %s; gói dự án: %s; kèm sẵn %d tệp tài liệu / TC (nén)\n' % (ban, luc, a.du_an or 'không (nạp bằng «Nạp thư mục»)', len(gs))]
     # tệp nào trong du-an/<dự án>/ có thì đóng gói kèm, thiếu thì bỏ qua (máy kiểm vẫn chạy)
-    for ten, bien in (('ho-so.json', '__dqtvHoSo'), ('loi-da-biet.json', '__dqtvQuyTac'), ('gioi-han-o.json', '__dqtvGioiHanO'),
-                      ('trang-thai-quy-trinh.json', '__dqtvTrangThaiQT')):
+    for ten, bien in (('ho-so.json', '__itaHoSo'), ('loi-da-biet.json', '__itaQuyTac'), ('gioi-han-o.json', '__itaGioiHanO'),
+                      ('trang-thai-quy-trinh.json', '__itaTrangThaiQT')):
         tep = GOC / 'du-an' / a.du_an / ten
-        if tep.exists():
+        if a.du_an and tep.exists():
             dl = json.loads(tep.read_text(encoding='utf-8'))
             dau.append('window.%s = %s;\n' % (bien, json.dumps(dl, ensure_ascii=False, separators=(',', ':'))))
             print('kèm', tep.relative_to(GOC))
@@ -78,9 +78,9 @@ def main():
         dau.append('if (!window.axe) {\n' + axe.read_text(encoding='utf-8') + '\n}\n')   # dán lại lần nữa: không nạp axe hai lần
         print('kèm', axe.relative_to(GOC))
     if gs:
-        dau.append('window.__dqtvGoiSan = %s;\n' % json.dumps(gs, separators=(',', ':')))
+        dau.append('window.__itaGoiSan = %s;\n' % json.dumps(gs, separators=(',', ':')))
         print('kèm sẵn %d tệp quy trình / TC (nén %d byte)' % (len(gs), sum(len(x['gz']) for x in gs)))
-    ra = pathlib.Path(a.ra) if a.ra else GOC / 'dist' / ('dqtv-kiem-tra-%s.js' % ban)
+    ra = pathlib.Path(a.ra) if a.ra else GOC / 'dist' / (('ita-%s.js' % a.du_an) if a.du_an else 'ita.js')
     ra.parent.mkdir(exist_ok=True)
     ra.write_text(''.join(dau) + ma, encoding='utf-8')
     print('Đã ghi %s (%d byte)' % (ra, ra.stat().st_size))

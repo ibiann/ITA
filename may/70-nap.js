@@ -1,7 +1,7 @@
 /* ============================================================= *
  * 7. NẠP DỮ LIỆU (bản 3.26.1, bước 6)                            *
  * Người dùng chọn tệp hoặc cả thư mục (nút «Nạp tệp», «Nạp thư   *
- * mục» trên bảng, hoặc dqtv.nap() / dqtv.napThuMuc()). Mỗi tệp đi *
+ * mục» trên bảng, hoặc ita.nap() / ita.napThuMuc()). Mỗi tệp đi *
  * qua các bộ đọc trong bo-doc/: bộ nào nhận ra NỘI DUNG thì đọc;  *
  * không bộ nào nhận ra thì báo «không nhận ra», không đoán.       *
  * Tệp đã nhận giữ trong IndexedDB của trình duyệt (localStorage  *
@@ -14,17 +14,17 @@ let NAP_DA_DUNG = [], KHONG_NHAN = [];   // tệp đang dùng (ghi vào báo cá
 // gộp theo tên khoá, trả { dac_ta, tc, do_phu }. Bảng ghép vào phần đối chiếu; danh mục TC dùng cho mục «Phủ danh mục TC».
 const GHEP = [];
 let DM_V7 = null, DO_PHU = null;
-// [bước 7d] Tệp đóng gói sẵn trong dist (cong-cu/dong_goi.py: gzip + base64 ở window.__dqtvGoiSan). Giải nén một lần.
+// [bước 7d] Tệp đóng gói sẵn trong dist (cong-cu/dong_goi.py: gzip + base64 ở window.__itaGoiSan). Giải nén một lần.
 let GOI_SAN = null;
 async function docGoiSan() {
   if (GOI_SAN) return GOI_SAN;
   GOI_SAN = [];
-  for (const t of window.__dqtvGoiSan || []) {
+  for (const t of window.__itaGoiSan || []) {
     try {
       const b = Uint8Array.from(atob(t.gz), c => c.charCodeAt(0));
       const chu = await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
       GOI_SAN.push({ ten: t.ten, chu, bam: t.bam, luc: t.luc, goi_san: true });
-    } catch (e) { console.warn('[dqtv] Không giải nén được tệp đóng gói sẵn ' + t.ten + ': ' + e.message); }
+    } catch (e) { console.warn('[ita] Không giải nén được tệp đóng gói sẵn ' + t.ten + ': ' + e.message); }
   }
   return GOI_SAN;
 }
@@ -36,7 +36,7 @@ function lapDanhMucV7(ds, tep) {
   return { tc, loai, vai, khong_chay, meta: { tep } };
 }
 
-function moKho(ten = 'dqtv-kiem-tra') {
+function moKho(ten = 'ita') {
   return new Promise((ok, loi) => {
     const r = indexedDB.open(ten, 1);
     r.onupgradeneeded = () => r.result.createObjectStore('tep', { keyPath: 'ten' });
@@ -52,7 +52,7 @@ async function kho(che, viec, ten) {
   });
 }
 // [10a] điểm dừng đầy đủ khi localStorage hết chỗ: kho riêng, không lẫn với tệp đã nạp. Chạy tiếp chỉ dùng bản của đúng lượt chạy.
-const KHO_CKPT = 'dqtv-kiem-tra-ckpt';
+const KHO_CKPT = 'ita-ckpt';
 const luuCkptLon = (khoa, chu) => kho('readwrite', st => st.put({ ten: khoa, chu }), KHO_CKPT);
 const xoaCkptLon = khoa => kho('readwrite', st => st.delete(khoa), KHO_CKPT).catch(() => {});
 async function docCkptLon(ck) {
@@ -68,14 +68,14 @@ const boDocCua = (ten, chu) => BO_DOC.find(b => { try { return b.nhan(ten, chu);
 // Đọc lại mọi tệp đã nạp rồi đưa bảng đặc tả vào phần đối chiếu. Mỗi bảng mang tên tệp (__tep) để báo cáo ghi căn cứ.
 async function apDungNap() {
   let ds;
-  try { ds = (await kho('readonly', st => st.getAll())) || []; } catch (e) { console.warn('[dqtv] Không đọc được dữ liệu đã nạp: ' + e.message); ds = []; }
+  try { ds = (await kho('readonly', st => st.getAll())) || []; } catch (e) { console.warn('[ita] Không đọc được dữ liệu đã nạp: ' + e.message); ds = []; }
   // tệp đóng gói sẵn: chỉ dùng loại (bộ đọc) mà người dùng chưa tự nạp — nạp thư mục quy trình mới thì thay bộ quy trình đóng gói
   const goi = await docGoiSan(), loaiNap = new Set(ds.map(t => t.bo_doc));
   for (const t of goi) { const bd = boDocCua(t.ten, t.chu); if (bd && !loaiNap.has(bd.ten)) ds.push(Object.assign({ bo_doc: bd.ten }, t)); }
-  NAP_DA_DUNG = []; DM_V7 = null; DO_PHU = null;
+  NAP_DA_DUNG = []; DM_V7 = null; DO_PHU = null; QUY_CACH = null;
   if (!ds.length) return;   // chưa nạp gì: giữ nguyên (đặc tả dán Console, nếu có)
   const bang = [], gop = {};
-  if (window.__dqtvTrangThaiQT) gop.trang_thai_qt = window.__dqtvTrangThaiQT;
+  if (window.__itaTrangThaiQT) gop.trang_thai_qt = window.__itaTrangThaiQT;
   for (const t of ds) {
     const bd = BO_DOC.find(b => b.ten === t.bo_doc) || boDocCua(t.ten, t.chu);
     if (!bd) continue;
@@ -84,8 +84,10 @@ async function apDungNap() {
       for (const d of dt) bang.push(Object.assign(d, { __tep: t.ten, __bo_doc: bd.ten }));
       let so = 0; for (const [k, v] of Object.entries(ra)) if (k !== 'dac_ta' && Array.isArray(v)) { (gop[k] = gop[k] || []).push(...v); so += v.length; }
       NAP_DA_DUNG.push({ tep: t.ten, bo_doc: bd.ten, so_bang: dt.length, so_muc: so, bam: t.bam, luc: t.luc, goi_san: !!t.goi_san });
-    } catch (e) { console.warn('[dqtv] Bộ đọc «' + bd.ten + '» lỗi với tệp ' + (t.goi_san ? 'đóng gói sẵn ' : 'đã nạp ') + t.ten + ': ' + e.message); }
+    } catch (e) { console.warn('[ita] Bộ đọc «' + bd.ten + '» lỗi với tệp ' + (t.goi_san ? 'đóng gói sẵn ' : 'đã nạp ') + t.ten + ': ' + e.message); }
   }
+  if (gop.ho_so && gop.ho_so.length) apHoSo(gop.ho_so[gop.ho_so.length - 1]);   // [13b] hồ sơ đã nạp thay hồ sơ đóng gói sẵn
+  if (gop.quy_cach && gop.quy_cach.length) QUY_CACH = gop.quy_cach[gop.quy_cach.length - 1];   // [13e]
   // [bước 7c] ghép: tài liệu quy trình × TC v7 → bảng cho phần đối chiếu + danh mục TC
   for (const g of GHEP) {
     try {
@@ -93,10 +95,10 @@ async function apDungNap() {
       for (const d of r.dac_ta || []) bang.push(Object.assign(d, { __bo_doc: d.__bo_doc || 'ghép' }));
       if (r.tc && r.tc.length) DM_V7 = lapDanhMucV7(r.tc, NAP_DA_DUNG.filter(x => x.bo_doc === 'v7-tc-csv').map(x => x.tep).join(', ') || 'TC v7');
       if (r.do_phu) DO_PHU = r.do_phu;
-    } catch (e) { console.warn('[dqtv] Ghép dữ liệu lỗi: ' + e.message); }
+    } catch (e) { console.warn('[ita] Ghép dữ liệu lỗi: ' + e.message); }
   }
   napDacTaVao.chiBoNho = true;
-  try { if (bang.length) napDacTaVao(bang, true); else window.__dqtvDacTaBoNho = []; } catch (e) { console.warn('[dqtv] Không đưa được bảng đã nạp vào đối chiếu: ' + e.message); }
+  try { if (bang.length) napDacTaVao(bang, true); else window.__itaDacTaBoNho = []; } catch (e) { console.warn('[ita] Không đưa được bảng đã nạp vào đối chiếu: ' + e.message); }
 }
 
 async function napTep(files) {
@@ -114,9 +116,9 @@ async function napTep(files) {
   KHONG_NHAN = khong;
   await apDungNap();
   if (dung.length) console.table(dung);
-  if (khong.length) { console.warn('[dqtv] ' + khong.length + ' tệp không nhận ra, không dùng:'); console.table(khong); }
+  if (khong.length) { console.warn('[ita] ' + khong.length + ' tệp không nhận ra, không dùng:'); console.table(khong); }
   CO.tienDo = 'Đã nạp ' + dung.length + ' tệp (' + dung.reduce((n, x) => n + x.so_bang, 0) + ' bảng)' + (khong.length ? '; ' + khong.length + ' tệp không nhận ra: ' + khong.map(x => x.tep).join(', ') : '') + '.';
-  capNhatBang(); console.info('[dqtv] ' + CO.tienDo);
+  capNhatBang(); console.info('[ita] ' + CO.tienDo);
   return { dung, khong_nhan: khong };
 }
 
@@ -129,7 +131,7 @@ function chonTep(thuMuc) {
   i.click();
 }
 
-Object.assign(window.dqtv, {
+Object.assign(window.ita, {
   nap() { chonTep(false); return this; },
   napThuMuc() { chonTep(true); return this; },
   napTep(files) { return napTep([...files]); },
@@ -139,7 +141,7 @@ Object.assign(window.dqtv, {
   },
   async xoaNap() {
     await kho('readwrite', st => st.clear());
-    NAP_DA_DUNG = []; KHONG_NHAN = []; window.__dqtvDacTaBoNho = [];
-    console.info('[dqtv] Đã xoá mọi dữ liệu đã nạp.'); return this;
+    NAP_DA_DUNG = []; KHONG_NHAN = []; window.__itaDacTaBoNho = [];
+    console.info('[ita] Đã xoá mọi dữ liệu đã nạp.'); return this;
   },
 });
