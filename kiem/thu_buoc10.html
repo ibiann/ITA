@@ -1,0 +1,78 @@
+<!doctype html><html><head><meta charset="utf-8"></head>
+<!-- Trang mẫu kiểm bước 10. Chạy qua kiem/test_buoc10.py, không mở tay.
+     Bảng đặc tả, danh sách bước máy chủ dưới đây là MẪU THỬ do người viết phép kiểm soạn, không phải dữ liệu dự án.
+     ?khongIDB=1: trước khi chạy tiếp thì xoá bản điểm dừng đầy đủ ở IndexedDB (ca đối chứng: báo cáo phải ghi mục mất kết quả). -->
+<body><header style="position:fixed;top:0;right:0;width:30%"><span>TQ Trợ lý mẫu</span></header>
+<aside style="position:fixed;left:0;top:0;width:200px;height:100vh"><a href="#/mau">Danh sách mẫu</a><br><a href="#/mau-2">Mẫu hai</a><br><a href="#/mau-3">Mẫu ba</a><br><a href="#/mau-4">Mẫu bốn</a><br><a href="#/mau-5">Mẫu năm</a><br><a href="#/mau-6">Mẫu sáu</a><br><a href="#/mau-7">Mẫu bảy</a><br><a href="#/mau-8">Mẫu tám</a></aside>
+<main style="margin-left:220px"><h1>Danh sách mẫu</h1><p>Tổng: 3</p></main>
+<script>
+window.__loi = []; addEventListener('error', e => __loi.push(e.message)); window.__log = []; for (const m of ['log', 'info', 'warn']) { const g = console[m]; console[m] = (...a) => { if (/\[ita\]/.test(String(a[0]))) __log.push(m + ': ' + a.map(String).join(' ').slice(0, 220)); return g.apply(console, a); }; }
+addEventListener('hashchange', () => { const a = [...document.querySelectorAll('aside a')].find(x => x.getAttribute('href') === location.hash); if (a) document.querySelector('main').innerHTML = '<h1>' + a.textContent + '</h1><p>Tổng: 3</p>'; });
+// pha 2, ca đối chứng: xoá bản đầy đủ ở IndexedDB trước khi công cụ khởi động và tự chạy tiếp
+if (sessionStorage.getItem('pha') === '2' && /khongIDB=1/.test(location.search)) { const r = indexedDB.open('ita-ckpt', 1); r.onupgradeneeded = () => r.result.createObjectStore('tep', { keyPath: 'ten' }); r.onsuccess = () => { const tx = r.result.transaction('tep', 'readwrite'); tx.objectStore('tep').clear(); tx.oncomplete = () => r.result.close(); }; }
+// giả trình duyệt hết chỗ: điểm dừng đầy đủ (không phải bản gọn) không ghi được vào localStorage
+const ghiGoc = Storage.prototype.setItem;
+Storage.prototype.setItem = function (k, v) { if (String(k).startsWith('ita.ckpt.v1|') && !String(v).startsWith('{"gon":true')) throw new DOMException('giả hết chỗ', 'QuotaExceededError'); return ghiGoc.call(this, k, v); };
+</script>
+<script src="tool.js"></script>
+<script>
+const KHO = 'ita-ckpt', CHAY = { tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false };
+const ngu = ms => new Promise(r => setTimeout(r, ms));
+const docKho = () => new Promise(ok => { const r = indexedDB.open(KHO, 1); r.onupgradeneeded = () => r.result.createObjectStore('tep', { keyPath: 'ten' }); r.onsuccess = () => { const tx = r.result.transaction('tep', 'readonly'), g = tx.objectStore('tep').getAll(); tx.oncomplete = () => { r.result.close(); ok(g.result || []); }; }; r.onerror = () => ok([]); });
+const xoaKho = () => new Promise(ok => { const r = indexedDB.open(KHO, 1); r.onupgradeneeded = () => r.result.createObjectStore('tep', { keyPath: 'ten' }); r.onsuccess = () => { const tx = r.result.transaction('tep', 'readwrite'); tx.objectStore('tep').clear(); tx.oncomplete = () => { r.result.close(); ok(); }; }; });
+const ckGon = () => { const k = Object.keys(localStorage).find(x => x.startsWith('ita.ckpt.v1|')); return k ? JSON.parse(localStorage.getItem(k)) : null; };
+
+// 10b–10e: chấm trên dữ liệu quan sát dựng sẵn
+function phanChamSan() {
+  const T = window.__itaThu, r = {};
+  const dacTa = [{ mau: { ten: 'MẪU THỬ' }, __tep: 'mau-thu.json', dinh_danh: { ma_ben_b: 'MAU', ten: 'MẪU THỬ' }, vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
+      trang_thai: [{ ma: 'OPEN', nhan: 'Đang mở' }],
+      buoc: [{ ma: 'B1', nut: 'Ghi nhận nhiệm vụ được giao', ma_app: 'raiseX', vai: ['TQ'], duong_dan_man: '/mau/{id}', nguon: 'v7' },
+             { ma: 'B2', nut: 'Duyệt hồ sơ mẫu', ma_app: 'approveX', vai: ['TQ'], duong_dan_man: '/mau/{id}', nguon: 'v7' },
+             { ma: 'B3', nut: 'Khoá sổ mẫu', ma_app: 'lockX', vai: ['TQ'], duong_dan_man: '/mau/{id}', nguon: 'v7' },
+             { ma: 'B4', nut: 'Chuyển kho mẫu', ma_app: 'moveX', vai: ['TQ'], duong_dan_man: '/mau/{id}', nguon: 'v7' },
+             { ma: 'B5', nut: 'Thu hồi mẫu', ma_app: 'revokeX', vai: ['TP'], duong_dan_man: '/mau/{id}', nguon: 'v7' },
+             { ma: 'B6', nut: 'Kết thúc mẫu', ma_app: 'finishX', vai: ['TQ'], tu: 'OPEN', den: 'OPEN', duong_dan_man: '/mau/{id}', nguon: 'v7' }] },
+    { mau: { ten: 'MẪU THỬ' }, __tep: 'mau-thu.json', dinh_danh: { ma_ben_b: 'MAUB', ten: 'MẪU THỬ B' }, vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
+      buoc: [{ ma: 'B1', nut: 'Ghi nhận nhiệm vụ được giao', ma_app: 'raiseY', vai: ['TQ'], duong_dan_man: '/maub/{id}', nguon: 'v7' }] }];
+  const quanSat = { tai_khoan: 'TQ Trợ lý mẫu', form_da_mo: [], bo_qua_khong_bam: [], danh_muc_truong: [],
+    man_da_kiem: [{ tab: 'Mẫu › «Đang mở» › [hồ sơ đầu]', url: '/mau/1', nut_tren_man: 'Ghi nhận nhiệm vụ · Thu hồi mẫu · Xuất Excel' }, { tab: 'Mẫu B › [hồ sơ đầu]', url: '/maub/1', nut_tren_man: 'Ghi nhận nhiệm vụ' }],
+    buoc_may_chu: [{ tuyen: '/mau/1', action: 'raiseX', label: 'Ghi nhận nhiệm vụ được giao', allowed: true, ready: true, kind: '' },
+                   { tuyen: '/mau/1', action: 'approveX', label: 'Duyệt hồ sơ mẫu', allowed: true, ready: true, kind: '' },
+                   { tuyen: '/mau/1', action: 'moveX', label: 'Chuyển kho mẫu', allowed: false, ready: false, kind: '' },
+                   { tuyen: '/mau/1', action: 'revokeX', label: 'Thu hồi mẫu', allowed: true, ready: true, kind: '' }] };
+  window.__itaDanhMucTC = { tc: [['MAU.B9.DUNG', 0, [0]]], loai: ['Đúng vai'], vai: ['TQ Trợ lý mẫu'], meta: { tep: 'mẫu' },
+    khong_chay: { 'MAU.B9.DUNG': { ly_do: 'bước «Duyệt hồ sơ mẫu» đã dời sang qt-mau.md; kết quả lấy theo TC đề xuất MAU.B2.DUNG', nhom: 'TC', chay_duoi: 'MAU.B2.DUNG' } } };
+  const d = T.doiChieuDacTa(quanSat, dacTa);
+  r.dong = d.ket_qua.filter(k => k.loai_bang === 'đặc tả').map(k => ({ ma: k.ma, kq: k.kq, dg: k.dg, nhom: k.nhom || '', mx: k.mat_xich == null ? null : String(k.mat_xich) }));
+  const P = T.phuDanhMucTC(quanSat, d); delete window.__itaDanhMucTC;
+  r.phu = { ap_dung: P.ap_dung, co_ket_qua: P.co_ket_qua, theo_ma_khac: P.theo_ma_khac };
+  const html = T.sangHTML({ tai_khoan: 'TQ Trợ lý mẫu', van_de: [], danh_muc_truong: [], doi_chieu_dac_ta: d, phu_danh_muc_tc: P, muc_mat_ket_qua: ['Mẫu hai'] });
+  r.html = { mat_xich_2: html.includes('mắt xích 2 · màn hình ↔ máy chủ'), mat_ket_qua: html.includes('MẤT KẾT QUẢ KHI TRANG TẢI LẠI'), theo_de_xuat: html.includes('kết quả theo TC đề xuất') };
+  return r;
+}
+
+addEventListener('load', () => setTimeout(async () => {
+  const pha = sessionStorage.getItem('pha') || '1';
+  if (pha === '1') {
+    sessionStorage.setItem('cham', JSON.stringify(phanChamSan()));
+    sessionStorage.setItem('pha', '2');
+    ita.chay(CHAY).catch(() => {});
+    // bản đầy đủ ở IndexedDB đã ghi xong mục menu đầu thì tải lại trang giữa chừng
+    const xongKho = async () => { const ds = await docKho(); return ds.length ? JSON.parse(ds[0].chu).xong.length : 0; };
+    for (let i = 0; i < 2400 && (await xongKho()) < 1; i++) await ngu(50);
+    sessionStorage.setItem('truoc_tai_lai', JSON.stringify({ gon: ckGon(), kho: (await docKho()).length, xong_kho: await xongKho() }));
+    location.reload();
+    return;
+  }
+  // pha 2: công cụ nạp từ đầu trang nên tự chạy tiếp sau tải lại (như bản dán Console sau khi bấm Chạy): chờ lần chạy xong
+  let loiChay = '';
+  for (let i = 0; i < 960 && !(window.__ITA_AUDIT && window.__ITA_AUDIT.ketQua); i++) await ngu(250);
+  if (!(window.__ITA_AUDIT && window.__ITA_AUDIT.ketQua)) loiChay = 'không tự chạy tiếp sau tải lại';
+  const kq = (window.__ITA_AUDIT || {}).ketQua || {};
+  document.body.setAttribute('data-kq', JSON.stringify({
+    cham: JSON.parse(sessionStorage.getItem('cham') || 'null'), truoc_tai_lai: JSON.parse(sessionStorage.getItem('truoc_tai_lai') || 'null'),
+    loi_chay: loiChay, man: (kq.man_da_kiem || []).map(m => m.tab), so_man: kq.so_man_da_kiem, gon: kq.diem_dung_gon, mat_kq: kq.muc_mat_ket_qua || null,
+    log: __log.slice(0, 40), kho_sau: (await docKho()).length, loi_js: __loi.join(' | ') || 'không' }));
+}, 800));
+</script></body></html>

@@ -1,0 +1,27 @@
+{
+  "ten": "DQTV",
+  "ten_mien": "dqtv.linksafe.vn",
+  "kieu_app": "rest-buoc",
+  "goc_duong_dan": "/dqtv",
+  "man_viec_chung": {
+    "nhan": "Việc của tôi",
+    "duong_dan": "/dqtv/viec-cua-toi"
+  },
+  "tien_to_tai_khoan": "^[A-ZĐ]{2,3} (?=\\S)",
+  "ma_yeu_cau": {
+    "buoc_he_thong": "YC-CHUNG-09"
+  },
+  "post_cho_qua": [
+    "/api/session",
+    "/api/search"
+  ],
+  "_nguon": {
+    "ten_mien": "3.26, cấu hình tenMienDuocChay",
+    "goc_duong_dan": "3.26, 30-loi-kiem: bỏ tiền tố /dqtv khỏi tên màn",
+    "man_viec_chung": "3.26, 50-doi-chieu-dac-ta; đường dẫn có trong mã app core/platform/server/mount.mjs. Màn mọi vai đều thấy, không dùng làm màn của quy trình khi xét quyền xem",
+    "tien_to_tai_khoan": "3.21: app hiện chữ viết tắt vai (BD, PK, TQ…) đầu tên tài khoản ở cửa sổ rộng, cửa sổ hẹp thì mất",
+    "ma_yeu_cau": "YeuCauSua_BenB_DQTV_29102026.md",
+    "post_cho_qua": "mã app: POST /api/session = đăng nhập (libs/http/serve.mjs:451); POST /api/search = tìm, app đánh dấu readOnly (core/platform/server/mount.mjs:78, clients/staff-web/src/api.js:190). Các đường /api/auth/* đều là GET. App không có lệnh POST giữ phiên.",
+    "kieu_app": "bước 13c: app DQTV trả danh sách bước {action, label, allowed} trong phản hồi GET (bước 10c); máy kiểm chỉ đọc danh sách này khi kieu_app = rest-buoc"
+  }
+}

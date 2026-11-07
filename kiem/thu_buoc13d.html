@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset="utf-8"></head>
+<!-- Trang mẫu kiểm bước 13c/13d (kiểu app openslides). Chạy qua kiem/test_buoc13d.py (máy chủ thử giả who-am-i + autoupdate), không mở tay.
+     Đường dẫn trang /87/agenda giống cuộc họp 87 của PMS; hồ sơ và dữ liệu là MẪU THỬ, không phải dữ liệu dự án. -->
+<body><header style="position:fixed;top:0;right:0;width:30%"><os-account-button><span title="ITA Chủ tọa">ITA Chủ tọa</span> <span title="Chủ tọa">Chủ tọa</span></os-account-button></header>
+<aside style="position:fixed;left:0;top:0;width:200px;height:100vh"><a href="#/a">Chương trình</a><br><a href="#/b">Kiến nghị</a><br><a href="#/c">Bình bầu</a></aside>
+<main style="margin-left:220px"><h1>Chương trình</h1><button type="button">Thêm mục</button><p style="font-size:13px">Chữ cỡ 13px, ngoài quy cách mẫu</p></main>
+<script>window.__loi = []; addEventListener('error', e => __loi.push(e.message));</script>
+<script src="/tool.js"></script>
+<script>
+const HO_SO = { ten: 'MẪU THỬ OpenSlides', ten_mien: location.hostname, kieu_app: 'openslides', chon_tai_khoan: 'os-account-button span[title]',
+  post_cho_qua: ['/system/auth/login', '/system/auth/who-am-i'], _ghi_chu: 'MẪU THỬ — không phải dữ liệu dự án' };
+addEventListener('load', () => setTimeout(async () => {
+  const kq = { dang: 'bắt đầu' };
+  try {
+    await ita.napTep([new File([JSON.stringify(HO_SO)], 'du-an/mau-os/ho-so.json'),
+      new File([JSON.stringify({ loai: 'quy-cach-giao-dien', nguon: 'QUY CÁCH MẪU', chuanDS: { luoi: 2 }, co_chu_px: [12, 14, 16, 32], bo_goc_px: [8, 10] })], 'du-an/mau-os/quy-cach.json')]);
+    const LC = window.__itaLaChan;
+    kq.chan = { who_am_i: LC.ghiChat('POST', '/system/auth/who-am-i/'), action: LC.ghiChat('POST', '/system/action/handle_request'), presenter: LC.ghiChat('POST', '/system/presenter/handle_request') };
+    kq.dang = 'chạy';
+    await ita.chay({ kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false, kiemTroNang: false });
+    const khoa = Object.keys(localStorage).find(k => k.startsWith('ita.last.v1|'));
+    const c = khoa ? JSON.parse(localStorage.getItem(khoa)) : {};
+    kq.ket_qua = { tai_khoan: c.tai_khoan, quyen_may_chu: c.quyen_may_chu, so_buoc_may: (c.buoc_may_chu || []).length };
+    const tk = c.he_thong_thiet_ke || {};
+    kq.thiet_ke = { can_cu: tk.can_cu, luoi: (tk.lech_luoi || {}).luoi, vuot: tk.vuot_chuan, nap: (c.du_lieu_nap || []).map(x => x.bo_doc) };
+    kq.html_co_may_chu = /<b>Máy chủ:<\/b>.*nhóm Chủ tọa \(3 quyền\)/.test(window.__itaThu.html(c));
+  } catch (e) { kq.loi_trang_thu = e.message + ' @ ' + kq.dang; }
+  kq.loi_js = __loi.join(' | ') || 'không';
+  document.body.setAttribute('data-kq', JSON.stringify(kq));
+}, 800));
+</script></body></html>
