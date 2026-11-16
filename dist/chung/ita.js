@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T09:16:18+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T09:33:06+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
 if (!window.axe) {
 /*! axe v4.14.0
  * Copyright (c) 2015 - 2026 Deque Systems, Inc.
@@ -266,7 +266,7 @@ const MAC_DINH = {
   moNutNghiepVu: true,
   // Nút không bao giờ bấm khi mở form (tải tệp, mở tệp, điều hướng, xoá/huỷ hồ sơ…)
   // "xuất" chỉ bỏ khi là xuất tệp (không bỏ "Nhận công văn báo xuất ngũ")
-  boQuaNut: /(?<![\p{L}\d])(đăng xuất|thoát|xuất(?=\s*$)|xuất (excel|pdf|word|tệp|file|dữ liệu|danh sách|báo cáo)|tải|in|download|export|import|nhập danh sách|nhập từ|xoá|xóa|huỷ|hủy|đóng hồ sơ|khoá|mở khoá|mở bản|mở tờ|đã ký|xem|ẩn|hiện|trạng thái|diện|về danh sách|mở danh sách|kỳ trước|kỳ sau|tuần trước|tuần này|tuần sau|tháng trước|tháng sau|thu gọn|mở rộng|cột|bỏ lọc|lọc|nâng cao|báo cáo tổng hợp|bảng kê|tra cứu|làm mới|tải lại)(?![\p{L}\d])/iu,
+  boQuaNut: /(?<![\p{L}\d])(đăng xuất|thoát|xuất(?=\s*$)|xuất (excel|pdf|word|tệp|file|dữ liệu|danh sách|báo cáo)|tải|in|download|export|import|nhập danh sách|nhập từ|xoá|xóa|huỷ|hủy|đóng hồ sơ|khoá|mở khoá|mở bản|mở tờ|đã ký|xem|ẩn|hiện|trạng thái|diện|về danh sách|mở danh sách|kỳ trước|kỳ sau|tuần trước|tuần này|tuần sau|tháng trước|tháng sau|thu gọn|mở rộng|cột|bỏ lọc|lọc|nâng cao|báo cáo tổng hợp|bảng kê|tra cứu|làm mới|tải lại|đặt lại|khôi phục|reset)(?![\p{L}\d])/iu,   // đặt lại / khôi phục / reset: thường tác động ngay, không qua hộp thoại — không bao giờ bấm
   moDropdownTuyBien: true,      // mở ô chọn kiểu Ant/Element/MUI… để đọc danh sách lựa chọn
   maxMoChon: 25,                // mỗi vùng mở tối đa N ô chọn tuỳ biến
   maxLuaChon: 60,               // lưu tối đa N lựa chọn mỗi ô
@@ -800,7 +800,7 @@ async function itaAudit(over, trangThaiTiep) {
   //  - Lá chắn có từ đầu trang: mở như 3.6.
   //  - Dán Console: 3.6 tắt hẳn; 3.23 vẫn mở nhưng NGỪNG ngay khi thấy một lệnh mạng đi vòng bộ chặn.
   //    Giữ cách của 3.23 (không có thì gần hết ca đặc tả thành CHƯA KIỂM). Muốn an toàn tuyệt đối: ita.chay({ moNutKhiDanConsole: false }).
-  const nvOk = () => !!(C.moNutNghiepVu && !BYPASS.length && !DUNG_BAM && !NGUNG_BAM_TRUOC && ((LC && LC.som) || C.moNutKhiDanConsole !== false));
+  const nvOk = () => !!(C.moNutNghiepVu && !DU_AN.giao_dien_thuan && !BYPASS.length && !DUNG_BAM && !NGUNG_BAM_TRUOC && ((LC && LC.som) || C.moNutKhiDanConsole !== false));
   if (C.moNutNghiepVu && !(LC && LC.som)) console.warn('[ita] Dán Console: lá chắn cài muộn. Vẫn mở nút nghiệp vụ để đọc form (lệnh ghi bị chặn); thấy lệnh mạng đi vòng thì tự ngừng bấm. Muốn tắt hẳn: ita.chay({ moNutKhiDanConsole: false }).');
   const resetLog = () => { LOG.length = 0; ERR.length = 0; };
   const apiErrs = () => LOG.filter(l => l.s === 'NETERR' || l.s >= 400).map(l => l.s + ' ' + l.u.replace(location.origin, '').split('?')[0].slice(0, 60));
@@ -3710,7 +3710,7 @@ function sangHTML(kq) {
 <style>body{font:14px system-ui;margin:24px;color:#1a1a1a}h1{font-size:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}tr.cao td{background:#fdecea}tr.tb td{background:#fff6e5}.m{color:#666}</style>
 <h1>ITA — kết quả kiểm giao diện</h1>
 ${kq.nguon_menu && !/^menu trái$/.test(kq.nguon_menu) ? '<p style="color:#8a4b00"><b>Nguồn menu: ' + esc(kq.nguon_menu) + '</b>' + (/link nội bộ|chỉ màn/.test(kq.nguon_menu) ? ' — công cụ không thấy menu trái / thanh điều hướng trên; màn chỉ vào được qua nút / form sẽ không được ghé.' : '') + '</p>' : ''}
-${kq.giao_dien_thuan ? '<p style="color:#8a4b00"><b>Chế độ kiểm giao diện thuần</b> (hồ sơ tạm, chưa có hồ sơ dự án): mọi lệnh POST bị chặn; phần quy trình / UC / TC không có căn cứ nên ghi «Chưa kiểm».</p>' : ''}
+${kq.giao_dien_thuan ? '<p style="color:#8a4b00"><b>Chế độ kiểm giao diện thuần</b> (hồ sơ tạm, chưa có hồ sơ dự án): mọi lệnh POST bị chặn; không bấm nút nghiệp vụ (chỉ mở form thêm / sửa / xem); phần quy trình / UC / TC không có căn cứ nên ghi «Chưa kiểm».</p>' : ''}
 <p><b>Tài khoản:</b> ${esc(kq.tai_khoan || '')}${kq.quyen_may_chu ? ' · <b>Máy chủ:</b> <span title="' + esc(((kq.quyen_may_chu.nhom || []).flatMap(n => n.quyen)).join(', ')) + '">' + esc(moTaQuyen(kq.quyen_may_chu)) + '</span>' : ''}${kq.dung_giua_chung ? ' · <b style="color:#c62828">LẦN CHẠY BỊ DỪNG GIỮA CHỪNG — kết quả chưa đủ</b>' : ''}</p>${(kq.muc_mat_ket_qua || []).length ? '<p style="color:#c62828"><b>MẤT KẾT QUẢ KHI TRANG TẢI LẠI — ' + kq.muc_mat_ket_qua.length + ' mục menu đã chạy nhưng không đọc lại được kết quả, màn và TC của các mục này không có trong báo cáo:</b> ' + kq.muc_mat_ket_qua.map(esc).join(' · ') + '</p>' : ''}${kq.dung_giua_chung ? `<p style="color:#c62828"><b>Lý do dừng:</b> ${esc(kq.ly_do_dung || '')}${(kq.menu_chua_chay || []).length ? '<br><b>Mục menu chưa chạy (' + kq.menu_chua_chay.length + '):</b> ' + kq.menu_chua_chay.map(esc).join(' · ') : ''}</p>` : ''}
 ${kq.cau_hinh ? '<p class=m><b>Cấu hình:</b> bộ «' + esc(kq.cau_hinh.bo) + '»' + (kq.cau_hinh.khac_mac_dinh.length ? '; khác mặc định: ' + kq.cau_hinh.khac_mac_dinh.map(x => esc(x.khoa) + ' = ' + esc(x.gia_tri) + ' (' + esc(x.nguon) + ')').join('; ') : '; còn lại theo mặc định') + (kq.cau_hinh.da_luu.length ? '. <b>Có cấu hình đã lưu từ trước</b> (ita.dat): ' + kq.cau_hinh.da_luu.map(esc).join(', ') + ' — xoá bằng ita.datLai()' : '') + '</p>' : ''}
 <p class=m>Công cụ bản ${esc(kq.phien_ban || '≤3.10')} · nạp bằng ${esc(kq.cach_nap || '?')} · cửa sổ ${esc(kq.cua_so || '?')}${kq.ngung_bam_do_di_vong ? ' · <b style="color:#c62828">có phần chạy ở chế độ ngừng bấm nút nghiệp vụ (bản dán Console gặp yêu cầu mạng đi vòng bộ chặn) — form chưa kiểm đủ (xem mục «Yêu cầu mạng không đi qua bộ chặn» bên dưới)</b>' : ''}</p>

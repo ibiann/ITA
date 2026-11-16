@@ -42,7 +42,7 @@ const MAC_DINH = {
   moNutNghiepVu: true,
   // Nút không bao giờ bấm khi mở form (tải tệp, mở tệp, điều hướng, xoá/huỷ hồ sơ…)
   // "xuất" chỉ bỏ khi là xuất tệp (không bỏ "Nhận công văn báo xuất ngũ")
-  boQuaNut: /(?<![\p{L}\d])(đăng xuất|thoát|xuất(?=\s*$)|xuất (excel|pdf|word|tệp|file|dữ liệu|danh sách|báo cáo)|tải|in|download|export|import|nhập danh sách|nhập từ|xoá|xóa|huỷ|hủy|đóng hồ sơ|khoá|mở khoá|mở bản|mở tờ|đã ký|xem|ẩn|hiện|trạng thái|diện|về danh sách|mở danh sách|kỳ trước|kỳ sau|tuần trước|tuần này|tuần sau|tháng trước|tháng sau|thu gọn|mở rộng|cột|bỏ lọc|lọc|nâng cao|báo cáo tổng hợp|bảng kê|tra cứu|làm mới|tải lại)(?![\p{L}\d])/iu,
+  boQuaNut: /(?<![\p{L}\d])(đăng xuất|thoát|xuất(?=\s*$)|xuất (excel|pdf|word|tệp|file|dữ liệu|danh sách|báo cáo)|tải|in|download|export|import|nhập danh sách|nhập từ|xoá|xóa|huỷ|hủy|đóng hồ sơ|khoá|mở khoá|mở bản|mở tờ|đã ký|xem|ẩn|hiện|trạng thái|diện|về danh sách|mở danh sách|kỳ trước|kỳ sau|tuần trước|tuần này|tuần sau|tháng trước|tháng sau|thu gọn|mở rộng|cột|bỏ lọc|lọc|nâng cao|báo cáo tổng hợp|bảng kê|tra cứu|làm mới|tải lại|đặt lại|khôi phục|reset)(?![\p{L}\d])/iu,   // đặt lại / khôi phục / reset: thường tác động ngay, không qua hộp thoại — không bao giờ bấm
   moDropdownTuyBien: true,      // mở ô chọn kiểu Ant/Element/MUI… để đọc danh sách lựa chọn
   maxMoChon: 25,                // mỗi vùng mở tối đa N ô chọn tuỳ biến
   maxLuaChon: 60,               // lưu tối đa N lựa chọn mỗi ô
