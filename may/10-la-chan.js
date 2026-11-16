@@ -66,7 +66,7 @@ const NGUYEN_TAC = {
   o_khong_nhan: 'WCAG 1.3.1 / 4.1.2: ô nhập cần nhãn', wcag_loi: 'WCAG 2.2 A/AA (axe-core): mỗi luật vi phạm một dòng, kèm mục WCAG', gio_khong_chuan: 'Nhất quán: ngày giờ dạng dd/mm/yyyy hh:mm, không hiện chuỗi máy', truong_loi: 'Kiểm kê trường: xem danh mục trường',
   dinh_dang_ngay_tron: 'Nhất quán: một định dạng ngày trong toàn hệ thống', dinh_dang_so_tron: 'Nhất quán: một kiểu phân cách hàng nghìn',
   tieu_de_lech_menu: 'Nhất quán điều hướng: tiêu đề màn khớp mục menu', nut_chinh_nhieu: 'Một hành động chính mỗi màn',
-  chan_ghi: 'Màn chỉ xem không nên tự gửi lệnh ghi', o_nhap: 'Tìm kiếm/lọc phải trả đúng kết quả và báo trống rõ ràng',
+  chan_ghi: 'Màn chỉ xem không nên tự gửi lệnh ghi', gia_loi_doc: 'Trạng thái lỗi: tải dữ liệu thất bại thì màn phải báo lỗi, không hiện «trống», không treo, không trắng', o_nhap: 'Tìm kiếm/lọc phải trả đúng kết quả và báo trống rõ ràng',
 };
 // [3.26.1] Căn cứ của từng phép kiểm giao diện chung. Chỉ «sự việc», «chuẩn», «đặc tả» được tính mức (cao / trung bình / thấp).
 // «tự đặt» = ngưỡng hay luật do người viết công cụ đặt, chưa có tài liệu dự án nào nói: chỉ GHI NHẬN, không tính là lỗi.
@@ -77,6 +77,8 @@ const CAN_CU_KIEM = {
   js_loi: [SU_VIEC, 'trang báo lỗi JavaScript'],
   du_lieu_nhay_cam: [SU_VIEC, 'màn hiện thông tin hạ tầng, câu lệnh, mật khẩu hoặc khoá'],
   rong_nhung_api_loi: [SU_VIEC, 'máy chủ báo lỗi nhưng màn hiện «trống»'],
+  // [bước 2] ITA làm hỏng lệnh đọc dữ liệu của màn (như mất mạng) rồi mở lại màn; chỉ phản ứng sai rõ ràng mới là sự việc
+  gia_loi_doc: v => /^(hiện «trống»|treo|màn trắng)/.test(v) ? [SU_VIEC, 'lệnh đọc dữ liệu đã thất bại mà màn ' + (/^treo/.test(v) ? 'vẫn quay «đang tải» sau 10 giây' : /^màn trắng/.test(v) ? 'trắng, không hiện gì' : 'báo «không có dữ liệu»: người dùng tưởng không có dữ liệu')] : [TU_DAT, 'tải dữ liệu thất bại nhưng không thấy thông báo lỗi — kỳ vọng do công cụ đặt'],
   so_dong_vuot_tong: [SU_VIEC, 'số dòng hiện ra lớn hơn tổng do chính màn đó ghi'],
   chu_la: v => CHU_LOI_MAY.test(v) ? [SU_VIEC, 'màn hiện giá trị lỗi của máy (NaN, undefined, [object Object]…)'] : /[a-z][A-Z]|\b[A-Z]+_[A-Z]/.test(v) ? [TC_PM, 'KHUNG-CHUNG.MA_CHUA_DICH: không có giá trị dạng mã máy (CHỮ_HOA_GẠCH, camelCase)'] : [TU_DAT, 'chữ giống tên biến ({…}): công cụ đoán'],
   ma_enum_lo: [TC_PM, 'KHUNG-CHUNG.MA_CHUA_DICH: không có giá trị dạng mã máy (CHỮ_HOA_GẠCH, camelCase)'],

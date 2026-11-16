@@ -24,6 +24,15 @@ function htmlThietKe(kq) {
     ds('Chữ Unicode tổ hợp (NFD)', n.unicode_to_hop, a => esc(a.gia_tri)) +
     ds('Định dạng ngày đang dùng', n.dinh_dang_ngay_dung, a => esc(a.gia_tri) + ' (' + esc(a.so_man) + ' màn: ' + dsMan(a.man, a.so_man) + ')');
 }
+// [bước 2] giả lỗi đọc: mỗi màn một dòng — ĐẠT / SAI / CẦN XEM / CHƯA THỬ (chưa thử cũng ghi, để biết màn nào chưa được thử trạng thái lỗi)
+function htmlGiaLoi(kq) {
+  const ds = kq.gia_loi_doc || []; if (!ds.length) return '';
+  const thu = { 'SAI': 0, 'CẦN XEM': 1, 'CHƯA THỬ': 2, 'ĐẠT': 3 }, x = ds.slice().sort((a, b) => thu[a.kq] - thu[b.kq]), dem = k => ds.filter(d => d.kq === k).length;
+  return '<h2 style="font-size:16px;margin-top:28px">Trạng thái lỗi — giả tải dữ liệu thất bại (' + ds.length + ' màn)</h2>'
+    + '<p class=m>ITA làm hỏng các lệnh đọc dữ liệu riêng của màn (như mất mạng; lệnh không tới máy chủ, không ghi gì) rồi mở lại màn. Màn phải báo lỗi; hiện «không có dữ liệu», treo «đang tải» hay trắng là sai. Không thấy thông báo lỗi thì «cần xem» (màn có thể đang hiện dữ liệu cũ). Sai ' + dem('SAI') + ' · cần xem ' + dem('CẦN XEM') + ' · chưa thử ' + dem('CHƯA THỬ') + ' · đạt ' + dem('ĐẠT') + '.</p>'
+    + '<table><thead><tr><th>Kết quả</th><th>Màn</th><th>Quan sát</th></tr></thead><tbody>'
+    + x.map(d => '<tr class="' + (d.kq === 'SAI' ? 'tb' : '') + '"><td>' + esc(d.kq) + '</td><td>' + esc(d.man) + '</td><td>' + esc(d.quan_sat) + '</td></tr>').join('') + '</tbody></table>';
+}
 // [11a] tên tiếng Việt của các mục WCAG 2.2 mà bộ luật axe-core đo (chỉ để đọc; mã mục là căn cứ)
 const TEN_SC = { '1.1.1': 'chữ thay thế cho ảnh, biểu tượng', '1.2.2': 'phụ đề', '1.3.1': 'thông tin và quan hệ (nhãn, tiêu đề, bảng)', '1.3.5': 'mục đích ô nhập',
   '1.4.1': 'không chỉ dùng màu', '1.4.2': 'điều khiển âm thanh', '1.4.3': 'tương phản chữ (tối thiểu)', '1.4.4': 'phóng to chữ', '1.4.11': 'tương phản thành phần, biểu tượng', '1.4.12': 'giãn cách chữ',
@@ -60,7 +69,7 @@ function sangHTML(kq) {
     r.nghi_ngo_so_lech && 'Nghi số lệch với API: ' + r.nghi_ngo_so_lech,
     r.du_lieu_nhay_cam && 'Dữ liệu nhạy cảm: ' + r.du_lieu_nhay_cam, r.ma_enum_lo && 'Mã lộ ra: ' + r.ma_enum_lo, r.cat_chu_khong_tooltip && 'Chữ cắt không tooltip: ' + r.cat_chu_khong_tooltip,
     r.chuoi_dai_khong_ngat && 'Chuỗi dài không ngắt: ' + r.chuoi_dai_khong_ngat, r.dinh_dang_ngay_tron && 'Ngày trộn: ' + r.dinh_dang_ngay_tron, r.dinh_dang_so_tron && 'Số trộn: ' + r.dinh_dang_so_tron,
-    r.tieu_de_lech_menu && 'Tiêu đề lệch menu: ' + r.tieu_de_lech_menu, r.nut_chinh_nhieu && 'Nhiều nút chính: ' + r.nut_chinh_nhieu, r.can_xac_nhan && 'Cần xác nhận: ' + r.can_xac_nhan,
+    r.gia_loi_doc && 'Khi tải dữ liệu thất bại: ' + r.gia_loi_doc, r.tieu_de_lech_menu && 'Tiêu đề lệch menu: ' + r.tieu_de_lech_menu, r.nut_chinh_nhieu && 'Nhiều nút chính: ' + r.nut_chinh_nhieu, r.can_xac_nhan && 'Cần xác nhận: ' + r.can_xac_nhan,
   ].filter(Boolean).join(' | '))}</td></tr>`).join('');
   return `<!doctype html><meta charset=utf-8><title>ITA kết quả kiểm</title>
 <style>body{font:14px system-ui;margin:24px;color:#1a1a1a}h1{font-size:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}tr.cao td{background:#fdecea}tr.tb td{background:#fff6e5}.m{color:#666}</style>
@@ -77,6 +86,7 @@ ${htmlDacTa(kq)}
 <p class=m><b>Kết luận</b> theo căn cứ: <b>Sai</b> = sự việc (máy chủ, trang báo lỗi…), chuẩn công khai (WCAG, ghi điều khoản) hoặc đặc tả / quy cách của dự án · <b>Lệch chuẩn</b> = trái điều các hệ thiết kế lớn cùng làm, dự án chưa định (mức thấp) · <b>Không thống nhất</b> = khác số đông trong chính app · <b>Cần xem</b> = ITA không chắc hoặc ngưỡng do ITA tự đặt, kèm lý do. Chỉ «Sai» và «Lệch chuẩn» có mức (cao / trung bình / thấp) và được tính là lỗi.</p>
 <table><thead><tr><th>Màn</th><th>Kết luận</th><th>URL</th><th>Căn cứ</th><th>Vấn đề</th></tr></thead><tbody>${tr}</tbody></table>
 ${(kq.mau_loi || []).length ? `<h2 style="font-size:16px;margin-top:28px">Mẫu lỗi — gom theo thành phần / loại (${kq.mau_loi.length})</h2><table><thead><tr><th>Kết luận</th><th>Mẫu lỗi · nguyên tắc</th><th>Số màn</th><th>Ở màn</th></tr></thead><tbody>${kq.mau_loi.map(m => `<tr class="${m.muc_do === 'cao' ? 'cao' : m.muc_do === 'trung bình' ? 'tb' : ''}"><td>${klHien(m)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class=m>${esc(m.nguyen_tac)}${m.can_cu ? ' · căn cứ: ' + esc(m.can_cu) : ''}${m.can_xac_nhan ? ' · cần xem vì: ' + esc(m.can_xac_nhan) : ''}${(m.cung || []).length ? ' · cùng chỗ này cũng trúng: ' + esc(m.cung.join(', ')) : ''}</div></td><td>${esc(m.so_man)}</td><td>${dsMan(m.ds_man || m.vi_du_man, m.so_man)}</td></tr>`).join('')}</tbody></table>` : ''}
+${htmlGiaLoi(kq)}
 ${htmlThietKe(kq) ? '<h2 style="font-size:16px;margin-top:28px">Hệ thống thiết kế &amp; ngôn từ</h2>' + htmlThietKe(kq) : ''}
 ${(kq.dich_vu_401 || []).length ? `<h2 style="font-size:16px;margin-top:28px">Dịch vụ trả 401 (${kq.dich_vu_401.length})</h2><p class=m>401 chưa phải mất phiên: công cụ kiểm lại phiên chính (về màn đăng nhập? lệnh kiem_phien của hồ sơ? dịch vụ khác vẫn trả về bình thường?). Phiên còn thì ghi lỗi API và chạy tiếp.</p><table><thead><tr><th>Dịch vụ</th><th>Số lệnh</th><th>Phiên chính</th><th>Căn cứ</th><th>Đường dẫn</th><th>Ở màn</th></tr></thead><tbody>${kq.dich_vu_401.map(x => `<tr class="${x.phien_chinh_con ? 'tb' : 'cao'}"><td>${esc(x.dv)}</td><td>${x.so}</td><td>${x.phien_chinh_con ? 'vẫn còn — ghi lỗi API của dịch vụ' : 'mất — đã dừng hẳn'}</td><td>${esc(x.ly_do || '')}</td><td>${esc(x.duong.join(' · '))}</td><td>${esc(x.man.join(' · '))}</td></tr>`).join('')}</tbody></table>` : ''}
 ${(kq.ho_so_mau || []).length ? `<h2 style="font-size:16px;margin-top:28px">Hồ sơ mẫu (dataset) — ${kq.ho_so_mau.filter(x => /^đã mở/.test(x.ket_qua)).length}/${kq.ho_so_mau.length} mở được</h2><table><thead><tr><th>Mã</th><th>Đường dẫn</th><th>Kết quả</th><th>Ghi chú</th></tr></thead><tbody>${kq.ho_so_mau.map(x => `<tr class="${/^đã mở$/.test(x.ket_qua) ? '' : 'tb'}"><td>${esc(x.ma)}</td><td>${esc(x.duong_dan)}</td><td>${esc(x.ket_qua)}</td><td>${esc(x.ly_do || '')}</td></tr>`).join('')}</tbody></table>` : ''}

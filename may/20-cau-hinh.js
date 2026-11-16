@@ -20,6 +20,7 @@ const MAC_DINH = {
 
   /* --- thử ô nhập (đầu vào) và kiểm đầu ra --- */
   thuOTim: true,
+  thuLoiDoc: true,   // [bước 2] giả lỗi đọc dữ liệu (như mất mạng) rồi mở lại màn: màn có báo lỗi không, hay hiện «trống» / treo / trắng
   giaTriTim: [
     { giaTri: 'Nguyễn', ten: 'có dấu' },
     { giaTri: 'nguyen', ten: 'không dấu', phaiRaNhuCoDau: 'Nguyễn' },
@@ -210,7 +211,7 @@ function luuCfg(o) { try { localStorage.setItem(KEY_CFG, hoaChuoi(o)); } catch (
 const KIEU = {
   tenMienDuocChay: 'RegExp?', cheNhayCam: 'boolean',
   chiMenu: 'RegExp?', boQuaMenu: 'RegExp?', doSauTab: 'number', maxTabMoiMan: 'number',
-  moHoSoDau: 'boolean', thuOTim: 'boolean', giaTriTim: 'object', thuOChon: 'number',
+  moHoSoDau: 'boolean', thuOTim: 'boolean', thuLoiDoc: 'boolean', giaTriTim: 'object', thuOChon: 'number',
   thuBaoMat: 'boolean',
   dacTa: 'object?', kichBan: 'object', chiChayKichBan: 'boolean',
   waitMax: 'number', idle: 'number', slowMs: 'number',
@@ -247,16 +248,16 @@ function kiemKieu(k, v) {
 
 // [1.2] BỘ CẤU HÌNH: mỗi bộ đặt ĐỦ cùng một danh sách khoá (không cộng dồn bộ trước), chỉ áp cho lần chạy (không lưu), báo cáo ghi tên bộ.
 // Thứ tự: mặc định ← đã lưu (ita.dat) ← bộ đang chọn ← ITA_MAC_DINH ← ITA_CONFIG ← tham số ita.chay({...}).
-const BO_KHOA = ['moHoSoDau', 'thuOTim', 'thuOChon', 'doSauTab', 'maxTabMoiMan', 'kiemKeTruong', 'moFormDeKiemKe', 'maxFormMoiMan', 'moNutNghiepVu', 'moDropdownTuyBien', 'moRongMuc', 'moHoSoMoiTrangThai', 'maxTrangThai', 'kiemTroNang', 'kiemThietKe', 'kiemNgonTu', 'thuBaoMat'];
+const BO_KHOA = ['moHoSoDau', 'thuOTim', 'thuLoiDoc', 'thuOChon', 'doSauTab', 'maxTabMoiMan', 'kiemKeTruong', 'moFormDeKiemKe', 'maxFormMoiMan', 'moNutNghiepVu', 'moDropdownTuyBien', 'moRongMuc', 'moHoSoMoiTrangThai', 'maxTrangThai', 'kiemTroNang', 'kiemThietKe', 'kiemNgonTu', 'thuBaoMat'];
 const BO_CHUAN = Object.fromEntries(BO_KHOA.map(k => [k, MAC_DINH[k]]));   // «chuẩn» = đúng mặc định
 const BO_CAU_HINH = {
   // bề mặt mọi màn: không mở form, hồ sơ, ô chọn, mục ẩn; tab một tầng — quét định kỳ cho nhanh
-  'nhanh': Object.assign({}, BO_CHUAN, { moHoSoDau: false, thuOTim: false, thuOChon: 0, doSauTab: 1, maxTabMoiMan: 10, moFormDeKiemKe: false, maxFormMoiMan: 0, moNutNghiepVu: false, moDropdownTuyBien: false, moRongMuc: false, moHoSoMoiTrangThai: false, maxTrangThai: 0 }),
+  'nhanh': Object.assign({}, BO_CHUAN, { moHoSoDau: false, thuOTim: false, thuLoiDoc: false, thuOChon: 0, doSauTab: 1, maxTabMoiMan: 10, moFormDeKiemKe: false, maxFormMoiMan: 0, moNutNghiepVu: false, moDropdownTuyBien: false, moRongMuc: false, moHoSoMoiTrangThai: false, maxTrangThai: 0 }),
   'chuan': Object.assign({}, BO_CHUAN),
   // thêm tầng tab, nhiều form, nhiều trạng thái, nhiều lựa chọn lọc — trước khi bàn giao
   'sau': Object.assign({}, BO_CHUAN, { doSauTab: 3, maxTabMoiMan: 50, maxFormMoiMan: 50, thuOChon: 12, maxTrangThai: 20 }),
   // chỉ kiểm kê trường: bỏ thử ô tìm / ô lọc, thiết kế, ngôn từ, trợ năng
-  'kiem-ke-truong': Object.assign({}, BO_CHUAN, { thuOTim: false, thuOChon: 0, kiemTroNang: false, kiemThietKe: false, kiemNgonTu: false }),
+  'kiem-ke-truong': Object.assign({}, BO_CHUAN, { thuOTim: false, thuLoiDoc: false, thuOChon: 0, kiemTroNang: false, kiemThietKe: false, kiemNgonTu: false }),
   'bao-mat': Object.assign({}, BO_CHUAN, { thuBaoMat: true }),
 };
 const BO_TEN = { 'nhanh': 'nhanh', 'chuan': 'chuan', 'day-du': 'chuan', 'sau': 'sau', 'kiem-ke-truong': 'kiem-ke-truong', 'bao-mat': 'bao-mat' };   // day-du: tên cũ
