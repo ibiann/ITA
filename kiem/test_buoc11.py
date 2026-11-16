@@ -63,7 +63,8 @@ v1, v2 = vd['Danh sách mẫu'], vd['Mẫu hai']
 assert 'color-contrast' in v1['wcag_loi'] and 'wcag_loi: chuẩn' in v1['can_cu'], v1
 assert 'ISO' in v1['gio'] and 'gio_khong_chuan: TC v7' in v1['can_cu'], v1
 assert (v1['chu_la'] or v1['ma_enum']) and 'TC v7 — KHUNG-CHUNG.MA_CHUA_DICH' in v1['can_cu'], v1
-assert v2['menu'] and 'tieu_de_lech_menu: TC v7' in v2['can_cu'] and v2['muc'] != 'ghi nhận', v2
-print('đạt: dòng vấn đề của màn ghi lỗi WCAG (căn cứ chuẩn), giờ ISO thô, mã camelCase, tiêu đề khác menu (căn cứ TC v7 KHUNG-CHUNG), được tính mức')
+# [tầng] tiêu đề khác menu luôn «cần xác nhận» (tên khác nhưng có thể cùng nghĩa) → «Cần xem», không tính mức
+assert v2['menu'] and 'tieu_de_lech_menu: TC v7' in v2['can_cu'] and v2['muc'] == 'ghi nhận', v2
+print('đạt: dòng vấn đề của màn ghi lỗi WCAG (căn cứ chuẩn), giờ ISO thô, mã camelCase; tiêu đề khác menu ra «Cần xem» (ITA không chắc)')
 assert c['html'] == {'tro_nang': True, 'tuong_phan': True}, c['html']
 print('đạt: báo cáo HTML có mục «Kiểm trợ năng tự động — axe-core», tên mục WCAG tiếng Việt')

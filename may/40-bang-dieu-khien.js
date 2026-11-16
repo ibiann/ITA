@@ -143,7 +143,7 @@ function veThe(t) {
         if (f === '__ds') { wrap.innerHTML = htmlThietKe(kq) || '<div class="muted">Không có dữ liệu (bản chạy cũ hoặc đã tắt).</div>'; return; }
         const ml = kq.mau_loi || []; wrap.innerHTML = ml.length ? '' : '<div class="muted">Không có mục khớp.</div>'; if (!ml.length) return;
         const tb3 = el('<table><thead><tr><th>Mức</th><th>Mẫu lỗi</th><th>Số màn</th></tr></thead><tbody></tbody></table>');
-        ml.forEach(m => tb3.querySelector('tbody').appendChild(el(`<tr><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class="muted">${esc(m.nguyen_tac)}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div><div class="muted">vd: ${esc((m.vi_du_man || []).join(' · '))}${m.so_man > (m.vi_du_man || []).length ? ' (+' + (m.so_man - (m.vi_du_man || []).length) + ' màn — đủ danh sách trong báo cáo)' : ''}</div></td><td>${esc(m.so_man)}</td></tr>`)));
+        ml.forEach(m => tb3.querySelector('tbody').appendChild(el(`<tr><td>${esc(m.ket_luan || m.muc_do)}${m.ket_luan && m.muc_do !== 'ghi nhận' ? ' · ' + esc(m.muc_do) : ''}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class="muted">${esc(m.nguyen_tac)}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div><div class="muted">vd: ${esc((m.vi_du_man || []).join(' · '))}${m.so_man > (m.vi_du_man || []).length ? ' (+' + (m.so_man - (m.vi_du_man || []).length) + ' màn — đủ danh sách trong báo cáo)' : ''}</div></td><td>${esc(m.so_man)}</td></tr>`)));
         wrap.appendChild(tb3); return;
       }
       if (f === '__truong' || f === '__thieu') {
@@ -168,7 +168,7 @@ function veThe(t) {
           r.du_lieu_nhay_cam && 'Dữ liệu nhạy cảm: ' + r.du_lieu_nhay_cam, r.ma_enum_lo && 'Mã lộ ra: ' + r.ma_enum_lo, r.cat_chu_khong_tooltip && 'Chữ cắt không tooltip: ' + r.cat_chu_khong_tooltip,
           r.chuoi_dai_khong_ngat && 'Chuỗi dài không ngắt: ' + r.chuoi_dai_khong_ngat, r.dinh_dang_ngay_tron && 'Ngày trộn: ' + r.dinh_dang_ngay_tron, r.dinh_dang_so_tron && 'Số trộn: ' + r.dinh_dang_so_tron,
           r.tieu_de_lech_menu && 'Tiêu đề lệch menu: ' + r.tieu_de_lech_menu, r.nut_chinh_nhieu && 'Nhiều nút chính: ' + r.nut_chinh_nhieu, r.can_xac_nhan && 'Cần xác nhận: ' + r.can_xac_nhan].filter(Boolean).map(esc).join('<br>');   // 3.5: escape dữ liệu lấy từ trang
-        const tr = el(`<tr class="row ${cls}"><td>${esc(r.tab)}</td><td><span class="pill ${pill}">${esc(r.muc_do)}</span></td><td>${van}</td></tr>`);
+        const tr = el(`<tr class="row ${cls}"><td>${esc(r.tab)}</td><td><span class="pill ${pill}">${esc(r.ket_luan || r.muc_do)}${r.ket_luan && r.muc_do !== 'ghi nhận' ? ' · ' + esc(r.muc_do) : ''}</span></td><td>${van}</td></tr>`);
         tr.onclick = () => ita.moMan(r.url, r.tab);
         body2.appendChild(tr);
       });
@@ -205,7 +205,7 @@ function taiTep(ten, noiDung, kieu) {
   (document.body || document.documentElement).appendChild(a); a.click(); a.remove();
 }
 function sangCSV(kq) {
-  const rows = kq.van_de || []; const cols = ['tab', 'url', 'muc_do', 'can_cu', 'du_lieu_nhay_cam', 'api_loi', 'js_loi', 'quy_trinh_loi', 'quy_trinh_trang_thai', 'rong_nhung_api_loi', 'o_khong_nhan', 'tieu_de_bi_cat', 'chu_la', 'phan_tram_vo_ly', 'so_dong_vuot_tong', 'van_dang_tai', 'tran_ngang', 'chan_ghi', 'nghi_ngo_so_lech',
+  const rows = kq.van_de || []; const cols = ['tab', 'url', 'ket_luan', 'muc_do', 'can_cu', 'du_lieu_nhay_cam', 'api_loi', 'js_loi', 'quy_trinh_loi', 'quy_trinh_trang_thai', 'rong_nhung_api_loi', 'o_khong_nhan', 'tieu_de_bi_cat', 'chu_la', 'phan_tram_vo_ly', 'so_dong_vuot_tong', 'van_dang_tai', 'tran_ngang', 'chan_ghi', 'nghi_ngo_so_lech',
     'ma_enum_lo', 'cat_chu_khong_tooltip', 'chuoi_dai_khong_ngat', 'dinh_dang_ngay_tron', 'dinh_dang_so_tron', 'tieu_de_lech_menu', 'nut_chinh_nhieu', 'can_xac_nhan'];
   const q = v => '"' + cheChuoi(v == null ? '' : v).replace(/"/g, '""') + '"';
   return '\ufeff' + cols.join(',') + '\n' + rows.map(r => cols.map(c => q(r[c])).join(',')).join('\n');

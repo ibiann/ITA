@@ -2143,7 +2143,9 @@ async function itaAudit(over, trangThaiTiep) {
   const canXN = r => Object.keys(CAN_XN).filter(k => r[k]).map(k => { const x = CAN_XN[k](r[k]); return x ? k + ': ' + x : ''; }).filter(Boolean).join(' | ');
   const coXss = r => /XSS|5xx/.test((r.quy_trinh_loi || '') + (r.api_loi || ''));
   // [3.26.1] chỉ phép kiểm có căn cứ mới được tính mức; còn lại là «ghi nhận»
-  const coCC = (r, k) => r[k] && coCanCu(k, r[k]);
+  const khongChac = (k, v) => !!(CAN_XN[k] && CAN_XN[k](v));   // [tầng] ITA không chắc → «Cần xem», không tính mức (chỉ hạ, không nâng)
+  const coCC = (r, k) => r[k] && coCanCu(k, r[k]) && !khongChac(k, r[k]);
+  const klCua = (k, v) => ketLuanCC(k, v, khongChac(k, v));
   // [1.1] lỗi WCAG lấy mức theo axe: critical → cao, serious → trung bình, còn lại → thấp (trước: luôn thấp)
   const wcagMuc = v => /\(nghiêm trọng nhất/.test(v) ? 'cao' : /\(nghiêm trọng[,)]/.test(v) ? 'trung bình' : 'thấp';
   const mucDo0 = r => (CAO.some(k => coCC(r, k)) || coXss(r) || /⚠/.test(r.quy_trinh_loi || '')) ? 'cao' : TB.some(k => coCC(r, k)) ? 'trung bình' : THAP.some(k => coCC(r, k)) ? 'thấp' : '';
@@ -2165,29 +2167,34 @@ async function itaAudit(over, trangThaiTiep) {
     }
     return [...m.values()];
   })();
-  const issues = resG.filter(r => CHECK.some(k => r[k])).map(r => { const o = Object.fromEntries(Object.entries(r).filter(([, v]) => v !== '' && v != null)); o.muc_do = mucDo(r) || 'ghi nhận'; o.can_cu = CHECK.filter(k => r[k]).map(k => k + ': ' + canCuKiem(k, r[k]).join(' — ')).join(' | '); const xn = canXN(r); if (xn) o.can_xac_nhan = xn; return o; });
+  const issues = resG.filter(r => CHECK.some(k => r[k])).map(r => { const o = Object.fromEntries(Object.entries(r).filter(([, v]) => v !== '' && v != null)); o.muc_do = mucDo(r) || 'ghi nhận'; const kl = CHECK.filter(k => coCC(r, k)).map(k => klCua(k, r[k])); o.ket_luan = o.muc_do === 'ghi nhận' ? 'Cần xem' : !kl.length || kl.includes('Sai') ? 'Sai' : 'Lệch chuẩn'; o.can_cu = CHECK.filter(k => r[k]).map(k => k + ': ' + canCuKiem(k, r[k]).join(' — ')).join(' | '); const xn = canXN(r); if (xn) o.can_xac_nhan = xn; return o; });
   const inputIssues = inputs.filter(i => i.loi);
 
   // 3.6: gom theo mẫu lỗi / thành phần — một lỗi component trên nhiều màn = 1 dòng
-  const mucCua = (k, v) => !coCanCu(k, v) ? 'ghi nhận' : k === 'wcag_loi' ? wcagMuc(v) : CAO.includes(k) || (k === 'quy_trinh_loi' && /⚠/.test(v)) ? 'cao' : TB.includes(k) ? 'trung bình' : THAP.includes(k) ? 'thấp' : 'nghi ngờ';
+  const mucCua = (k, v) => !coCanCu(k, v) || khongChac(k, v) ? 'ghi nhận' : k === 'wcag_loi' ? wcagMuc(v) : CAO.includes(k) || (k === 'quy_trinh_loi' && /⚠/.test(v)) ? 'cao' : TB.includes(k) ? 'trung bình' : THAP.includes(k) ? 'thấp' : 'nghi ngờ';
   const MAU = {}; let ccHien = '';   // căn cứ của mẫu đang gom (đặt trước mỗi lượt gọi themMau)
   const themMau = (khoa, loai, muc, chiTiet, man, xn) => {
-    const o = MAU[khoa] || (MAU[khoa] = { loai, muc_do: muc, chi_tiet: chiTiet, nguyen_tac: NGUYEN_TAC[loai] || '', can_cu: ccHien, so_man: 0, vi_du_man: [], can_xac_nhan: xn || '', _m: new Set() });
+    const kl = muc === 'ghi nhận' ? 'Cần xem' : KL_CC[ccHien.split(' — ')[0]] || 'Sai';
+    const o = MAU[khoa] || (MAU[khoa] = { loai, ket_luan: kl, muc_do: muc, chi_tiet: chiTiet, nguyen_tac: NGUYEN_TAC[loai] || '', can_cu: ccHien, so_man: 0, vi_du_man: [], can_xac_nhan: xn || '', _m: new Set(), _cung: new Set() });
     if (!o._m.has(man)) { o._m.add(man); o.so_man++; if (o.vi_du_man.length < 4) o.vi_du_man.push(man); }
+    return o;
   };
+  // [tầng] một chỗ chỉ ra một dòng: cùng một thành phần trên một màn trúng nhiều phép kiểm → giữ phép có kết luận mạnh nhất, phép kia ghi phụ «cũng»
+  const thangTP = r => { const g = {}; for (const k of THEO_TP) if (r[k] && r.__tp) for (const tp of new Set(r.__tp[k] || [])) (g[tp] = g[tp] || []).push(k);
+    for (const tp in g) g[tp].sort((a, b) => HANG_KL[klCua(b, r[b])] - HANG_KL[klCua(a, r[a])]); return g; };   // g[tp][0] thắng, còn lại ghi «cũng»
   const duongMau = x => String(x).replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':id').replace(/\/\d+(?=\/|$)/g, '/:id');
   const THEO_TP = ['tieu_de_bi_cat', 'cat_chu_khong_tooltip', 'chuoi_dai_khong_ngat', 'ma_enum_lo'];
-  for (const r of res) for (const k of CHECK) {
+  for (const r of res) { const g = thangTP(r); for (const k of CHECK) {
     if (!r[k]) continue;
     const muc = mucCua(k, r[k]), xn = CAN_XN[k] ? CAN_XN[k](r[k]) : ''; ccHien = canCuKiem(k, r[k]).join(' — ');
-    if (THEO_TP.includes(k) && r.__tp && (r.__tp[k] || []).length) { for (const tp of new Set(r.__tp[k])) themMau(k + '·' + tp, k, muc, 'thành phần ' + tp, r.tab, xn); }
-    else if (k === 'api_loi' || k === 'api_cham' || k === 'chan_ghi') { for (const p of String(r[k]).split(' | ')) { const c = duongMau(p.replace(/^\d+ms /, '')); themMau(k + '·' + c, k, muc, c, r.tab, k === 'api_loi' ? (CAN_XN.api_loi(p) || '') : xn); } }
+    if (THEO_TP.includes(k) && r.__tp && (r.__tp[k] || []).length) { for (const tp of new Set(r.__tp[k])) if (g[tp][0] === k) { const o = themMau(k + '·' + tp, k, muc, 'thành phần ' + tp, r.tab, xn); g[tp].slice(1).forEach(x => o._cung.add(x)); } }
+    else if (k === 'api_loi' || k === 'api_cham' || k === 'chan_ghi') { for (const p of String(r[k]).split(' | ')) { const c = duongMau(p.replace(/^\d+ms /, '')); ccHien = canCuKiem(k, p).join(' — '); themMau(k + '·' + c, k, mucCua(k, p), c, r.tab, k === 'api_loi' ? (CAN_XN.api_loi(p) || '') : xn); } }
     else if (k === 'chu_la') { for (const p of String(r[k]).split(', ')) themMau(k + '·' + p, k, muc, p, r.tab, xn); }
     else if (k === 'du_lieu_nhay_cam') { for (const p of String(r[k]).split(' | ')) themMau(k + '·' + p.split(' «')[0], k, muc, p.split(' «')[0], r.tab, xn); }
     else if (k === 'wcag_loi') { for (const p of String(r[k]).split(' · ')) themMau(k + '·' + p.split(' ')[0], k, mucCua(k, p), p.replace(/ ×\d+$/, ''), r.tab, xn); }   // [1.1] mức theo từng luật   // [11a] mỗi luật axe một mẫu
     else if (['js_loi', 'quy_trinh_loi', 'dinh_dang_ngay_tron', 'dinh_dang_so_tron', 'rong_nhung_api_loi', 'tieu_de_lech_menu', 'phan_tram_vo_ly', 'truong_loi'].includes(k)) { const ct = String(r[k]).replace(/\s+/g, ' ').slice(0, 120); themMau(k + '·' + ct.replace(/\d+/g, 'N'), k, muc, ct, r.tab, xn); }
     else themMau(k, k, muc, '', r.tab, xn);
-  }
+  } }
   for (const i of inputIssues) for (const p of String(i.loi).split(' | ')) {
     const xn = /^\[cần xác nhận\]/.test(p) ? 'kiểm bằng mắt' : '';
     const ct = p.replace(/^\[cần xác nhận\] /, '').replace(/\d+/g, 'N').replace(/"[^"]*"/g, '"…"');
@@ -2198,7 +2205,7 @@ async function itaAudit(over, trangThaiTiep) {
   }
   const RANK = { 'cao': 3, 'trung bình': 2, 'thấp': 1, 'nghi ngờ': 0, 'ghi nhận': -1 };
   // [tầng gom] ds_man: ĐỦ mọi màn của mẫu lỗi; vi_du_man: 4 màn đầu, chỉ cho bảng điều khiển gọn
-  const mau_loi = Object.values(MAU).map(o => { o.ds_man = [...o._m]; delete o._m; return o; }).sort((a, b) => (RANK[b.muc_do] - RANK[a.muc_do]) || (b.so_man - a.so_man));
+  const mau_loi = Object.values(MAU).map(o => { o.ds_man = [...o._m]; o.cung = [...o._cung]; delete o._m; delete o._cung; return o; }).sort((a, b) => (RANK[b.muc_do] - RANK[a.muc_do]) || (b.so_man - a.so_man));
   // 3.6: hệ thống thiết kế & ngôn từ toàn app
   // [tầng gom] giữ ĐỦ mọi giá trị và mọi màn (giá trị hiếm — thứ cần tìm — không bị cắt); thứ tự: dùng nhiều trước
   const xep = bangGT => Object.entries(bangGT).map(([gt, o]) => ({ gia_tri: gt, lan: o.n, so_man: o.so_man, man: o.man || [] })).sort((a, b) => b.lan - a.lan);
@@ -2254,6 +2261,7 @@ async function itaAudit(over, trangThaiTiep) {
     man_cao: issues.filter(r => r.muc_do === 'cao').length,
     man_trung_binh: issues.filter(r => r.muc_do === 'trung bình').length,
     man_ghi_nhan: issues.filter(r => r.muc_do === 'ghi nhận').length,
+    dem_ket_luan: Object.fromEntries(Object.keys(HANG_KL).map(k => [k, mau_loi.filter(m => m.ket_luan === k).length])),   // [tầng] số mẫu lỗi theo chữ kết luận
     o_nhap_da_thu: inputs.length, o_nhap_co_loi: inputIssues.length,
     menu_khong_mo_duoc: missing,
     bieu_do_chua_bam_duoc: resG.filter(r => { const m = /^(\d+)\/(\d+)/.exec(r.bieu_do || ''); return m && +m[1] < +m[2]; }).map(r => r.tab + ' (' + r.bieu_do + ')'),

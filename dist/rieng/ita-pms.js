@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T10:03:23+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T10:28:23+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
 window.__itaHoSo = {"ten":"LANCS PMS","ten_mien":"pms.lab.linksafe.vn","kieu_app":"openslides","chon_tai_khoan":"os-account-button span[title]","post_cho_qua":["/system/auth/login","/system/auth/who-am-i","/system/presenter/handle_request"],"cuoc_hop_mau":87,"tai_khoan":[{"dang_nhap":"ita.thuky","ten_hien":"ITA Thư ký","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Quản trị viên"},{"dang_nhap":"ita.chutoa","ten_hien":"ITA Chủ tọa","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Chủ tọa"},{"dang_nhap":"ita.daibieu","ten_hien":"ITA Đại biểu","vai":"DAI_BIEU","nhom_app":"Đại biểu"},{"dang_nhap":"ita.khongnhom","ten_hien":"ITA Không nhóm","vai":"KHONG_QUYEN","nhom_app":"Mặc định"},{"dang_nhap":"ita.qttochuc","ten_hien":"ITA Quản trị tổ chức","vai":"QUAN_TRI_TO_CHUC","nhom_app":""},{"dang_nhap":"ita.qluyban","ten_hien":"ITA Quản lý ủy ban","vai":"QUAN_LY_UY_BAN","nhom_app":""}],"_nguon":{"ten_mien":"lab của dự án (DOCS/80-setup-3-cuoc-hop-demo-khach-hang-2026-07-12.md)","kieu_app":"OpenSlides 4: dữ liệu đi qua SharedWorker (openslides-client/client/src/app/openslides-main-module/services/shared-worker.service.ts:108); ITA đọc nhóm + quyền qua who-am-i + autoupdate (35-kieu-app.js)","chon_tai_khoan":"openslides-client/client/src/app/site/modules/global-headbar/components/account-button/account-button.component.html: span đầu tiên có title = tên ngắn của tài khoản, span sau = nhóm","post_cho_qua":"đọc mà dùng POST: đăng nhập, who-am-i (auth-service public-controller.ts:41), presenter (openslides-backend/openslides_backend/presenter/: không presenter nào ghi dữ liệu, rà 07/11/2026). Mọi lệnh ghi đi qua /system/action/handle_request, /system/vote, /system/media, dịch vụ LPM (/api/gateway…, bóc băng, Drive) → bị chặn khi chạy. Lưu ý: lab có thể chạy bản backend khác repo (lab tạo 6 nhóm khi tạo cuộc họp, repo tạo 4)","cuoc_hop_mau":"cuộc họp «ITA – cuộc họp mẫu» dựng 07/11/2026 cho ITA: 3 mục chương trình, 2 kiến nghị, 1 bình bầu","tai_khoan":"tài khoản ita.* dựng 07/11/2026 (id 38–43). Vai theo hướng dẫn sử dụng (DOCS/ui-ux/huong-dan-su-dung/HUONG-DAN-SU-DUNG-LANCS-PMS.md mục 2, Phụ lục A): «Chủ tọa / Quản trị cuộc họp» gần như mọi quyền (người dùng chốt 07/11) — gán cho cả ita.thuky (nhóm Quản trị viên) và ita.chutoa (nhóm Chủ tọa, 12 quyền) để thấy chỗ nhóm Chủ tọa của app thiếu so với tài liệu. Không ghi mật khẩu."}};
 if (!window.axe) {
 /*! axe v4.14.0
@@ -218,7 +218,13 @@ const CAN_CU_KIEM = {
   tran_ngang: () => innerWidth <= 320 ? [CHUAN, 'WCAG 2.2 SC 1.4.10 (khổ ' + innerWidth + 'px)'] : [1366, 1920].includes(innerWidth) ? [TC_PM, 'KHUNG-CHUNG.TRAN_NGANG: trang không rộng hơn cửa sổ (khổ ' + innerWidth + 'px)'] : [TU_DAT, 'cuộn ngang ở khổ ' + innerWidth + 'px; WCAG 1.4.10 xét ở 320px, TC KHUNG-CHUNG.TRAN_NGANG ở 1366 và 1920px'],
 };
 const canCuKiem = (k, v) => { const x = CAN_CU_KIEM[k]; return (typeof x === 'function' ? x(v) : x) || [TU_DAT, 'ngưỡng hoặc luật do công cụ đặt, chưa có tài liệu dự án']; };
-const coCanCu = (k, v) => canCuKiem(k, v)[0] !== TU_DAT;
+// [tầng] chữ kết luận theo căn cứ — T1 sự việc / T2 chuẩn / T3 đặc tả dự án → «Sai»; T4 chuẩn chung (≥3 hệ thiết kế) → «Lệch chuẩn»;
+// T5 số đông trong app → «Không thống nhất»; tự đặt hoặc ITA không chắc (cần xác nhận) → «Cần xem». Bộ lọc «Cần xem» chỉ HẠ, không nâng.
+const CHUNG = 'chuẩn chung', TRONG_APP = 'trong app';
+const KL_CC = { [SU_VIEC]: 'Sai', [CHUAN]: 'Sai', [DAC_TA]: 'Sai', [CHUNG]: 'Lệch chuẩn', [TC_PM]: 'Lệch chuẩn', [TRONG_APP]: 'Không thống nhất', [TU_DAT]: 'Cần xem' };
+const HANG_KL = { 'Sai': 3, 'Lệch chuẩn': 2, 'Không thống nhất': 1, 'Cần xem': 0 };
+const ketLuanCC = (k, v, khongChac) => khongChac ? 'Cần xem' : KL_CC[canCuKiem(k, v)[0]] || 'Cần xem';
+const coCanCu = (k, v) => ['Sai', 'Lệch chuẩn'].includes(KL_CC[canCuKiem(k, v)[0]]);   // chỉ «Sai» / «Lệch chuẩn» được tính mức
 // Khoá chỉ dùng trong lúc chạy, không lưu vào trình duyệt (mở ghi)
 const KHONG_LUU = { chanGhi: 1, mucQuyTrinh: 1, moiTruongKiemThu: 1 };
 const locLuu = o => { const r = {}; for (const k in (o || {})) if (!KHONG_LUU[k]) r[k] = o[k]; return r; };
@@ -2672,7 +2678,9 @@ async function itaAudit(over, trangThaiTiep) {
   const canXN = r => Object.keys(CAN_XN).filter(k => r[k]).map(k => { const x = CAN_XN[k](r[k]); return x ? k + ': ' + x : ''; }).filter(Boolean).join(' | ');
   const coXss = r => /XSS|5xx/.test((r.quy_trinh_loi || '') + (r.api_loi || ''));
   // [3.26.1] chỉ phép kiểm có căn cứ mới được tính mức; còn lại là «ghi nhận»
-  const coCC = (r, k) => r[k] && coCanCu(k, r[k]);
+  const khongChac = (k, v) => !!(CAN_XN[k] && CAN_XN[k](v));   // [tầng] ITA không chắc → «Cần xem», không tính mức (chỉ hạ, không nâng)
+  const coCC = (r, k) => r[k] && coCanCu(k, r[k]) && !khongChac(k, r[k]);
+  const klCua = (k, v) => ketLuanCC(k, v, khongChac(k, v));
   // [1.1] lỗi WCAG lấy mức theo axe: critical → cao, serious → trung bình, còn lại → thấp (trước: luôn thấp)
   const wcagMuc = v => /\(nghiêm trọng nhất/.test(v) ? 'cao' : /\(nghiêm trọng[,)]/.test(v) ? 'trung bình' : 'thấp';
   const mucDo0 = r => (CAO.some(k => coCC(r, k)) || coXss(r) || /⚠/.test(r.quy_trinh_loi || '')) ? 'cao' : TB.some(k => coCC(r, k)) ? 'trung bình' : THAP.some(k => coCC(r, k)) ? 'thấp' : '';
@@ -2694,29 +2702,34 @@ async function itaAudit(over, trangThaiTiep) {
     }
     return [...m.values()];
   })();
-  const issues = resG.filter(r => CHECK.some(k => r[k])).map(r => { const o = Object.fromEntries(Object.entries(r).filter(([, v]) => v !== '' && v != null)); o.muc_do = mucDo(r) || 'ghi nhận'; o.can_cu = CHECK.filter(k => r[k]).map(k => k + ': ' + canCuKiem(k, r[k]).join(' — ')).join(' | '); const xn = canXN(r); if (xn) o.can_xac_nhan = xn; return o; });
+  const issues = resG.filter(r => CHECK.some(k => r[k])).map(r => { const o = Object.fromEntries(Object.entries(r).filter(([, v]) => v !== '' && v != null)); o.muc_do = mucDo(r) || 'ghi nhận'; const kl = CHECK.filter(k => coCC(r, k)).map(k => klCua(k, r[k])); o.ket_luan = o.muc_do === 'ghi nhận' ? 'Cần xem' : !kl.length || kl.includes('Sai') ? 'Sai' : 'Lệch chuẩn'; o.can_cu = CHECK.filter(k => r[k]).map(k => k + ': ' + canCuKiem(k, r[k]).join(' — ')).join(' | '); const xn = canXN(r); if (xn) o.can_xac_nhan = xn; return o; });
   const inputIssues = inputs.filter(i => i.loi);
 
   // 3.6: gom theo mẫu lỗi / thành phần — một lỗi component trên nhiều màn = 1 dòng
-  const mucCua = (k, v) => !coCanCu(k, v) ? 'ghi nhận' : k === 'wcag_loi' ? wcagMuc(v) : CAO.includes(k) || (k === 'quy_trinh_loi' && /⚠/.test(v)) ? 'cao' : TB.includes(k) ? 'trung bình' : THAP.includes(k) ? 'thấp' : 'nghi ngờ';
+  const mucCua = (k, v) => !coCanCu(k, v) || khongChac(k, v) ? 'ghi nhận' : k === 'wcag_loi' ? wcagMuc(v) : CAO.includes(k) || (k === 'quy_trinh_loi' && /⚠/.test(v)) ? 'cao' : TB.includes(k) ? 'trung bình' : THAP.includes(k) ? 'thấp' : 'nghi ngờ';
   const MAU = {}; let ccHien = '';   // căn cứ của mẫu đang gom (đặt trước mỗi lượt gọi themMau)
   const themMau = (khoa, loai, muc, chiTiet, man, xn) => {
-    const o = MAU[khoa] || (MAU[khoa] = { loai, muc_do: muc, chi_tiet: chiTiet, nguyen_tac: NGUYEN_TAC[loai] || '', can_cu: ccHien, so_man: 0, vi_du_man: [], can_xac_nhan: xn || '', _m: new Set() });
+    const kl = muc === 'ghi nhận' ? 'Cần xem' : KL_CC[ccHien.split(' — ')[0]] || 'Sai';
+    const o = MAU[khoa] || (MAU[khoa] = { loai, ket_luan: kl, muc_do: muc, chi_tiet: chiTiet, nguyen_tac: NGUYEN_TAC[loai] || '', can_cu: ccHien, so_man: 0, vi_du_man: [], can_xac_nhan: xn || '', _m: new Set(), _cung: new Set() });
     if (!o._m.has(man)) { o._m.add(man); o.so_man++; if (o.vi_du_man.length < 4) o.vi_du_man.push(man); }
+    return o;
   };
+  // [tầng] một chỗ chỉ ra một dòng: cùng một thành phần trên một màn trúng nhiều phép kiểm → giữ phép có kết luận mạnh nhất, phép kia ghi phụ «cũng»
+  const thangTP = r => { const g = {}; for (const k of THEO_TP) if (r[k] && r.__tp) for (const tp of new Set(r.__tp[k] || [])) (g[tp] = g[tp] || []).push(k);
+    for (const tp in g) g[tp].sort((a, b) => HANG_KL[klCua(b, r[b])] - HANG_KL[klCua(a, r[a])]); return g; };   // g[tp][0] thắng, còn lại ghi «cũng»
   const duongMau = x => String(x).replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':id').replace(/\/\d+(?=\/|$)/g, '/:id');
   const THEO_TP = ['tieu_de_bi_cat', 'cat_chu_khong_tooltip', 'chuoi_dai_khong_ngat', 'ma_enum_lo'];
-  for (const r of res) for (const k of CHECK) {
+  for (const r of res) { const g = thangTP(r); for (const k of CHECK) {
     if (!r[k]) continue;
     const muc = mucCua(k, r[k]), xn = CAN_XN[k] ? CAN_XN[k](r[k]) : ''; ccHien = canCuKiem(k, r[k]).join(' — ');
-    if (THEO_TP.includes(k) && r.__tp && (r.__tp[k] || []).length) { for (const tp of new Set(r.__tp[k])) themMau(k + '·' + tp, k, muc, 'thành phần ' + tp, r.tab, xn); }
-    else if (k === 'api_loi' || k === 'api_cham' || k === 'chan_ghi') { for (const p of String(r[k]).split(' | ')) { const c = duongMau(p.replace(/^\d+ms /, '')); themMau(k + '·' + c, k, muc, c, r.tab, k === 'api_loi' ? (CAN_XN.api_loi(p) || '') : xn); } }
+    if (THEO_TP.includes(k) && r.__tp && (r.__tp[k] || []).length) { for (const tp of new Set(r.__tp[k])) if (g[tp][0] === k) { const o = themMau(k + '·' + tp, k, muc, 'thành phần ' + tp, r.tab, xn); g[tp].slice(1).forEach(x => o._cung.add(x)); } }
+    else if (k === 'api_loi' || k === 'api_cham' || k === 'chan_ghi') { for (const p of String(r[k]).split(' | ')) { const c = duongMau(p.replace(/^\d+ms /, '')); ccHien = canCuKiem(k, p).join(' — '); themMau(k + '·' + c, k, mucCua(k, p), c, r.tab, k === 'api_loi' ? (CAN_XN.api_loi(p) || '') : xn); } }
     else if (k === 'chu_la') { for (const p of String(r[k]).split(', ')) themMau(k + '·' + p, k, muc, p, r.tab, xn); }
     else if (k === 'du_lieu_nhay_cam') { for (const p of String(r[k]).split(' | ')) themMau(k + '·' + p.split(' «')[0], k, muc, p.split(' «')[0], r.tab, xn); }
     else if (k === 'wcag_loi') { for (const p of String(r[k]).split(' · ')) themMau(k + '·' + p.split(' ')[0], k, mucCua(k, p), p.replace(/ ×\d+$/, ''), r.tab, xn); }   // [1.1] mức theo từng luật   // [11a] mỗi luật axe một mẫu
     else if (['js_loi', 'quy_trinh_loi', 'dinh_dang_ngay_tron', 'dinh_dang_so_tron', 'rong_nhung_api_loi', 'tieu_de_lech_menu', 'phan_tram_vo_ly', 'truong_loi'].includes(k)) { const ct = String(r[k]).replace(/\s+/g, ' ').slice(0, 120); themMau(k + '·' + ct.replace(/\d+/g, 'N'), k, muc, ct, r.tab, xn); }
     else themMau(k, k, muc, '', r.tab, xn);
-  }
+  } }
   for (const i of inputIssues) for (const p of String(i.loi).split(' | ')) {
     const xn = /^\[cần xác nhận\]/.test(p) ? 'kiểm bằng mắt' : '';
     const ct = p.replace(/^\[cần xác nhận\] /, '').replace(/\d+/g, 'N').replace(/"[^"]*"/g, '"…"');
@@ -2727,7 +2740,7 @@ async function itaAudit(over, trangThaiTiep) {
   }
   const RANK = { 'cao': 3, 'trung bình': 2, 'thấp': 1, 'nghi ngờ': 0, 'ghi nhận': -1 };
   // [tầng gom] ds_man: ĐỦ mọi màn của mẫu lỗi; vi_du_man: 4 màn đầu, chỉ cho bảng điều khiển gọn
-  const mau_loi = Object.values(MAU).map(o => { o.ds_man = [...o._m]; delete o._m; return o; }).sort((a, b) => (RANK[b.muc_do] - RANK[a.muc_do]) || (b.so_man - a.so_man));
+  const mau_loi = Object.values(MAU).map(o => { o.ds_man = [...o._m]; o.cung = [...o._cung]; delete o._m; delete o._cung; return o; }).sort((a, b) => (RANK[b.muc_do] - RANK[a.muc_do]) || (b.so_man - a.so_man));
   // 3.6: hệ thống thiết kế & ngôn từ toàn app
   // [tầng gom] giữ ĐỦ mọi giá trị và mọi màn (giá trị hiếm — thứ cần tìm — không bị cắt); thứ tự: dùng nhiều trước
   const xep = bangGT => Object.entries(bangGT).map(([gt, o]) => ({ gia_tri: gt, lan: o.n, so_man: o.so_man, man: o.man || [] })).sort((a, b) => b.lan - a.lan);
@@ -2783,6 +2796,7 @@ async function itaAudit(over, trangThaiTiep) {
     man_cao: issues.filter(r => r.muc_do === 'cao').length,
     man_trung_binh: issues.filter(r => r.muc_do === 'trung bình').length,
     man_ghi_nhan: issues.filter(r => r.muc_do === 'ghi nhận').length,
+    dem_ket_luan: Object.fromEntries(Object.keys(HANG_KL).map(k => [k, mau_loi.filter(m => m.ket_luan === k).length])),   // [tầng] số mẫu lỗi theo chữ kết luận
     o_nhap_da_thu: inputs.length, o_nhap_co_loi: inputIssues.length,
     menu_khong_mo_duoc: missing,
     bieu_do_chua_bam_duoc: resG.filter(r => { const m = /^(\d+)\/(\d+)/.exec(r.bieu_do || ''); return m && +m[1] < +m[2]; }).map(r => r.tab + ' (' + r.bieu_do + ')'),
@@ -3020,7 +3034,7 @@ function veThe(t) {
         if (f === '__ds') { wrap.innerHTML = htmlThietKe(kq) || '<div class="muted">Không có dữ liệu (bản chạy cũ hoặc đã tắt).</div>'; return; }
         const ml = kq.mau_loi || []; wrap.innerHTML = ml.length ? '' : '<div class="muted">Không có mục khớp.</div>'; if (!ml.length) return;
         const tb3 = el('<table><thead><tr><th>Mức</th><th>Mẫu lỗi</th><th>Số màn</th></tr></thead><tbody></tbody></table>');
-        ml.forEach(m => tb3.querySelector('tbody').appendChild(el(`<tr><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class="muted">${esc(m.nguyen_tac)}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div><div class="muted">vd: ${esc((m.vi_du_man || []).join(' · '))}${m.so_man > (m.vi_du_man || []).length ? ' (+' + (m.so_man - (m.vi_du_man || []).length) + ' màn — đủ danh sách trong báo cáo)' : ''}</div></td><td>${esc(m.so_man)}</td></tr>`)));
+        ml.forEach(m => tb3.querySelector('tbody').appendChild(el(`<tr><td>${esc(m.ket_luan || m.muc_do)}${m.ket_luan && m.muc_do !== 'ghi nhận' ? ' · ' + esc(m.muc_do) : ''}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class="muted">${esc(m.nguyen_tac)}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div><div class="muted">vd: ${esc((m.vi_du_man || []).join(' · '))}${m.so_man > (m.vi_du_man || []).length ? ' (+' + (m.so_man - (m.vi_du_man || []).length) + ' màn — đủ danh sách trong báo cáo)' : ''}</div></td><td>${esc(m.so_man)}</td></tr>`)));
         wrap.appendChild(tb3); return;
       }
       if (f === '__truong' || f === '__thieu') {
@@ -3045,7 +3059,7 @@ function veThe(t) {
           r.du_lieu_nhay_cam && 'Dữ liệu nhạy cảm: ' + r.du_lieu_nhay_cam, r.ma_enum_lo && 'Mã lộ ra: ' + r.ma_enum_lo, r.cat_chu_khong_tooltip && 'Chữ cắt không tooltip: ' + r.cat_chu_khong_tooltip,
           r.chuoi_dai_khong_ngat && 'Chuỗi dài không ngắt: ' + r.chuoi_dai_khong_ngat, r.dinh_dang_ngay_tron && 'Ngày trộn: ' + r.dinh_dang_ngay_tron, r.dinh_dang_so_tron && 'Số trộn: ' + r.dinh_dang_so_tron,
           r.tieu_de_lech_menu && 'Tiêu đề lệch menu: ' + r.tieu_de_lech_menu, r.nut_chinh_nhieu && 'Nhiều nút chính: ' + r.nut_chinh_nhieu, r.can_xac_nhan && 'Cần xác nhận: ' + r.can_xac_nhan].filter(Boolean).map(esc).join('<br>');   // 3.5: escape dữ liệu lấy từ trang
-        const tr = el(`<tr class="row ${cls}"><td>${esc(r.tab)}</td><td><span class="pill ${pill}">${esc(r.muc_do)}</span></td><td>${van}</td></tr>`);
+        const tr = el(`<tr class="row ${cls}"><td>${esc(r.tab)}</td><td><span class="pill ${pill}">${esc(r.ket_luan || r.muc_do)}${r.ket_luan && r.muc_do !== 'ghi nhận' ? ' · ' + esc(r.muc_do) : ''}</span></td><td>${van}</td></tr>`);
         tr.onclick = () => ita.moMan(r.url, r.tab);
         body2.appendChild(tr);
       });
@@ -3082,7 +3096,7 @@ function taiTep(ten, noiDung, kieu) {
   (document.body || document.documentElement).appendChild(a); a.click(); a.remove();
 }
 function sangCSV(kq) {
-  const rows = kq.van_de || []; const cols = ['tab', 'url', 'muc_do', 'can_cu', 'du_lieu_nhay_cam', 'api_loi', 'js_loi', 'quy_trinh_loi', 'quy_trinh_trang_thai', 'rong_nhung_api_loi', 'o_khong_nhan', 'tieu_de_bi_cat', 'chu_la', 'phan_tram_vo_ly', 'so_dong_vuot_tong', 'van_dang_tai', 'tran_ngang', 'chan_ghi', 'nghi_ngo_so_lech',
+  const rows = kq.van_de || []; const cols = ['tab', 'url', 'ket_luan', 'muc_do', 'can_cu', 'du_lieu_nhay_cam', 'api_loi', 'js_loi', 'quy_trinh_loi', 'quy_trinh_trang_thai', 'rong_nhung_api_loi', 'o_khong_nhan', 'tieu_de_bi_cat', 'chu_la', 'phan_tram_vo_ly', 'so_dong_vuot_tong', 'van_dang_tai', 'tran_ngang', 'chan_ghi', 'nghi_ngo_so_lech',
     'ma_enum_lo', 'cat_chu_khong_tooltip', 'chuoi_dai_khong_ngat', 'dinh_dang_ngay_tron', 'dinh_dang_so_tron', 'tieu_de_lech_menu', 'nut_chinh_nhieu', 'can_xac_nhan'];
   const q = v => '"' + cheChuoi(v == null ? '' : v).replace(/"/g, '""') + '"';
   return '\ufeff' + cols.join(',') + '\n' + rows.map(r => cols.map(c => q(r[c])).join(',')).join('\n');
@@ -3659,7 +3673,7 @@ const dsMan = (arr, tong) => { arr = arr || []; const dau = arr.slice(0, 4).map(
 // [tầng xuất] CSV mẫu lỗi: MỖI chỗ xảy ra (mẫu × màn) một dòng, để lọc / đối chiếu trong Excel
 function sangCSVMau(kq) {
   const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const cols = ['muc_do', 'loai', 'chi_tiet', 'so_man', 'man', 'nguyen_tac', 'can_cu', 'can_xac_nhan'];
+  const cols = ['ket_luan', 'muc_do', 'loai', 'chi_tiet', 'so_man', 'man', 'nguyen_tac', 'can_cu', 'can_xac_nhan', 'cung'];
   return '\ufeff' + cols.join(',') + '\n' + (kq.mau_loi || []).flatMap(r => (r.ds_man || r.vi_du_man || ['']).map(man => cols.map(c => q(c === 'man' ? man : r[c])).join(','))).join('\n');
 }
 function htmlThietKe(kq) {
@@ -3697,12 +3711,14 @@ function htmlTroNang(kq) {
     + (hang.length ? '<table><thead><tr><th>Luật axe</th><th>Mức</th><th>Mục WCAG</th><th>Mô tả (axe)</th><th>Số màn</th><th>Số chỗ</th><th>Ví dụ màn</th></tr></thead><tbody>'
       + hang.map(x => '<tr class="' + (x.muc === 'critical' || x.muc === 'serious' ? 'tb' : '') + '"><td>' + esc(x.id) + '</td><td>' + esc(MUC_AXE_VN[x.muc] || x.muc) + '</td><td>' + esc(x.sc.map(s => s + (TEN_SC[s] ? ' ' + TEN_SC[s] : '')).join('; ')) + '</td><td>' + esc(x.help) + '</td><td>' + x.man.length + '</td><td>' + x.so + '</td><td>' + esc(x.man.slice(0, 2).join(' | ')) + '</td></tr>').join('') + '</tbody></table>' : '');
 }
+// [tầng] chữ kết luận + mức (chỉ «Sai» / «Lệch chuẩn» có mức)
+const klHien = r => '<b>' + esc(r.ket_luan || (r.muc_do === 'ghi nhận' ? 'Cần xem' : 'Sai')) + '</b>' + (r.muc_do && r.muc_do !== 'ghi nhận' ? '<div class=m>' + esc(r.muc_do) + '</div>' : '');
 function sangHTML(kq) {
   const rows = kq.van_de || [];
   const ds = kq.danh_muc_truong || [];
   const trT = ds.map(f => `<tr class="${f.loi ? 'tb' : ''}">${COT_TRUONG.map(c => `<td>${esc(f[c[0]])}</td>`).join('')}</tr>`).join('');
   const trThieu = (kq.thieu_truong_so_voi_mong_doi || []).map(x => `<tr class="cao"><td>${esc(x.man)}</td><td>${esc(x.truong)}</td></tr>`).join('');
-  const tr = rows.map(r => `<tr class="${r.muc_do === 'cao' ? 'cao' : r.muc_do === 'trung bình' ? 'tb' : ''}"><td>${esc(r.tab)}</td><td>${esc(r.muc_do)}</td><td>${esc(r.url)}</td><td>${esc(r.can_cu || '')}</td><td>${esc([
+  const tr = rows.map(r => `<tr class="${r.muc_do === 'cao' ? 'cao' : r.muc_do === 'trung bình' ? 'tb' : ''}"><td>${esc(r.tab)}</td><td>${klHien(r)}</td><td>${esc(r.url)}</td><td>${esc(r.can_cu || '')}</td><td>${esc([
     r.du_lieu_nhay_cam && 'Dữ liệu nhạy cảm hiện trên màn: ' + r.du_lieu_nhay_cam,
     r.api_loi && 'API lỗi: ' + r.api_loi, r.js_loi && 'JS lỗi: ' + r.js_loi, r.quy_trinh_loi && 'Quy trình: ' + r.quy_trinh_loi,
     r.rong_nhung_api_loi, r.cat_chu_khong_goi_y && 'Chữ bị cắt «…» không có gợi ý: ' + r.cat_chu_khong_goi_y, r.so_dong_vuot_tong && 'Số dòng vượt tổng: ' + r.so_dong_vuot_tong,
@@ -3722,13 +3738,13 @@ ${kq.giao_dien_thuan ? '<p style="color:#8a4b00"><b>Chế độ kiểm giao di�
 <p><b>Tài khoản:</b> ${esc(kq.tai_khoan || '')}${kq.quyen_may_chu ? ' · <b>Máy chủ:</b> <span title="' + esc(((kq.quyen_may_chu.nhom || []).flatMap(n => n.quyen)).join(', ')) + '">' + esc(moTaQuyen(kq.quyen_may_chu)) + '</span>' : ''}${kq.dung_giua_chung ? ' · <b style="color:#c62828">LẦN CHẠY BỊ DỪNG GIỮA CHỪNG — kết quả chưa đủ</b>' : ''}</p>${(kq.muc_mat_ket_qua || []).length ? '<p style="color:#c62828"><b>MẤT KẾT QUẢ KHI TRANG TẢI LẠI — ' + kq.muc_mat_ket_qua.length + ' mục menu đã chạy nhưng không đọc lại được kết quả, màn và TC của các mục này không có trong báo cáo:</b> ' + kq.muc_mat_ket_qua.map(esc).join(' · ') + '</p>' : ''}${kq.dung_giua_chung ? `<p style="color:#c62828"><b>Lý do dừng:</b> ${esc(kq.ly_do_dung || '')}${(kq.menu_chua_chay || []).length ? '<br><b>Mục menu chưa chạy (' + kq.menu_chua_chay.length + '):</b> ' + kq.menu_chua_chay.map(esc).join(' · ') : ''}</p>` : ''}
 ${kq.cau_hinh ? '<p class=m><b>Cấu hình:</b> bộ «' + esc(kq.cau_hinh.bo) + '»' + (kq.cau_hinh.khac_mac_dinh.length ? '; khác mặc định: ' + kq.cau_hinh.khac_mac_dinh.map(x => esc(x.khoa) + ' = ' + esc(x.gia_tri) + ' (' + esc(x.nguon) + ')').join('; ') : '; còn lại theo mặc định') + (kq.cau_hinh.da_luu.length ? '. <b>Có cấu hình đã lưu từ trước</b> (ita.dat): ' + kq.cau_hinh.da_luu.map(esc).join(', ') + ' — xoá bằng ita.datLai()' : '') + '</p>' : ''}
 <p class=m>Công cụ bản ${esc(kq.phien_ban || '≤3.10')} · nạp bằng ${esc(kq.cach_nap || '?')} · cửa sổ ${esc(kq.cua_so || '?')}${kq.ngung_bam_do_di_vong ? ' · <b style="color:#c62828">có phần chạy ở chế độ ngừng bấm nút nghiệp vụ (bản dán Console gặp yêu cầu mạng đi vòng bộ chặn) — form chưa kiểm đủ (xem mục «Yêu cầu mạng không đi qua bộ chặn» bên dưới)</b>' : ''}</p>
-<p class=m>${esc(kq.url)} · ${esc(kq.luc)} · ${kq.so_man_da_kiem} màn đã kiểm · cao ${kq.man_cao}, trung bình ${kq.man_trung_binh}, ghi nhận ${kq.man_ghi_nhan || 0} · ${kq.o_nhap_co_loi} lỗi ô nhập · ${kq.doi_chieu_dac_ta ? 'đối chiếu đặc tả: ' + esc(gonMaDT(kq.doi_chieu_dac_ta.quy_trinh.map(q => q.ma))) : 'mức quy trình ' + kq.muc_quy_trinh + (kq.co_dac_ta ? ' (có đặc tả)' : ' (chưa nạp đặc tả)')}</p>
+<p class=m>${esc(kq.url)} · ${esc(kq.luc)} · ${kq.so_man_da_kiem} màn đã kiểm · cao ${kq.man_cao}, trung bình ${kq.man_trung_binh}, cần xem ${kq.man_ghi_nhan || 0}${kq.dem_ket_luan ? ' · mẫu lỗi: ' + Object.entries(kq.dem_ket_luan).map(([k, n]) => esc(k) + ' ' + n).join(', ') : ''} · ${kq.o_nhap_co_loi} lỗi ô nhập · ${kq.doi_chieu_dac_ta ? 'đối chiếu đặc tả: ' + esc(gonMaDT(kq.doi_chieu_dac_ta.quy_trinh.map(q => q.ma))) : 'mức quy trình ' + kq.muc_quy_trinh + (kq.co_dac_ta ? ' (có đặc tả)' : ' (chưa nạp đặc tả)')}</p>
 <p class=m><b>Dữ liệu đã nạp:</b> ${(kq.du_lieu_nap || []).length ? Object.values(kq.du_lieu_nap.reduce((g, x) => { const k = x.bo_doc + (x.goi_san ? '|g' : ''); (g[k] = g[k] || []).push(x); return g; }, {})).map(n => n.length > 3 ? esc(n.length + ' tệp ' + n[0].bo_doc + (n[0].goi_san ? ' (đóng gói sẵn trong tệp dán)' : ' (đã nạp)') + ': ' + n.slice(0, 3).map(x => x.tep).join(', ') + '…') : n.map(x => esc(x.tep) + ' (bộ đọc ' + esc(x.bo_doc) + ', ' + (x.so_bang ? x.so_bang + ' bảng, ' : '') + (x.so_muc ? x.so_muc + ' mục, ' : '') + 'mã băm ' + esc(x.bam) + ', ' + (x.goi_san ? 'đóng gói sẵn ' : 'nạp ') + esc(x.luc) + ')').join('; ')).join('; ') : 'không có. Chỉ kiểm giao diện chung, không đối chiếu quy trình / UC / TC.'}</p>
 ${(kq.du_lieu_du_an || []).length ? '<h2 style="font-size:16px;margin-top:28px">Dữ liệu dự án — ' + kq.du_lieu_du_an.filter(x => x.co).length + '/' + kq.du_lieu_du_an.length + ' loại có</h2><table><thead><tr><th>Loại</th><th>Có</th><th>Chi tiết</th><th>Nguồn</th><th>Dùng cho</th></tr></thead><tbody>' + kq.du_lieu_du_an.map(x => '<tr class="' + (x.co ? '' : 'tb') + '"><td>' + esc(x.muc) + '</td><td>' + (x.co ? 'có' : 'KHÔNG') + '</td><td>' + esc(x.chi_tiet) + '</td><td>' + esc(x.nguon) + '</td><td>' + esc(x.dung_cho) + '</td></tr>').join('') + '</tbody></table>' + ((kq.tep_khong_nap_duoc || []).length ? '<p class=m><b>Tệp không nạp được ở lần nạp gần nhất (' + kq.tep_khong_nap_duoc.length + '):</b> ' + kq.tep_khong_nap_duoc.map(x => esc(x.tep) + ' — ' + esc(x.ly_do)).join('; ') + '</p>' : '') : ''}
 ${htmlDacTa(kq)}
-<p class=m>Mức (cao / trung bình / thấp) chỉ tính cho phép kiểm có căn cứ: sự việc (máy chủ, trang báo lỗi…), chuẩn công khai (ghi điều khoản), hoặc đặc tả đã nạp. Phép kiểm theo ngưỡng công cụ tự đặt ghi «ghi nhận», không tính là lỗi.</p>
-<table><thead><tr><th>Màn</th><th>Mức</th><th>URL</th><th>Căn cứ</th><th>Vấn đề</th></tr></thead><tbody>${tr}</tbody></table>
-${(kq.mau_loi || []).length ? `<h2 style="font-size:16px;margin-top:28px">Mẫu lỗi — gom theo thành phần / loại (${kq.mau_loi.length})</h2><table><thead><tr><th>Mức</th><th>Mẫu lỗi · nguyên tắc</th><th>Số màn</th><th>Ở màn</th></tr></thead><tbody>${kq.mau_loi.map(m => `<tr class="${m.muc_do === 'cao' ? 'cao' : m.muc_do === 'trung bình' ? 'tb' : ''}"><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class=m>${esc(m.nguyen_tac)}${m.can_cu ? ' · căn cứ: ' + esc(m.can_cu) : ''}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div></td><td>${esc(m.so_man)}</td><td>${dsMan(m.ds_man || m.vi_du_man, m.so_man)}</td></tr>`).join('')}</tbody></table>` : ''}
+<p class=m><b>Kết luận</b> theo căn cứ: <b>Sai</b> = sự việc (máy chủ, trang báo lỗi…), chuẩn công khai (WCAG, ghi điều khoản) hoặc đặc tả / quy cách của dự án · <b>Lệch chuẩn</b> = trái điều các hệ thiết kế lớn cùng làm, dự án chưa định (mức thấp) · <b>Không thống nhất</b> = khác số đông trong chính app · <b>Cần xem</b> = ITA không chắc hoặc ngưỡng do ITA tự đặt, kèm lý do. Chỉ «Sai» và «Lệch chuẩn» có mức (cao / trung bình / thấp) và được tính là lỗi.</p>
+<table><thead><tr><th>Màn</th><th>Kết luận</th><th>URL</th><th>Căn cứ</th><th>Vấn đề</th></tr></thead><tbody>${tr}</tbody></table>
+${(kq.mau_loi || []).length ? `<h2 style="font-size:16px;margin-top:28px">Mẫu lỗi — gom theo thành phần / loại (${kq.mau_loi.length})</h2><table><thead><tr><th>Kết luận</th><th>Mẫu lỗi · nguyên tắc</th><th>Số màn</th><th>Ở màn</th></tr></thead><tbody>${kq.mau_loi.map(m => `<tr class="${m.muc_do === 'cao' ? 'cao' : m.muc_do === 'trung bình' ? 'tb' : ''}"><td>${klHien(m)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class=m>${esc(m.nguyen_tac)}${m.can_cu ? ' · căn cứ: ' + esc(m.can_cu) : ''}${m.can_xac_nhan ? ' · cần xem vì: ' + esc(m.can_xac_nhan) : ''}${(m.cung || []).length ? ' · cùng chỗ này cũng trúng: ' + esc(m.cung.join(', ')) : ''}</div></td><td>${esc(m.so_man)}</td><td>${dsMan(m.ds_man || m.vi_du_man, m.so_man)}</td></tr>`).join('')}</tbody></table>` : ''}
 ${htmlThietKe(kq) ? '<h2 style="font-size:16px;margin-top:28px">Hệ thống thiết kế &amp; ngôn từ</h2>' + htmlThietKe(kq) : ''}
 ${(kq.dich_vu_401 || []).length ? `<h2 style="font-size:16px;margin-top:28px">Dịch vụ trả 401 (${kq.dich_vu_401.length})</h2><p class=m>401 chưa phải mất phiên: công cụ kiểm lại phiên chính (về màn đăng nhập? lệnh kiem_phien của hồ sơ? dịch vụ khác vẫn trả về bình thường?). Phiên còn thì ghi lỗi API và chạy tiếp.</p><table><thead><tr><th>Dịch vụ</th><th>Số lệnh</th><th>Phiên chính</th><th>Căn cứ</th><th>Đường dẫn</th><th>Ở màn</th></tr></thead><tbody>${kq.dich_vu_401.map(x => `<tr class="${x.phien_chinh_con ? 'tb' : 'cao'}"><td>${esc(x.dv)}</td><td>${x.so}</td><td>${x.phien_chinh_con ? 'vẫn còn — ghi lỗi API của dịch vụ' : 'mất — đã dừng hẳn'}</td><td>${esc(x.ly_do || '')}</td><td>${esc(x.duong.join(' · '))}</td><td>${esc(x.man.join(' · '))}</td></tr>`).join('')}</tbody></table>` : ''}
 ${(kq.ho_so_mau || []).length ? `<h2 style="font-size:16px;margin-top:28px">Hồ sơ mẫu (dataset) — ${kq.ho_so_mau.filter(x => /^đã mở/.test(x.ket_qua)).length}/${kq.ho_so_mau.length} mở được</h2><table><thead><tr><th>Mã</th><th>Đường dẫn</th><th>Kết quả</th><th>Ghi chú</th></tr></thead><tbody>${kq.ho_so_mau.map(x => `<tr class="${/^đã mở$/.test(x.ket_qua) ? '' : 'tb'}"><td>${esc(x.ma)}</td><td>${esc(x.duong_dan)}</td><td>${esc(x.ket_qua)}</td><td>${esc(x.ly_do || '')}</td></tr>`).join('')}</tbody></table>` : ''}

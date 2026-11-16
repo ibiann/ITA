@@ -91,7 +91,13 @@ const CAN_CU_KIEM = {
   tran_ngang: () => innerWidth <= 320 ? [CHUAN, 'WCAG 2.2 SC 1.4.10 (khổ ' + innerWidth + 'px)'] : [1366, 1920].includes(innerWidth) ? [TC_PM, 'KHUNG-CHUNG.TRAN_NGANG: trang không rộng hơn cửa sổ (khổ ' + innerWidth + 'px)'] : [TU_DAT, 'cuộn ngang ở khổ ' + innerWidth + 'px; WCAG 1.4.10 xét ở 320px, TC KHUNG-CHUNG.TRAN_NGANG ở 1366 và 1920px'],
 };
 const canCuKiem = (k, v) => { const x = CAN_CU_KIEM[k]; return (typeof x === 'function' ? x(v) : x) || [TU_DAT, 'ngưỡng hoặc luật do công cụ đặt, chưa có tài liệu dự án']; };
-const coCanCu = (k, v) => canCuKiem(k, v)[0] !== TU_DAT;
+// [tầng] chữ kết luận theo căn cứ — T1 sự việc / T2 chuẩn / T3 đặc tả dự án → «Sai»; T4 chuẩn chung (≥3 hệ thiết kế) → «Lệch chuẩn»;
+// T5 số đông trong app → «Không thống nhất»; tự đặt hoặc ITA không chắc (cần xác nhận) → «Cần xem». Bộ lọc «Cần xem» chỉ HẠ, không nâng.
+const CHUNG = 'chuẩn chung', TRONG_APP = 'trong app';
+const KL_CC = { [SU_VIEC]: 'Sai', [CHUAN]: 'Sai', [DAC_TA]: 'Sai', [CHUNG]: 'Lệch chuẩn', [TC_PM]: 'Lệch chuẩn', [TRONG_APP]: 'Không thống nhất', [TU_DAT]: 'Cần xem' };
+const HANG_KL = { 'Sai': 3, 'Lệch chuẩn': 2, 'Không thống nhất': 1, 'Cần xem': 0 };
+const ketLuanCC = (k, v, khongChac) => khongChac ? 'Cần xem' : KL_CC[canCuKiem(k, v)[0]] || 'Cần xem';
+const coCanCu = (k, v) => ['Sai', 'Lệch chuẩn'].includes(KL_CC[canCuKiem(k, v)[0]]);   // chỉ «Sai» / «Lệch chuẩn» được tính mức
 // Khoá chỉ dùng trong lúc chạy, không lưu vào trình duyệt (mở ghi)
 const KHONG_LUU = { chanGhi: 1, mucQuyTrinh: 1, moiTruongKiemThu: 1 };
 const locLuu = o => { const r = {}; for (const k in (o || {})) if (!KHONG_LUU[k]) r[k] = o[k]; return r; };
