@@ -459,7 +459,8 @@ async function itaAudit(over, trangThaiTiep) {
   const NT = (trangThaiTiep && trangThaiTiep.nt) || { tu: {}, nhan: {}, ngoai: {}, nfd: {}, ngay: {} };
   // [1.1] cùng một màu viết hai kiểu (color(srgb …) và rgb(…)) → một giá trị
   const chuanMau = c => { const m = /^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)$/.exec(String(c)); if (!m) return c; const v = [m[1], m[2], m[3]].map(x => Math.round(parseFloat(x) * 255)); return m[4] != null && m[4] !== '1' ? 'rgba(' + v.join(', ') + ', ' + m[4] + ')' : 'rgb(' + v.join(', ') + ')'; };
-  const themDS = (bangGT, gt, man) => { const o = bangGT[gt] || (bangGT[gt] = { n: 0, so_man: 0, man: [] }); o.n++; if (o._l !== man) { o._l = man; o.so_man++; if (o.man.length < 4) o.man.push(man); } };
+  // [tầng ghi] nhớ ĐỦ mọi màn có giá trị này (báo cáo đủ chỗ xảy ra); so_man luôn là số đếm chính xác
+  const themDS = (bangGT, gt, man, gioiHan = Infinity) => { const o = bangGT[gt] || (bangGT[gt] = { n: 0, so_man: 0, man: [] }); o.n++; if (o._l !== man) { o._l = man; o.so_man++; if (o.man.length < gioiHan) o.man.push(man); } };
   const trongSuot = c => !c || c === 'transparent' || /rgba\([^)]*,\s*0\)$/.test(c);
   const doBao = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return 0; const v = m[1].split(',').map(parseFloat); if (v.length > 3 && v[3] < 0.5) return 0; return Math.max(v[0], v[1], v[2]) - Math.min(v[0], v[1], v[2]); };
   function thuThapThietKe(main, man) {
@@ -496,7 +497,7 @@ async function itaAudit(over, trangThaiTiep) {
       if (t !== t.normalize('NFC')) themDS(NT.nfd, t.normalize('NFC'), man);
       const raw = t.normalize('NFC');
       const o = NT.nhan[canon(raw)] || (NT.nhan[canon(raw)] = {}); themDS(o, raw, man);
-      for (const w of raw.match(/\p{L}+/gu) || []) { if (w.length < 2) continue; const o2 = NT.tu[canon(w)] || (NT.tu[canon(w)] = {}); themDS(o2, w.toLowerCase(), man); }
+      for (const w of raw.match(/\p{L}+/gu) || []) { if (w.length < 2) continue; const o2 = NT.tu[canon(w)] || (NT.tu[canon(w)] = {}); themDS(o2, w.toLowerCase(), man, 4); }   // ponytail: từ điển MỌI chữ của app — giữ 4 màn/cách viết để điểm dừng không phình (chữ chung có mặt ở mọi màn); so_man vẫn đủ. Cần đủ thì lưu chỉ số màn thay tên
       if (TU_NGOAI.test(raw)) themDS(NT.ngoai, raw, man);
     }
     const text = main.innerText || '';
@@ -2196,17 +2197,19 @@ async function itaAudit(over, trangThaiTiep) {
     themMau('o_nhap·' + i.loai + '·' + ct, 'o_nhap', muc, i.loai + ' — ' + ct, i.man + ' · ' + i.o, xn);
   }
   const RANK = { 'cao': 3, 'trung bình': 2, 'thấp': 1, 'nghi ngờ': 0, 'ghi nhận': -1 };
-  const mau_loi = Object.values(MAU).map(o => { delete o._m; return o; }).sort((a, b) => (RANK[b.muc_do] - RANK[a.muc_do]) || (b.so_man - a.so_man));
+  // [tầng gom] ds_man: ĐỦ mọi màn của mẫu lỗi; vi_du_man: 4 màn đầu, chỉ cho bảng điều khiển gọn
+  const mau_loi = Object.values(MAU).map(o => { o.ds_man = [...o._m]; delete o._m; return o; }).sort((a, b) => (RANK[b.muc_do] - RANK[a.muc_do]) || (b.so_man - a.so_man));
   // 3.6: hệ thống thiết kế & ngôn từ toàn app
-  const xep = (bangGT, n = 12) => Object.entries(bangGT).map(([gt, o]) => ({ gia_tri: gt, lan: o.n, so_man: o.so_man })).sort((a, b) => b.lan - a.lan).slice(0, n);
+  // [tầng gom] giữ ĐỦ mọi giá trị và mọi màn (giá trị hiếm — thứ cần tìm — không bị cắt); thứ tự: dùng nhiều trước
+  const xep = bangGT => Object.entries(bangGT).map(([gt, o]) => ({ gia_tri: gt, lan: o.n, so_man: o.so_man, man: o.man || [] })).sort((a, b) => b.lan - a.lan);
   const dsKq = !C.kiemThietKe ? {} : {
     co_chu: { so_luong: Object.keys(DS.coChu).length, chuan_toi_da: chuanDS.coChuToiDa, pho_bien: xep(DS.coChu) },
     mau_chu: { so_luong: Object.keys(DS.mauChu).length, chuan_toi_da: chuanDS.mauChuToiDa, pho_bien: xep(DS.mauChu) },
     mau_nen: { so_luong: Object.keys(DS.mauNen).length, chuan_toi_da: chuanDS.mauNenToiDa, pho_bien: xep(DS.mauNen) },
     bo_goc: { so_luong: Object.keys(DS.boGoc).length, chuan_toi_da: chuanDS.boGocToiDa, pho_bien: xep(DS.boGoc) },
-    do_bong: { so_luong: Object.keys(DS.doBong).length, chuan_toi_da: chuanDS.doBongToiDa, pho_bien: xep(DS.doBong, 6) },
+    do_bong: { so_luong: Object.keys(DS.doBong).length, chuan_toi_da: chuanDS.doBongToiDa, pho_bien: xep(DS.doBong) },
     lech_luoi: { luoi: chuanDS.luoi, so_gia_tri: Object.keys(DS.lechLuoi).length, pho_bien: xep(DS.lechLuoi) },
-    nut_cung_nhan_khac_kieu: Object.values(DS.nut).filter(o => Object.keys(o.kieu).length > 1).map(o => ({ nhan: o.nhan, so_kieu: Object.keys(o.kieu).length, kieu: xep(o.kieu, 4) })).sort((a, b) => b.so_kieu - a.so_kieu).slice(0, 20),
+    nut_cung_nhan_khac_kieu: Object.values(DS.nut).filter(o => Object.keys(o.kieu).length > 1).map(o => ({ nhan: o.nhan, so_kieu: Object.keys(o.kieu).length, kieu: xep(o.kieu) })).sort((a, b) => b.so_kieu - a.so_kieu),
   };
   if (C.kiemThietKe) {
     const vuot = [];
@@ -2221,12 +2224,12 @@ async function itaAudit(over, trangThaiTiep) {
     } else dsKq.can_cu = TU_DAT + ' — ngưỡng chuanDS của công cụ; chưa có quy cách thiết kế của dự án nên chỉ ghi nhận';
   }
   const nhieu = (bangGT, loc) => Object.values(bangGT).map(o => Object.entries(o)).filter(e => e.length > 1 && (!loc || loc(e)))
-    .map(e => ({ cach_viet: e.map(([w, o]) => w + ' (' + o.so_man + ' màn)'), vi_du_man: [...new Set(e.flatMap(([, o]) => o.man))].slice(0, 3) })).slice(0, 30);
+    .map(e => ({ cach_viet: e.map(([w, o]) => w + ' (' + o.so_man + ' màn)'), man: [...new Set(e.flatMap(([, o]) => o.man))] }));
   const giuDau = x => { let t = String(x).normalize('NFC'); for (const [a, b] of DAU_CU_MOI) t = t.split(a).join(b); return t; };
   const ntKq = !C.kiemNgonTu ? {} : {
     mot_tu_nhieu_cach_viet: nhieu(NT.tu, e => new Set(e.map(([w]) => w)).size > 1),
     khac_hoa_thuong: nhieu(NT.nhan, e => new Set(e.map(([w]) => giuDau(w))).size > 1 && new Set(e.map(([w]) => giuDau(w).toLowerCase())).size === 1),
-    lan_tieng_nuoc_ngoai: xep(NT.ngoai, 20), unicode_to_hop: xep(NT.nfd, 20), dinh_dang_ngay_dung: xep(NT.ngay),
+    lan_tieng_nuoc_ngoai: xep(NT.ngoai), unicode_to_hop: xep(NT.nfd), dinh_dang_ngay_dung: xep(NT.ngay),
   };
 
   const ketQua = {

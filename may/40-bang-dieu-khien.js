@@ -143,7 +143,7 @@ function veThe(t) {
         if (f === '__ds') { wrap.innerHTML = htmlThietKe(kq) || '<div class="muted">Không có dữ liệu (bản chạy cũ hoặc đã tắt).</div>'; return; }
         const ml = kq.mau_loi || []; wrap.innerHTML = ml.length ? '' : '<div class="muted">Không có mục khớp.</div>'; if (!ml.length) return;
         const tb3 = el('<table><thead><tr><th>Mức</th><th>Mẫu lỗi</th><th>Số màn</th></tr></thead><tbody></tbody></table>');
-        ml.forEach(m => tb3.querySelector('tbody').appendChild(el(`<tr><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class="muted">${esc(m.nguyen_tac)}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div><div class="muted">vd: ${esc((m.vi_du_man || []).join(' · '))}</div></td><td>${esc(m.so_man)}</td></tr>`)));
+        ml.forEach(m => tb3.querySelector('tbody').appendChild(el(`<tr><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class="muted">${esc(m.nguyen_tac)}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div><div class="muted">vd: ${esc((m.vi_du_man || []).join(' · '))}${m.so_man > (m.vi_du_man || []).length ? ' (+' + (m.so_man - (m.vi_du_man || []).length) + ' màn — đủ danh sách trong báo cáo)' : ''}</div></td><td>${esc(m.so_man)}</td></tr>`)));
         wrap.appendChild(tb3); return;
       }
       if (f === '__truong' || f === '__thieu') {

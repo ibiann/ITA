@@ -1,24 +1,28 @@
+// [tầng hiện] danh sách màn: ≤ 4 thì liệt kê, nhiều hơn thì 4 màn đầu + bấm mở ĐỦ danh sách; tong > số tên = phần màn không ghi tên (nói rõ, không giấu)
+const dsMan = (arr, tong) => { arr = arr || []; const dau = arr.slice(0, 4).map(esc).join(' · '), thieu = tong > arr.length ? ' <span class=m>(+' + (tong - arr.length) + ' màn không ghi tên)</span>' : '';
+  return arr.length <= 4 ? dau + thieu : dau + ' <details><summary>xem đủ ' + arr.length + ' màn</summary>' + arr.map(esc).join('<br>') + '</details>' + thieu; };
 // 3.6: mẫu lỗi → CSV; thiết kế & ngôn từ → HTML
+// [tầng xuất] CSV mẫu lỗi: MỖI chỗ xảy ra (mẫu × màn) một dòng, để lọc / đối chiếu trong Excel
 function sangCSVMau(kq) {
   const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const cols = ['muc_do', 'loai', 'chi_tiet', 'so_man', 'vi_du_man', 'nguyen_tac', 'can_cu', 'can_xac_nhan'];
-  return '\ufeff' + cols.join(',') + '\n' + (kq.mau_loi || []).map(r => cols.map(c => q(Array.isArray(r[c]) ? r[c].join(' · ') : r[c])).join(',')).join('\n');
+  const cols = ['muc_do', 'loai', 'chi_tiet', 'so_man', 'man', 'nguyen_tac', 'can_cu', 'can_xac_nhan'];
+  return '\ufeff' + cols.join(',') + '\n' + (kq.mau_loi || []).flatMap(r => (r.ds_man || r.vi_du_man || ['']).map(man => cols.map(c => q(c === 'man' ? man : r[c])).join(','))).join('\n');
 }
 function htmlThietKe(kq) {
   const d = kq.he_thong_thiet_ke || {}, n = kq.ngon_tu || {};
   if (!d.co_chu && !n.mot_tu_nhieu_cach_viet) return '';
   const bangGT = (tieuDe, o) => !o || !o.pho_bien ? '' : '<h4>' + esc(tieuDe) + ' — ' + esc(o.so_luong != null ? o.so_luong : o.so_gia_tri) + ' giá trị' + (o.chuan_toi_da ? ' (ngưỡng công cụ ≤ ' + esc(o.chuan_toi_da) + ')' : '') + '</h4><table><tbody>' +
-    o.pho_bien.map(p => '<tr><td>' + esc(p.gia_tri) + '</td><td>' + esc(p.lan) + ' lần</td><td>' + esc(p.so_man) + ' màn</td></tr>').join('') + '</tbody></table>';
+    o.pho_bien.map(p => '<tr><td>' + esc(p.gia_tri) + '</td><td>' + esc(p.lan) + ' lần</td><td>' + esc(p.so_man) + ' màn</td><td>' + dsMan(p.man, p.so_man) + '</td></tr>').join('') + '</tbody></table>';
   const ds = (tieuDe, arr, f) => !arr || !arr.length ? '' : '<h4>' + esc(tieuDe) + ' (' + arr.length + ')</h4><table><tbody>' + arr.map(a => '<tr><td>' + f(a) + '</td></tr>').join('') + '</tbody></table>';
   return '<p class=m>Căn cứ: ' + esc(d.can_cu || 'ngưỡng công cụ tự đặt') + '. Phần ngôn từ cũng là luật công cụ tự đặt: chỉ ghi nhận.</p>' +
     ((d.vuot_chuan || []).length ? '<p style="color:#8a4b00">' + (/^quy cách dự án/.test(d.can_cu || '') ? 'Lệch quy cách dự án' : 'Ghi nhận, vượt ngưỡng công cụ') + ':<br>' + d.vuot_chuan.map(esc).join('<br>') + '</p>' : '') +
     bangGT('Cỡ chữ', d.co_chu) + bangGT('Màu chữ', d.mau_chu) + bangGT('Màu nền', d.mau_nen) + bangGT('Bo góc', d.bo_goc) + bangGT('Đổ bóng', d.do_bong) + bangGT('Khoảng cách lệch lưới', d.lech_luoi) +
-    ds('Cùng nhãn nút, khác kiểu', d.nut_cung_nhan_khac_kieu, a => '<b>' + esc(a.nhan) + '</b> — ' + esc(a.so_kieu) + ' kiểu<br><span style="color:#666">' + a.kieu.map(k => esc(k.gia_tri) + ' (' + esc(k.so_man) + ' màn)').join('<br>') + '</span>') +
-    ds('Một từ, nhiều cách viết', n.mot_tu_nhieu_cach_viet, a => esc(a.cach_viet.join(' · '))) +
-    ds('Cùng nhãn, khác hoa/thường', n.khac_hoa_thuong, a => esc(a.cach_viet.join(' · '))) +
-    ds('Lẫn tiếng nước ngoài', n.lan_tieng_nuoc_ngoai, a => esc(a.gia_tri) + ' (' + esc(a.so_man) + ' màn)') +
+    ds('Cùng nhãn nút, khác kiểu', d.nut_cung_nhan_khac_kieu, a => '<b>' + esc(a.nhan) + '</b> — ' + esc(a.so_kieu) + ' kiểu<br><span style="color:#666">' + a.kieu.map(k => esc(k.gia_tri) + ' (' + esc(k.so_man) + ' màn: ' + dsMan(k.man, k.so_man) + ')').join('<br>') + '</span>') +
+    ds('Một từ, nhiều cách viết', n.mot_tu_nhieu_cach_viet, a => esc(a.cach_viet.join(' · ')) + '<br><span class=m>' + dsMan(a.man) + ' — mỗi cách viết ghi tối đa 4 màn</span>') +
+    ds('Cùng nhãn, khác hoa/thường', n.khac_hoa_thuong, a => esc(a.cach_viet.join(' · ')) + '<br><span class=m>' + dsMan(a.man) + '</span>') +
+    ds('Lẫn tiếng nước ngoài', n.lan_tieng_nuoc_ngoai, a => esc(a.gia_tri) + ' (' + esc(a.so_man) + ' màn: ' + dsMan(a.man, a.so_man) + ')') +
     ds('Chữ Unicode tổ hợp (NFD)', n.unicode_to_hop, a => esc(a.gia_tri)) +
-    ds('Định dạng ngày đang dùng', n.dinh_dang_ngay_dung, a => esc(a.gia_tri) + ' (' + esc(a.so_man) + ' màn)');
+    ds('Định dạng ngày đang dùng', n.dinh_dang_ngay_dung, a => esc(a.gia_tri) + ' (' + esc(a.so_man) + ' màn: ' + dsMan(a.man, a.so_man) + ')');
 }
 // [11a] tên tiếng Việt của các mục WCAG 2.2 mà bộ luật axe-core đo (chỉ để đọc; mã mục là căn cứ)
 const TEN_SC = { '1.1.1': 'chữ thay thế cho ảnh, biểu tượng', '1.2.2': 'phụ đề', '1.3.1': 'thông tin và quan hệ (nhãn, tiêu đề, bảng)', '1.3.5': 'mục đích ô nhập',
@@ -70,7 +74,7 @@ ${(kq.du_lieu_du_an || []).length ? '<h2 style="font-size:16px;margin-top:28px">
 ${htmlDacTa(kq)}
 <p class=m>Mức (cao / trung bình / thấp) chỉ tính cho phép kiểm có căn cứ: sự việc (máy chủ, trang báo lỗi…), chuẩn công khai (ghi điều khoản), hoặc đặc tả đã nạp. Phép kiểm theo ngưỡng công cụ tự đặt ghi «ghi nhận», không tính là lỗi.</p>
 <table><thead><tr><th>Màn</th><th>Mức</th><th>URL</th><th>Căn cứ</th><th>Vấn đề</th></tr></thead><tbody>${tr}</tbody></table>
-${(kq.mau_loi || []).length ? `<h2 style="font-size:16px;margin-top:28px">Mẫu lỗi — gom theo thành phần / loại (${kq.mau_loi.length})</h2><table><thead><tr><th>Mức</th><th>Mẫu lỗi · nguyên tắc</th><th>Số màn</th><th>Ví dụ</th></tr></thead><tbody>${kq.mau_loi.map(m => `<tr class="${m.muc_do === 'cao' ? 'cao' : m.muc_do === 'trung bình' ? 'tb' : ''}"><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class=m>${esc(m.nguyen_tac)}${m.can_cu ? ' · căn cứ: ' + esc(m.can_cu) : ''}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div></td><td>${esc(m.so_man)}</td><td>${esc((m.vi_du_man || []).join(' · '))}</td></tr>`).join('')}</tbody></table>` : ''}
+${(kq.mau_loi || []).length ? `<h2 style="font-size:16px;margin-top:28px">Mẫu lỗi — gom theo thành phần / loại (${kq.mau_loi.length})</h2><table><thead><tr><th>Mức</th><th>Mẫu lỗi · nguyên tắc</th><th>Số màn</th><th>Ở màn</th></tr></thead><tbody>${kq.mau_loi.map(m => `<tr class="${m.muc_do === 'cao' ? 'cao' : m.muc_do === 'trung bình' ? 'tb' : ''}"><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class=m>${esc(m.nguyen_tac)}${m.can_cu ? ' · căn cứ: ' + esc(m.can_cu) : ''}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div></td><td>${esc(m.so_man)}</td><td>${dsMan(m.ds_man || m.vi_du_man, m.so_man)}</td></tr>`).join('')}</tbody></table>` : ''}
 ${htmlThietKe(kq) ? '<h2 style="font-size:16px;margin-top:28px">Hệ thống thiết kế &amp; ngôn từ</h2>' + htmlThietKe(kq) : ''}
 ${(kq.dich_vu_401 || []).length ? `<h2 style="font-size:16px;margin-top:28px">Dịch vụ trả 401 (${kq.dich_vu_401.length})</h2><p class=m>401 chưa phải mất phiên: công cụ kiểm lại phiên chính (về màn đăng nhập? lệnh kiem_phien của hồ sơ? dịch vụ khác vẫn trả về bình thường?). Phiên còn thì ghi lỗi API và chạy tiếp.</p><table><thead><tr><th>Dịch vụ</th><th>Số lệnh</th><th>Phiên chính</th><th>Căn cứ</th><th>Đường dẫn</th><th>Ở màn</th></tr></thead><tbody>${kq.dich_vu_401.map(x => `<tr class="${x.phien_chinh_con ? 'tb' : 'cao'}"><td>${esc(x.dv)}</td><td>${x.so}</td><td>${x.phien_chinh_con ? 'vẫn còn — ghi lỗi API của dịch vụ' : 'mất — đã dừng hẳn'}</td><td>${esc(x.ly_do || '')}</td><td>${esc(x.duong.join(' · '))}</td><td>${esc(x.man.join(' · '))}</td></tr>`).join('')}</tbody></table>` : ''}
 ${(kq.ho_so_mau || []).length ? `<h2 style="font-size:16px;margin-top:28px">Hồ sơ mẫu (dataset) — ${kq.ho_so_mau.filter(x => /^đã mở/.test(x.ket_qua)).length}/${kq.ho_so_mau.length} mở được</h2><table><thead><tr><th>Mã</th><th>Đường dẫn</th><th>Kết quả</th><th>Ghi chú</th></tr></thead><tbody>${kq.ho_so_mau.map(x => `<tr class="${/^đã mở$/.test(x.ket_qua) ? '' : 'tb'}"><td>${esc(x.ma)}</td><td>${esc(x.duong_dan)}</td><td>${esc(x.ket_qua)}</td><td>${esc(x.ly_do || '')}</td></tr>`).join('')}</tbody></table>` : ''}

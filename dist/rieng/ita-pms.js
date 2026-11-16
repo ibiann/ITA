@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T09:33:08+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T10:03:23+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
 window.__itaHoSo = {"ten":"LANCS PMS","ten_mien":"pms.lab.linksafe.vn","kieu_app":"openslides","chon_tai_khoan":"os-account-button span[title]","post_cho_qua":["/system/auth/login","/system/auth/who-am-i","/system/presenter/handle_request"],"cuoc_hop_mau":87,"tai_khoan":[{"dang_nhap":"ita.thuky","ten_hien":"ITA Thư ký","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Quản trị viên"},{"dang_nhap":"ita.chutoa","ten_hien":"ITA Chủ tọa","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Chủ tọa"},{"dang_nhap":"ita.daibieu","ten_hien":"ITA Đại biểu","vai":"DAI_BIEU","nhom_app":"Đại biểu"},{"dang_nhap":"ita.khongnhom","ten_hien":"ITA Không nhóm","vai":"KHONG_QUYEN","nhom_app":"Mặc định"},{"dang_nhap":"ita.qttochuc","ten_hien":"ITA Quản trị tổ chức","vai":"QUAN_TRI_TO_CHUC","nhom_app":""},{"dang_nhap":"ita.qluyban","ten_hien":"ITA Quản lý ủy ban","vai":"QUAN_LY_UY_BAN","nhom_app":""}],"_nguon":{"ten_mien":"lab của dự án (DOCS/80-setup-3-cuoc-hop-demo-khach-hang-2026-07-12.md)","kieu_app":"OpenSlides 4: dữ liệu đi qua SharedWorker (openslides-client/client/src/app/openslides-main-module/services/shared-worker.service.ts:108); ITA đọc nhóm + quyền qua who-am-i + autoupdate (35-kieu-app.js)","chon_tai_khoan":"openslides-client/client/src/app/site/modules/global-headbar/components/account-button/account-button.component.html: span đầu tiên có title = tên ngắn của tài khoản, span sau = nhóm","post_cho_qua":"đọc mà dùng POST: đăng nhập, who-am-i (auth-service public-controller.ts:41), presenter (openslides-backend/openslides_backend/presenter/: không presenter nào ghi dữ liệu, rà 07/11/2026). Mọi lệnh ghi đi qua /system/action/handle_request, /system/vote, /system/media, dịch vụ LPM (/api/gateway…, bóc băng, Drive) → bị chặn khi chạy. Lưu ý: lab có thể chạy bản backend khác repo (lab tạo 6 nhóm khi tạo cuộc họp, repo tạo 4)","cuoc_hop_mau":"cuộc họp «ITA – cuộc họp mẫu» dựng 07/11/2026 cho ITA: 3 mục chương trình, 2 kiến nghị, 1 bình bầu","tai_khoan":"tài khoản ita.* dựng 07/11/2026 (id 38–43). Vai theo hướng dẫn sử dụng (DOCS/ui-ux/huong-dan-su-dung/HUONG-DAN-SU-DUNG-LANCS-PMS.md mục 2, Phụ lục A): «Chủ tọa / Quản trị cuộc họp» gần như mọi quyền (người dùng chốt 07/11) — gán cho cả ita.thuky (nhóm Quản trị viên) và ita.chutoa (nhóm Chủ tọa, 12 quyền) để thấy chỗ nhóm Chủ tọa của app thiếu so với tài liệu. Không ghi mật khẩu."}};
 if (!window.axe) {
 /*! axe v4.14.0
@@ -988,7 +988,8 @@ async function itaAudit(over, trangThaiTiep) {
   const NT = (trangThaiTiep && trangThaiTiep.nt) || { tu: {}, nhan: {}, ngoai: {}, nfd: {}, ngay: {} };
   // [1.1] cùng một màu viết hai kiểu (color(srgb …) và rgb(…)) → một giá trị
   const chuanMau = c => { const m = /^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)$/.exec(String(c)); if (!m) return c; const v = [m[1], m[2], m[3]].map(x => Math.round(parseFloat(x) * 255)); return m[4] != null && m[4] !== '1' ? 'rgba(' + v.join(', ') + ', ' + m[4] + ')' : 'rgb(' + v.join(', ') + ')'; };
-  const themDS = (bangGT, gt, man) => { const o = bangGT[gt] || (bangGT[gt] = { n: 0, so_man: 0, man: [] }); o.n++; if (o._l !== man) { o._l = man; o.so_man++; if (o.man.length < 4) o.man.push(man); } };
+  // [tầng ghi] nhớ ĐỦ mọi màn có giá trị này (báo cáo đủ chỗ xảy ra); so_man luôn là số đếm chính xác
+  const themDS = (bangGT, gt, man, gioiHan = Infinity) => { const o = bangGT[gt] || (bangGT[gt] = { n: 0, so_man: 0, man: [] }); o.n++; if (o._l !== man) { o._l = man; o.so_man++; if (o.man.length < gioiHan) o.man.push(man); } };
   const trongSuot = c => !c || c === 'transparent' || /rgba\([^)]*,\s*0\)$/.test(c);
   const doBao = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return 0; const v = m[1].split(',').map(parseFloat); if (v.length > 3 && v[3] < 0.5) return 0; return Math.max(v[0], v[1], v[2]) - Math.min(v[0], v[1], v[2]); };
   function thuThapThietKe(main, man) {
@@ -1025,7 +1026,7 @@ async function itaAudit(over, trangThaiTiep) {
       if (t !== t.normalize('NFC')) themDS(NT.nfd, t.normalize('NFC'), man);
       const raw = t.normalize('NFC');
       const o = NT.nhan[canon(raw)] || (NT.nhan[canon(raw)] = {}); themDS(o, raw, man);
-      for (const w of raw.match(/\p{L}+/gu) || []) { if (w.length < 2) continue; const o2 = NT.tu[canon(w)] || (NT.tu[canon(w)] = {}); themDS(o2, w.toLowerCase(), man); }
+      for (const w of raw.match(/\p{L}+/gu) || []) { if (w.length < 2) continue; const o2 = NT.tu[canon(w)] || (NT.tu[canon(w)] = {}); themDS(o2, w.toLowerCase(), man, 4); }   // ponytail: từ điển MỌI chữ của app — giữ 4 màn/cách viết để điểm dừng không phình (chữ chung có mặt ở mọi màn); so_man vẫn đủ. Cần đủ thì lưu chỉ số màn thay tên
       if (TU_NGOAI.test(raw)) themDS(NT.ngoai, raw, man);
     }
     const text = main.innerText || '';
@@ -2725,17 +2726,19 @@ async function itaAudit(over, trangThaiTiep) {
     themMau('o_nhap·' + i.loai + '·' + ct, 'o_nhap', muc, i.loai + ' — ' + ct, i.man + ' · ' + i.o, xn);
   }
   const RANK = { 'cao': 3, 'trung bình': 2, 'thấp': 1, 'nghi ngờ': 0, 'ghi nhận': -1 };
-  const mau_loi = Object.values(MAU).map(o => { delete o._m; return o; }).sort((a, b) => (RANK[b.muc_do] - RANK[a.muc_do]) || (b.so_man - a.so_man));
+  // [tầng gom] ds_man: ĐỦ mọi màn của mẫu lỗi; vi_du_man: 4 màn đầu, chỉ cho bảng điều khiển gọn
+  const mau_loi = Object.values(MAU).map(o => { o.ds_man = [...o._m]; delete o._m; return o; }).sort((a, b) => (RANK[b.muc_do] - RANK[a.muc_do]) || (b.so_man - a.so_man));
   // 3.6: hệ thống thiết kế & ngôn từ toàn app
-  const xep = (bangGT, n = 12) => Object.entries(bangGT).map(([gt, o]) => ({ gia_tri: gt, lan: o.n, so_man: o.so_man })).sort((a, b) => b.lan - a.lan).slice(0, n);
+  // [tầng gom] giữ ĐỦ mọi giá trị và mọi màn (giá trị hiếm — thứ cần tìm — không bị cắt); thứ tự: dùng nhiều trước
+  const xep = bangGT => Object.entries(bangGT).map(([gt, o]) => ({ gia_tri: gt, lan: o.n, so_man: o.so_man, man: o.man || [] })).sort((a, b) => b.lan - a.lan);
   const dsKq = !C.kiemThietKe ? {} : {
     co_chu: { so_luong: Object.keys(DS.coChu).length, chuan_toi_da: chuanDS.coChuToiDa, pho_bien: xep(DS.coChu) },
     mau_chu: { so_luong: Object.keys(DS.mauChu).length, chuan_toi_da: chuanDS.mauChuToiDa, pho_bien: xep(DS.mauChu) },
     mau_nen: { so_luong: Object.keys(DS.mauNen).length, chuan_toi_da: chuanDS.mauNenToiDa, pho_bien: xep(DS.mauNen) },
     bo_goc: { so_luong: Object.keys(DS.boGoc).length, chuan_toi_da: chuanDS.boGocToiDa, pho_bien: xep(DS.boGoc) },
-    do_bong: { so_luong: Object.keys(DS.doBong).length, chuan_toi_da: chuanDS.doBongToiDa, pho_bien: xep(DS.doBong, 6) },
+    do_bong: { so_luong: Object.keys(DS.doBong).length, chuan_toi_da: chuanDS.doBongToiDa, pho_bien: xep(DS.doBong) },
     lech_luoi: { luoi: chuanDS.luoi, so_gia_tri: Object.keys(DS.lechLuoi).length, pho_bien: xep(DS.lechLuoi) },
-    nut_cung_nhan_khac_kieu: Object.values(DS.nut).filter(o => Object.keys(o.kieu).length > 1).map(o => ({ nhan: o.nhan, so_kieu: Object.keys(o.kieu).length, kieu: xep(o.kieu, 4) })).sort((a, b) => b.so_kieu - a.so_kieu).slice(0, 20),
+    nut_cung_nhan_khac_kieu: Object.values(DS.nut).filter(o => Object.keys(o.kieu).length > 1).map(o => ({ nhan: o.nhan, so_kieu: Object.keys(o.kieu).length, kieu: xep(o.kieu) })).sort((a, b) => b.so_kieu - a.so_kieu),
   };
   if (C.kiemThietKe) {
     const vuot = [];
@@ -2750,12 +2753,12 @@ async function itaAudit(over, trangThaiTiep) {
     } else dsKq.can_cu = TU_DAT + ' — ngưỡng chuanDS của công cụ; chưa có quy cách thiết kế của dự án nên chỉ ghi nhận';
   }
   const nhieu = (bangGT, loc) => Object.values(bangGT).map(o => Object.entries(o)).filter(e => e.length > 1 && (!loc || loc(e)))
-    .map(e => ({ cach_viet: e.map(([w, o]) => w + ' (' + o.so_man + ' màn)'), vi_du_man: [...new Set(e.flatMap(([, o]) => o.man))].slice(0, 3) })).slice(0, 30);
+    .map(e => ({ cach_viet: e.map(([w, o]) => w + ' (' + o.so_man + ' màn)'), man: [...new Set(e.flatMap(([, o]) => o.man))] }));
   const giuDau = x => { let t = String(x).normalize('NFC'); for (const [a, b] of DAU_CU_MOI) t = t.split(a).join(b); return t; };
   const ntKq = !C.kiemNgonTu ? {} : {
     mot_tu_nhieu_cach_viet: nhieu(NT.tu, e => new Set(e.map(([w]) => w)).size > 1),
     khac_hoa_thuong: nhieu(NT.nhan, e => new Set(e.map(([w]) => giuDau(w))).size > 1 && new Set(e.map(([w]) => giuDau(w).toLowerCase())).size === 1),
-    lan_tieng_nuoc_ngoai: xep(NT.ngoai, 20), unicode_to_hop: xep(NT.nfd, 20), dinh_dang_ngay_dung: xep(NT.ngay),
+    lan_tieng_nuoc_ngoai: xep(NT.ngoai), unicode_to_hop: xep(NT.nfd), dinh_dang_ngay_dung: xep(NT.ngay),
   };
 
   const ketQua = {
@@ -3017,7 +3020,7 @@ function veThe(t) {
         if (f === '__ds') { wrap.innerHTML = htmlThietKe(kq) || '<div class="muted">Không có dữ liệu (bản chạy cũ hoặc đã tắt).</div>'; return; }
         const ml = kq.mau_loi || []; wrap.innerHTML = ml.length ? '' : '<div class="muted">Không có mục khớp.</div>'; if (!ml.length) return;
         const tb3 = el('<table><thead><tr><th>Mức</th><th>Mẫu lỗi</th><th>Số màn</th></tr></thead><tbody></tbody></table>');
-        ml.forEach(m => tb3.querySelector('tbody').appendChild(el(`<tr><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class="muted">${esc(m.nguyen_tac)}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div><div class="muted">vd: ${esc((m.vi_du_man || []).join(' · '))}</div></td><td>${esc(m.so_man)}</td></tr>`)));
+        ml.forEach(m => tb3.querySelector('tbody').appendChild(el(`<tr><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class="muted">${esc(m.nguyen_tac)}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div><div class="muted">vd: ${esc((m.vi_du_man || []).join(' · '))}${m.so_man > (m.vi_du_man || []).length ? ' (+' + (m.so_man - (m.vi_du_man || []).length) + ' màn — đủ danh sách trong báo cáo)' : ''}</div></td><td>${esc(m.so_man)}</td></tr>`)));
         wrap.appendChild(tb3); return;
       }
       if (f === '__truong' || f === '__thieu') {
@@ -3649,27 +3652,31 @@ function sangCSVDacTa(kq) {
 }
 
 /* <<DACTA-HET>> */
+// [tầng hiện] danh sách màn: ≤ 4 thì liệt kê, nhiều hơn thì 4 màn đầu + bấm mở ĐỦ danh sách; tong > số tên = phần màn không ghi tên (nói rõ, không giấu)
+const dsMan = (arr, tong) => { arr = arr || []; const dau = arr.slice(0, 4).map(esc).join(' · '), thieu = tong > arr.length ? ' <span class=m>(+' + (tong - arr.length) + ' màn không ghi tên)</span>' : '';
+  return arr.length <= 4 ? dau + thieu : dau + ' <details><summary>xem đủ ' + arr.length + ' màn</summary>' + arr.map(esc).join('<br>') + '</details>' + thieu; };
 // 3.6: mẫu lỗi → CSV; thiết kế & ngôn từ → HTML
+// [tầng xuất] CSV mẫu lỗi: MỖI chỗ xảy ra (mẫu × màn) một dòng, để lọc / đối chiếu trong Excel
 function sangCSVMau(kq) {
   const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const cols = ['muc_do', 'loai', 'chi_tiet', 'so_man', 'vi_du_man', 'nguyen_tac', 'can_cu', 'can_xac_nhan'];
-  return '\ufeff' + cols.join(',') + '\n' + (kq.mau_loi || []).map(r => cols.map(c => q(Array.isArray(r[c]) ? r[c].join(' · ') : r[c])).join(',')).join('\n');
+  const cols = ['muc_do', 'loai', 'chi_tiet', 'so_man', 'man', 'nguyen_tac', 'can_cu', 'can_xac_nhan'];
+  return '\ufeff' + cols.join(',') + '\n' + (kq.mau_loi || []).flatMap(r => (r.ds_man || r.vi_du_man || ['']).map(man => cols.map(c => q(c === 'man' ? man : r[c])).join(','))).join('\n');
 }
 function htmlThietKe(kq) {
   const d = kq.he_thong_thiet_ke || {}, n = kq.ngon_tu || {};
   if (!d.co_chu && !n.mot_tu_nhieu_cach_viet) return '';
   const bangGT = (tieuDe, o) => !o || !o.pho_bien ? '' : '<h4>' + esc(tieuDe) + ' — ' + esc(o.so_luong != null ? o.so_luong : o.so_gia_tri) + ' giá trị' + (o.chuan_toi_da ? ' (ngưỡng công cụ ≤ ' + esc(o.chuan_toi_da) + ')' : '') + '</h4><table><tbody>' +
-    o.pho_bien.map(p => '<tr><td>' + esc(p.gia_tri) + '</td><td>' + esc(p.lan) + ' lần</td><td>' + esc(p.so_man) + ' màn</td></tr>').join('') + '</tbody></table>';
+    o.pho_bien.map(p => '<tr><td>' + esc(p.gia_tri) + '</td><td>' + esc(p.lan) + ' lần</td><td>' + esc(p.so_man) + ' màn</td><td>' + dsMan(p.man, p.so_man) + '</td></tr>').join('') + '</tbody></table>';
   const ds = (tieuDe, arr, f) => !arr || !arr.length ? '' : '<h4>' + esc(tieuDe) + ' (' + arr.length + ')</h4><table><tbody>' + arr.map(a => '<tr><td>' + f(a) + '</td></tr>').join('') + '</tbody></table>';
   return '<p class=m>Căn cứ: ' + esc(d.can_cu || 'ngưỡng công cụ tự đặt') + '. Phần ngôn từ cũng là luật công cụ tự đặt: chỉ ghi nhận.</p>' +
     ((d.vuot_chuan || []).length ? '<p style="color:#8a4b00">' + (/^quy cách dự án/.test(d.can_cu || '') ? 'Lệch quy cách dự án' : 'Ghi nhận, vượt ngưỡng công cụ') + ':<br>' + d.vuot_chuan.map(esc).join('<br>') + '</p>' : '') +
     bangGT('Cỡ chữ', d.co_chu) + bangGT('Màu chữ', d.mau_chu) + bangGT('Màu nền', d.mau_nen) + bangGT('Bo góc', d.bo_goc) + bangGT('Đổ bóng', d.do_bong) + bangGT('Khoảng cách lệch lưới', d.lech_luoi) +
-    ds('Cùng nhãn nút, khác kiểu', d.nut_cung_nhan_khac_kieu, a => '<b>' + esc(a.nhan) + '</b> — ' + esc(a.so_kieu) + ' kiểu<br><span style="color:#666">' + a.kieu.map(k => esc(k.gia_tri) + ' (' + esc(k.so_man) + ' màn)').join('<br>') + '</span>') +
-    ds('Một từ, nhiều cách viết', n.mot_tu_nhieu_cach_viet, a => esc(a.cach_viet.join(' · '))) +
-    ds('Cùng nhãn, khác hoa/thường', n.khac_hoa_thuong, a => esc(a.cach_viet.join(' · '))) +
-    ds('Lẫn tiếng nước ngoài', n.lan_tieng_nuoc_ngoai, a => esc(a.gia_tri) + ' (' + esc(a.so_man) + ' màn)') +
+    ds('Cùng nhãn nút, khác kiểu', d.nut_cung_nhan_khac_kieu, a => '<b>' + esc(a.nhan) + '</b> — ' + esc(a.so_kieu) + ' kiểu<br><span style="color:#666">' + a.kieu.map(k => esc(k.gia_tri) + ' (' + esc(k.so_man) + ' màn: ' + dsMan(k.man, k.so_man) + ')').join('<br>') + '</span>') +
+    ds('Một từ, nhiều cách viết', n.mot_tu_nhieu_cach_viet, a => esc(a.cach_viet.join(' · ')) + '<br><span class=m>' + dsMan(a.man) + ' — mỗi cách viết ghi tối đa 4 màn</span>') +
+    ds('Cùng nhãn, khác hoa/thường', n.khac_hoa_thuong, a => esc(a.cach_viet.join(' · ')) + '<br><span class=m>' + dsMan(a.man) + '</span>') +
+    ds('Lẫn tiếng nước ngoài', n.lan_tieng_nuoc_ngoai, a => esc(a.gia_tri) + ' (' + esc(a.so_man) + ' màn: ' + dsMan(a.man, a.so_man) + ')') +
     ds('Chữ Unicode tổ hợp (NFD)', n.unicode_to_hop, a => esc(a.gia_tri)) +
-    ds('Định dạng ngày đang dùng', n.dinh_dang_ngay_dung, a => esc(a.gia_tri) + ' (' + esc(a.so_man) + ' màn)');
+    ds('Định dạng ngày đang dùng', n.dinh_dang_ngay_dung, a => esc(a.gia_tri) + ' (' + esc(a.so_man) + ' màn: ' + dsMan(a.man, a.so_man) + ')');
 }
 // [11a] tên tiếng Việt của các mục WCAG 2.2 mà bộ luật axe-core đo (chỉ để đọc; mã mục là căn cứ)
 const TEN_SC = { '1.1.1': 'chữ thay thế cho ảnh, biểu tượng', '1.2.2': 'phụ đề', '1.3.1': 'thông tin và quan hệ (nhãn, tiêu đề, bảng)', '1.3.5': 'mục đích ô nhập',
@@ -3721,7 +3728,7 @@ ${(kq.du_lieu_du_an || []).length ? '<h2 style="font-size:16px;margin-top:28px">
 ${htmlDacTa(kq)}
 <p class=m>Mức (cao / trung bình / thấp) chỉ tính cho phép kiểm có căn cứ: sự việc (máy chủ, trang báo lỗi…), chuẩn công khai (ghi điều khoản), hoặc đặc tả đã nạp. Phép kiểm theo ngưỡng công cụ tự đặt ghi «ghi nhận», không tính là lỗi.</p>
 <table><thead><tr><th>Màn</th><th>Mức</th><th>URL</th><th>Căn cứ</th><th>Vấn đề</th></tr></thead><tbody>${tr}</tbody></table>
-${(kq.mau_loi || []).length ? `<h2 style="font-size:16px;margin-top:28px">Mẫu lỗi — gom theo thành phần / loại (${kq.mau_loi.length})</h2><table><thead><tr><th>Mức</th><th>Mẫu lỗi · nguyên tắc</th><th>Số màn</th><th>Ví dụ</th></tr></thead><tbody>${kq.mau_loi.map(m => `<tr class="${m.muc_do === 'cao' ? 'cao' : m.muc_do === 'trung bình' ? 'tb' : ''}"><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class=m>${esc(m.nguyen_tac)}${m.can_cu ? ' · căn cứ: ' + esc(m.can_cu) : ''}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div></td><td>${esc(m.so_man)}</td><td>${esc((m.vi_du_man || []).join(' · '))}</td></tr>`).join('')}</tbody></table>` : ''}
+${(kq.mau_loi || []).length ? `<h2 style="font-size:16px;margin-top:28px">Mẫu lỗi — gom theo thành phần / loại (${kq.mau_loi.length})</h2><table><thead><tr><th>Mức</th><th>Mẫu lỗi · nguyên tắc</th><th>Số màn</th><th>Ở màn</th></tr></thead><tbody>${kq.mau_loi.map(m => `<tr class="${m.muc_do === 'cao' ? 'cao' : m.muc_do === 'trung bình' ? 'tb' : ''}"><td>${esc(m.muc_do)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class=m>${esc(m.nguyen_tac)}${m.can_cu ? ' · căn cứ: ' + esc(m.can_cu) : ''}${m.can_xac_nhan ? ' · cần xác nhận: ' + esc(m.can_xac_nhan) : ''}</div></td><td>${esc(m.so_man)}</td><td>${dsMan(m.ds_man || m.vi_du_man, m.so_man)}</td></tr>`).join('')}</tbody></table>` : ''}
 ${htmlThietKe(kq) ? '<h2 style="font-size:16px;margin-top:28px">Hệ thống thiết kế &amp; ngôn từ</h2>' + htmlThietKe(kq) : ''}
 ${(kq.dich_vu_401 || []).length ? `<h2 style="font-size:16px;margin-top:28px">Dịch vụ trả 401 (${kq.dich_vu_401.length})</h2><p class=m>401 chưa phải mất phiên: công cụ kiểm lại phiên chính (về màn đăng nhập? lệnh kiem_phien của hồ sơ? dịch vụ khác vẫn trả về bình thường?). Phiên còn thì ghi lỗi API và chạy tiếp.</p><table><thead><tr><th>Dịch vụ</th><th>Số lệnh</th><th>Phiên chính</th><th>Căn cứ</th><th>Đường dẫn</th><th>Ở màn</th></tr></thead><tbody>${kq.dich_vu_401.map(x => `<tr class="${x.phien_chinh_con ? 'tb' : 'cao'}"><td>${esc(x.dv)}</td><td>${x.so}</td><td>${x.phien_chinh_con ? 'vẫn còn — ghi lỗi API của dịch vụ' : 'mất — đã dừng hẳn'}</td><td>${esc(x.ly_do || '')}</td><td>${esc(x.duong.join(' · '))}</td><td>${esc(x.man.join(' · '))}</td></tr>`).join('')}</tbody></table>` : ''}
 ${(kq.ho_so_mau || []).length ? `<h2 style="font-size:16px;margin-top:28px">Hồ sơ mẫu (dataset) — ${kq.ho_so_mau.filter(x => /^đã mở/.test(x.ket_qua)).length}/${kq.ho_so_mau.length} mở được</h2><table><thead><tr><th>Mã</th><th>Đường dẫn</th><th>Kết quả</th><th>Ghi chú</th></tr></thead><tbody>${kq.ho_so_mau.map(x => `<tr class="${/^đã mở$/.test(x.ket_qua) ? '' : 'tb'}"><td>${esc(x.ma)}</td><td>${esc(x.duong_dan)}</td><td>${esc(x.ket_qua)}</td><td>${esc(x.ly_do || '')}</td></tr>`).join('')}</tbody></table>` : ''}
