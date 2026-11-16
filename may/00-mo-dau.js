@@ -16,8 +16,7 @@
  * ------------------------------------------------------------------
  * (Ghi chú bản 3.5 bên dưới vẫn đúng)
  * Bản 3.5 sửa so với 3.4 (rút từ lỗi đã tái hiện khi chạy thử):
- *   [1] LÁ CHẮN cài ngay khi nạp. Bản Tampermonkey nạp ở document-start → lá chắn có mặt TRƯỚC mã ứng dụng,
- *       nên lệnh ghi qua fetch/XHR mà ứng dụng giữ sẵn cũng bị chặn. Ngoài lúc chạy kiểm lá chắn cho qua hết.
+ *   [1] LÁ CHẮN cài ngay khi nạp. Ngoài lúc chạy kiểm lá chắn cho qua hết.
  *   [2] Chặn form.submit() gọi thẳng (3.4 để lọt POST và làm trang chuyển đi).
  *   [3] Ngoại lệ choPhepPost chỉ áp cho POST (3.4 cho qua cả PUT/DELETE tới /auth, /search…).
  *   [4] Phát hiện lệnh mạng đi vòng bộ chặn (khi dán Console) → ghi "lenh_di_vong_bo_chan".
@@ -26,7 +25,7 @@
  *   [7] Mở ghi: so tên máy chủ CHÍNH XÁC; chanGhi/mucQuyTrinh/moiTruongKiemThu KHÔNG lưu, chỉ truyền khi chạy.
  *       ITA_MAC_DINH cũ chỉ dùng trong phiên. nhapCauHinh có kiểm khoá.
  *   [8] Nút nghiệp vụ (moNutNghiepVu) và tự chạy tiếp sau tải lại CHỈ hoạt động khi lá chắn có từ đầu trang
- *       (bản Tampermonkey) và chưa thấy lệnh đi vòng. Dán Console thì tự tắt, có thông báo.
+ *       và chưa thấy lệnh đi vòng. Dán Console thì tự tắt, có thông báo.
  *   [9] Bảng điều khiển escape dữ liệu; ghi kịch bản bỏ ô mật khẩu/OTP; chayLaiLoi không chạy chồng;
  *       "Mở lại màn" điều hướng trong app, không tải lại trang.
  * Mục đích: Bên A tự kiểm giao diện để bắt (1) lỗi mã và (2) lỗi quy trình,
@@ -109,8 +108,4 @@
 
 (function () {
 'use strict';
-// Nguồn nạp của LẦN NÀY: bản userscript đặt cờ ngay trước khi chạy; dán vào Console thì không có cờ → "console".
-// (Dán vào Console luôn chạy trong chính trang, nên không cần kiểm tra thêm.)
-window.__itaNguon = window.__itaNguonMoi || 'console';
-try { delete window.__itaNguonMoi; } catch (e) { window.__itaNguonMoi = undefined; }
 

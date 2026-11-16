@@ -75,12 +75,12 @@ function veThe(t) {
         <button class="g" id="r-napthu" title="Chọn cả một thư mục; công cụ đọc từng tệp bên trong">⇪ Nạp thư mục</button>
       </div>
       <div class="r"><label>Bộ cấu hình:
-        <select id="r-hoso"><option value="">(đang dùng)</option><option value="nhanh">nhanh</option><option value="day-du">đầy đủ</option><option value="bao-mat">bảo mật</option><option value="kiem-ke-truong">chỉ kiểm kê trường</option></select></label>
+        <select id="r-hoso"><option value="chuan">chuẩn (mặc định)</option><option value="nhanh">nhanh — bề mặt mọi màn</option><option value="sau">sâu — trước bàn giao</option><option value="kiem-ke-truong">chỉ kiểm kê trường</option><option value="bao-mat">bảo mật (thêm XSS/SQL)</option></select></label>
       </div>
       <div class="prog" id="r-prog">Chưa chạy.</div>
       <div class="muted" id="r-note"></div>
     </div>`));
-    root.getElementById('r-chay').onclick = () => { const h = root.getElementById('r-hoso').value; if (h) ita.hoSo(h); ita.chay(); };
+    root.getElementById('r-chay').onclick = () => { const h = root.getElementById('r-hoso').value; ita.chay(h ? { __bo: h } : undefined); };   // [1.2] bộ áp cho lần chạy, không lưu
     root.getElementById('r-tham').onclick = async () => {   // 3.6
       const rows = await ita.thamDo(); if (!rows) return;
       let box = root.getElementById('r-thamdo'); if (!box) { box = document.createElement('div'); box.id = 'r-thamdo'; root.getElementById('r-tham').closest('div').parentElement.appendChild(box); }
@@ -92,7 +92,7 @@ function veThe(t) {
     root.getElementById('r-nk').onclick = () => { const ds = docNK(); taiTep('ita-nhat-ky-' + slugTK() + '-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.csv', '\ufeffgiờ,tài khoản,loại,nội dung,url\n' + ds.map(x => [x.t, x.tk, x.loai, x.nd, x.url].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(',')).join('\n'), 'text/csv'); ita.nhatKy(); };
     root.getElementById('r-nap').onclick = () => ita.nap();
     root.getElementById('r-napthu').onclick = () => ita.napThuMuc();
-    root.getElementById('r-dau').onclick = () => { const h = root.getElementById('r-hoso').value; if (h) ita.hoSo(h); ita.chayLaiTuDau(); };
+    root.getElementById('r-dau').onclick = () => { const h = root.getElementById('r-hoso').value; ita.chayLaiTuDau(h ? { __bo: h } : undefined); };
     root.getElementById('r-tay').onclick = async () => { const n = root.getElementById('r-note'); n.textContent = 'Đang quét màn này…'; const ds = await ita.quetManNay(); n.textContent = 'Quét tay: ' + (ds ? ds.length : 0) + ' trường. Gom được ' + docTay().length + ' trường. Xuất: ita.xuat("truong-tay")'; };
     // gợi ý tiếp tục nếu có điểm dừng
     TK = taiKhoan();

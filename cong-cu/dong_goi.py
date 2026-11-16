@@ -68,7 +68,7 @@ def main():
     dau = ['// ITA — máy kiểm giao diện, bản %s, đóng gói %s; gói dự án: %s; kèm sẵn %d tệp tài liệu / TC (nén)\n' % (ban, luc, a.du_an or 'không (nạp bằng «Nạp thư mục»)', len(gs))]
     # tệp nào trong du-an/<dự án>/ có thì đóng gói kèm, thiếu thì bỏ qua (máy kiểm vẫn chạy)
     for ten, bien in (('ho-so.json', '__itaHoSo'), ('loi-da-biet.json', '__itaQuyTac'), ('gioi-han-o.json', '__itaGioiHanO'),
-                      ('trang-thai-quy-trinh.json', '__itaTrangThaiQT')):
+                      ('trang-thai-quy-trinh.json', '__itaTrangThaiQT'), ('ho-so-mau.json', '__itaHoSoMau')):   # [1.1] dataset hồ sơ mẫu
         tep = GOC / 'du-an' / a.du_an / ten
         if a.du_an and tep.exists():
             dl = json.loads(tep.read_text(encoding='utf-8'))

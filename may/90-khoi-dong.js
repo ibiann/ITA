@@ -18,12 +18,12 @@ addEventListener('beforeunload', () => { window.__itaDangRoi = true; });
 if (window.__itaDacTaNap) { try { napDacTaVao.chiBoNho = true; try { localStorage.removeItem('dqtv.dacta.v1'); localStorage.removeItem(KEY_DACTA); } catch (e) {} const ds = napDacTaVao(window.__itaDacTaNap, true); console.info('[ita] Đã nạp đặc tả đóng gói sẵn: ' + gonMaDT(ds.map(maQT)) + (napDacTaVao.noiLuu === 'bo_nho' ? ' (bộ lớn, chỉ giữ trong trang này: tải lại trang thì dán lại tệp)' : '') + '. Xem đủ: ita.xemDacTa(). Bấm "▶ Chạy": cùng một lần chạy vừa kiểm giao diện vừa đối chiếu đặc tả.'); } catch (e) { console.warn('[ita] Không nạp được đặc tả đóng gói sẵn: ' + e.message); } delete window.__itaDacTaNap; }
 
 // Dán lại lần nữa: gỡ bảng cũ để không bị hai bảng
-// 3.5: bản Tampermonkey nạp ở document-start → chờ trang có thân rồi mới vẽ bảng / chạy tiếp
+// chờ trang có thân rồi mới vẽ bảng / chạy tiếp
 function khoiDong() {
 const cu = document.getElementById('ita-panel-host'); if (cu) cu.remove();
 moBang();
 try { let n = 0, c = 0; for (let j = 0; j < localStorage.length; j++) { const k = localStorage.key(j); if (k && KHOA_CU.test(k)) { n++; c += (localStorage.getItem(k) || '').length; } } if (n) console.warn('[ita] Còn ' + n + ' khóa lưu của bản cũ (~' + Math.round(c / 1024) + ' nghìn ký tự) chiếm chỗ trình duyệt. Xuất báo cáo cũ nếu cần rồi gõ ita.donBoNho() để xoá.'); } catch (e) {}
-console.info('[ita] Đã nạp bản ' + PHIEN_BAN + ' (' + (window.__itaNguon === 'userscript' ? 'Tampermonkey' + (window.__itaFetchGoc && window.__itaCongSom ? ', có cổng chặn từ đầu trang' : '') : 'dán Console') + '; lá chắn ' + (typeof LC !== 'undefined' && LC && LC.som ? 'có từ đầu trang' : 'cài lúc dán') + '). Bảng ở góc phải trên (Alt+Shift+D để ẩn/hiện). Hoặc gõ ita.chay()');
+console.info('[ita] Đã nạp bản ' + PHIEN_BAN + ' (dán Console; lá chắn ' + (typeof LC !== 'undefined' && LC && LC.som ? 'có từ đầu trang' : 'cài lúc dán') + '). Bảng ở góc phải trên (Alt+Shift+D để ẩn/hiện). Hoặc gõ ita.chay()');
 // Trang tự tải lại giữa lúc đang chạy (ứng dụng chuyển trang cứng, hết phiên…) → chờ trang vẽ xong rồi chạy tiếp
 // Chỉ chạy tiếp khi ĐÚNG tài khoản đã bắt đầu lần chạy; đổi tài khoản thì không tự chạy.
 async function chayTiepSauTaiLai(choRaTruoc) {
@@ -63,14 +63,15 @@ async function chayTiepSauTaiLai(choRaTruoc) {
     CO.lanTiep = 0;
   } else CO.lanTiep = lan;
   CO.mocTiep = moc;
-  // 3.5: chỉ TỰ chạy tiếp khi lá chắn có từ đầu trang (bản Tampermonkey); dán Console thì hiện nút để người bấm
+  // 3.5: chỉ TỰ chạy tiếp khi lá chắn có từ đầu trang; dán Console thì hiện nút để người bấm
   if (!(LC && LC.som)) { nhaLaChan(); CO.tienDo = 'Có lượt chạy dở của "' + TK + '" — bấm Chạy để chạy tiếp.'; capNhatBang(); console.info('[ita] ' + CO.tienDo); return; }
   console.info('[ita] Trang vừa tải lại giữa lúc chạy — tự chạy tiếp cho tài khoản "' + TK + '" (lần ' + (CO.lanTiep || 1) + ').');
   await ita.chay(run.over);
 }
 window.__itaChoDangNhap = chayTiepSauTaiLai;
 // [3.26.1] đọc lại dữ liệu đã nạp (IndexedDB) trước, để lượt chạy tiếp sau tải lại có đủ bảng đặc tả
-apDungNap().then(() => { if (!window.__itaHoSo) console.warn('[ita] Chưa có hồ sơ dự án: bấm «⇪ Nạp thư mục» chọn du-an/<tên dự án>/. Chưa nạp thì không chạy kiểm.'); chayTiepSauTaiLai(false); });   // [13b]
+apDungNap().then(() => { if (!window.__itaHoSo && docHoSoTam()) { apHoSo(docHoSoTam()); console.info('[ita] Dùng hồ sơ tạm «kiểm giao diện thuần» của ' + location.hostname + '.'); }   // [1.1]
+  if (!window.__itaHoSo) console.warn('[ita] Chưa có hồ sơ dự án: bấm «⇪ Nạp thư mục» chọn du-an/<tên dự án>/. Chưa nạp thì không chạy kiểm.'); chayTiepSauTaiLai(false); });   // [13b]
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', khoiDong, { once: true }); else khoiDong();
 

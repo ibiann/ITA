@@ -4,14 +4,17 @@
 async function itaAudit(over, trangThaiTiep) {
   const C = cfgHienTai(over);
   if (C.tenMienDuocChay && !C.tenMienDuocChay.test(location.hostname)) {
-    console.warn('%c[ita] KHÔNG CHẠY: tên miền "' + location.hostname + '" không khớp tenMienDuocChay ' + C.tenMienDuocChay + '. Nếu đây đúng là môi trường kiểm thử: ita.dat({ tenMienDuocChay: /^' + location.hostname.replace(/\./g, '\\.') + '$/ })', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px');
+    console.warn('%c[ita] KHÔNG CHẠY: tên miền "' + location.hostname + '" không khớp tenMienDuocChay ' + C.tenMienDuocChay + '. Khoá tên miền lấy từ ho-so.json của dự án (ten_mien): nạp đúng hồ sơ của dự án trên tên miền này. Không đặt được bằng ita.dat (bản 1.2).', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px');
     throw new Error('ita: tên miền không được phép chạy');
   }
   window.__itaKhongChe = !C.cheNhayCam;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   // bản 3.5: so trên chữ đã chuẩn hoá (Xóa/Xoá, NFD)
   const W = s => { const re = new RegExp('(?<![\\p{L}\\d])(' + canon(s) + ')(?![\\p{L}\\d])', 'iu'); return { test: x => re.test(canon(x)), source: re.source }; };
-  const SKIP = W('đăng xuất|thoát|xoá|xóa|ký|trình ký|trình|gửi|lưu|duyệt|phê duyệt|tạo|thêm|thêm mới|xuất|tải về|tải xuống|in|huỷ|hủy|từ chối|trả lại|rút về|nộp|đồng ý|xác nhận|chuyển|giao việc|cập nhật|sửa|nhập|import|export|download|delete|remove|save|submit|create|add|approve|sign|logout|reset|đặt lại|khôi phục|khoá|mở khoá|đóng hồ sơ|kết thúc|hoàn thành');
+  // [1.1] SKIP_DAU: với LINK điều hướng chỉ xét chữ hành động ở ĐẦU nhãn («Trình ký», «Tạo tờ trình»), không xét giữa nhãn («Chương trình nghị sự»)
+  const CAM_CHU = 'đăng xuất|thoát|xoá|xóa|ký|trình ký|trình|gửi|lưu|duyệt|phê duyệt|tạo|thêm|thêm mới|xuất|tải về|tải xuống|in|huỷ|hủy|từ chối|trả lại|rút về|nộp|đồng ý|xác nhận|chuyển|giao việc|cập nhật|sửa|nhập|import|export|download|delete|remove|save|submit|create|add|approve|sign|logout|reset|đặt lại|khôi phục|khoá|mở khoá|đóng hồ sơ|kết thúc|hoàn thành';
+  const WD = s => { const re = new RegExp('^(' + canon(s) + ')(?![\\p{L}\\d])', 'iu'); return { test: x => re.test(canon(String(x).trim())) }; };
+  const SKIP = W(CAM_CHU), SKIP_DAU = WD(CAM_CHU);
   const NAV_SKIP = W('đăng xuất|thoát|logout|sign out');
   const EMPTY = /Chưa có|Không có (dữ liệu|kết quả|bản ghi|việc|hồ sơ)|Không tìm thấy|Không có .{0,20}khớp|0 kết quả/i;
   const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').trim();
@@ -38,7 +41,7 @@ async function itaAudit(over, trangThaiTiep) {
   // Màn làm ứng dụng báo lỗi nặng / sập màn hình (lưu cả qua tải lại trang). Lần chạy tiếp sẽ bỏ qua đúng màn đó.
   // [S1] Màn sập: nhớ theo ĐƯỜNG DẪN (chữ menu có nhãn động như "của tôi" nên không dùng làm khóa).
   // Lưu ở khóa nhỏ riêng KEY_SAP để không mất khi điểm dừng lớn không lưu được.
-  const sapKey = () => KEY_SAP + '|' + location.origin + '|' + bam(TK || '?');
+  const sapKey = () => khoaSap(TK);   // [1.1] gắn hồ sơ dự án
   const docSapLuu = () => { try { return doChuoi(localStorage.getItem(sapKey()) || '[]') || []; } catch (e) { return []; } };
   const SAP = [];
   for (const x of [].concat((trangThaiTiep && trangThaiTiep.sap) || [], docSapLuu())) if (x && !SAP.some(y => y.man === x.man && y.duong_dan === x.duong_dan)) SAP.push(x);
@@ -50,11 +53,15 @@ async function itaAudit(over, trangThaiTiep) {
     const tu = chuanTuyen(q.duong_dan);
     if (!SAP_TUYEN.has(tu)) { SAP.push({ man: '(không mở — lỗi đã biết trong sổ)', duong_dan: tu, url: tu, loi: q.mo_ta || '', cach_nhan: 'bỏ trước theo sổ yêu cầu', vai_tren_giao_dien: TK || '', luc: new Date().toLocaleString('vi-VN'), loi_da_biet: { ma: q.ma, yc: q.yc || '', mo_ta: q.mo_ta || '' }, bo_truoc: true }); SAP_TUYEN.add(tu); }
   }
-  const luuSap = () => { try { localStorage.setItem(sapKey(), hoaChuoi(SAP.slice(-200))); } catch (e) {} };
+  const luuSap = () => { try { localStorage.setItem(sapKey(), hoaChuoi(SAP.filter(x => !x.bo_truoc).slice(-200))); } catch (e) {} };   // [1.1] lỗi đã biết của sổ chỉ dùng trong lần chạy, không lưu
   const loiDaBiet = tuyen => ((window.__itaQuyTac || {}).loi_sap || []).find(q => q.duong_dan && (tuyen === chuanTuyen(q.duong_dan) || tuyen.startsWith(chuanTuyen(q.duong_dan) + '/')));
   const SAP_MAN = { __itaSapMan: true };   // lỗi điều khiển: thoát khỏi màn vừa sập, chạy tiếp mục sau
   let SAP_MOI = null, VUA_PHUC_HOI = '', CKPT_GON = false;
   let HIENTAI = '';   // màn / tab công cụ vừa bấm vào
+  // [1.4c] đo thời gian theo mục menu / hồ sơ mẫu: chờ trang yên bao lâu, chờ vì sao, axe bao lâu
+  const DO_TG = (trangThaiTiep && trangThaiTiep.doTg) || {};
+  let TG_MUC = '(ngoài menu)';
+  const tgMuc = () => DO_TG[TG_MUC] || (DO_TG[TG_MUC] = { tong_ms: 0, cho_ms: 0, lan_cho: 0, cho_max_ms: 0, het_han: 0, vi: { mang: 0, json: 0, chua_im: 0, dang_tai: 0 }, axe_ms: 0, lan_axe: 0 });
   // [10c] danh sách bước máy chủ trả kèm hồ sơ: mọi mảng {action, label, allowed, …} trong thân phản hồi (vd nextActions). Mã bước + chữ + được làm không. Chỉ đọc.
   const BUOC_MAY = (trangThaiTiep && trangThaiTiep.buocMay) || [], BM_DA = new Set(BUOC_MAY.map(x => x.tuyen + '|' + x.action));
   function ghiBuocMay(j, u) {
@@ -117,19 +124,25 @@ async function itaAudit(over, trangThaiTiep) {
   const isWrite = (m, url) => chanGhi && !/^(GET|HEAD|OPTIONS)$/i.test(m || 'GET') && !postDuocDi(m, url);
   // Mã 401 = mất phiên đăng nhập → dừng gọn ở thao tác kế tiếp (ứng dụng sắp đẩy về trang đăng nhập).
   // Mã 403 = giao diện cho vào nhưng máy chủ cấm → ghi lại, đây là lỗi phân quyền cần báo Bên B.
-  const MA403 = [];
+  const MA403 = [], HSM_KQ = [];   // [1.1] HSM_KQ: kết quả mở hồ sơ mẫu
+  // [1.1] 401 chưa phải mất phiên: ghi theo DỊCH VỤ, kiểm lại phiên chính ở kiemCo(); dịch vụ phụ 401 → lỗi API, chạy tiếp
+  const duongCua = u => String(u).replace(location.origin, '').split('?')[0];
+  const dichVu = d => { const g = String(d).split('/').filter(Boolean); return '/' + (g[0] || '') + (g[0] === 'api' && g[1] ? '/' + g[1] : ''); };
+  const DV401 = [], PHIEN_CON = new Set(), DV_DEM = new Map(); let CHO_KIEM_PHIEN = null;
+  const demDV = u => { const d = dichVu(duongCua(u)); DV_DEM.set(d, (DV_DEM.get(d) || 0) + 1); };
+  const dvChinh = () => [...DV_DEM.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0])[0] || '';
   function ghiMaQuyen(s, u) {
-    const duong = String(u).replace(location.origin, '').split('?')[0];
+    const duong = duongCua(u);
     if (s === 401 || s === 419 || s === 440) {
-      nk('mất phiên', s + ' ' + duong);
-      if (C.dungKhiMatPhien && !MAT_PHIEN) { MAT_PHIEN = s + ' ' + duong + ' (đang ở: ' + (CO.tienDo || location.pathname) + ')'; CO.dung = true; }
+      const dv = dichVu(duong); nk('401', s + ' ' + duong);
+      let o = DV401.find(x => x.dv === dv); if (!o) { o = { dv, so: 0, man: [], duong: [] }; DV401.push(o); }
+      o.so++; const mh = CO.tienDo || location.pathname; if (!o.man.includes(mh) && o.man.length < 6) o.man.push(mh); if (!o.duong.includes(duong) && o.duong.length < 6) o.duong.push(duong);
+      if (C.dungKhiMatPhien && !MAT_PHIEN && !PHIEN_CON.has(dv) && !CHO_KIEM_PHIEN) CHO_KIEM_PHIEN = { s, duong, dv, luc: Date.now() };
     } else if (s === 403) { nk('bị cấm (403)', duong); MA403.push({ man: CO.tienDo || location.pathname, api: duong }); }
   }
 
   // fetch — SỬA LỖI 1: trả promise ngay, không await thân JSON (không chặn ứng dụng)
-  // Bản Tampermonkey cài sẵn "cổng" fetch từ lúc trang bắt đầu tải (__itaFetchGoc / __itaFetchCong):
-  // mã ứng dụng lỡ giữ tham chiếu fetch cũ vẫn phải đi qua bộ chặn này.
-  const of = window.__itaFetchGoc || window.fetch;
+  const of = window.fetch;
   const QUA_MOC = new Set(), DI_VONG = [];
   const ghiQua = u => { try { QUA_MOC.add(new URL(u, location.href).href); } catch (e) {} };
   const moFetch = function (input, init) {
@@ -139,7 +152,7 @@ async function itaAudit(over, trangThaiTiep) {
     const t0 = performance.now(); inflight++;
     const p = of.apply(this, arguments);
     p.then(r => {
-      const entry = { u: url, s: r.status, ms: performance.now() - t0, j: null };
+      const entry = { u: url, s: r.status, ms: performance.now() - t0, j: null, t: Date.now() }; demDV(url);
       LOG.push(entry); pendingJson++; DEM_API++;
       ghiMaQuyen(r.status, url);
       r.clone().json().then(j => { entry.j = j; ghiBuocMay(j, url); }).catch(() => {}).finally(() => { pendingJson--; });
@@ -164,18 +177,21 @@ async function itaAudit(over, trangThaiTiep) {
     this.addEventListener('loadend', () => {
       inflight--; lastNet = Date.now();
       let j = null; try { j = this.responseType === 'json' ? this.response : JSON.parse(this.responseText); } catch (e) {}
-      LOG.push({ u: this.__u, s: this.status || 'NETERR', ms: performance.now() - t0, j }); ghiBuocMay(j, this.__u); DEM_API++; if (!this.status) DEM_NETERR++;
+      LOG.push({ u: this.__u, s: this.status || 'NETERR', ms: performance.now() - t0, j, t: Date.now() }); demDV(this.__u); ghiBuocMay(j, this.__u); DEM_API++; if (!this.status) DEM_NETERR++;
       ghiMaQuyen(this.status, this.__u);
     });
     return XS.apply(this, arguments);
   };
 
   const oe = console.error;
-  console.error = function () { const m = [...arguments].map(a => (a && a.stack) ? (a.name || 'Error') + ': ' + (a.message || '') : String(a)).join(' '); ERR.push(m.slice(0, 160)); try { ghiSap(m); } catch (e) {} return oe.apply(this, arguments); };
+  // [1.1] lỗi xảy ra trong 3 giây sau một lệnh ghi bị lá chắn chặn: do công cụ gây ra, ghi nhật ký, không tính lỗi app
+  let LAST_CHAN = 0; BLOCK.push = function (...a) { LAST_CHAN = Date.now(); return Array.prototype.push.apply(this, a); };
+  const sauChan = m => Date.now() - LAST_CHAN < 3000 && (nk('lỗi sau khi chặn ghi (do công cụ)', String(m).slice(0, 160)), true);
+  console.error = function () { const m = [...arguments].map(a => (a && a.stack) ? (a.name || 'Error') + ': ' + (a.message || '') : String(a)).join(' '); if (sauChan(m)) return oe.apply(this, arguments); ERR.push(m.slice(0, 160)); try { ghiSap(m); } catch (e) {} return oe.apply(this, arguments); };
   // SỬA LỖI 2: lỗi do công cụ tự gây ra (chặn ghi) KHÔNG tính là lỗi ứng dụng
   const onErr = e => {
     const msg = (e.message || (e.reason && (e.reason.message || e.reason)) || '') + '';
-    if ((e.reason && e.reason.__ita) || msg.includes('itaAudit')) return;
+    if ((e.reason && e.reason.__ita) || msg.includes('itaAudit') || sauChan(msg)) return;
     ERR.push('JS: ' + msg); try { ghiSap('Uncaught ' + msg); } catch (x) {}
   };
   window.addEventListener('error', onErr); window.addEventListener('unhandledrejection', onErr);
@@ -208,7 +224,6 @@ async function itaAudit(over, trangThaiTiep) {
   let PO = null, DUNG_BAM = false;
   const T_MOC = performance.now();   // thời điểm cài móc: yêu cầu bắt đầu trước mốc này (đang dở lúc bấm Chạy) không tính là đi vòng
   const NGUNG_BAM_TRUOC = !!(trangThaiTiep && trangThaiTiep.ngungBam);   // phần đã chạy trước khi tải lại có ở chế độ ngừng bấm không
-  const coCong = !!window.__itaFetchGoc && !!window.__itaCongSom;   // bản Tampermonkey: có cổng fetch cài từ đầu → tham chiếu cũ vẫn bị chặn
   try {
     PO = new PerformanceObserver(l => {
       for (const e of l.getEntries()) {
@@ -220,8 +235,8 @@ async function itaAudit(over, trangThaiTiep) {
         const rec = { url: u, ngan: u.replace(location.origin, ''), loai: e.initiatorType, man: CO.tienDo || location.pathname, luc: new Date().toLocaleTimeString('vi-VN') };
         DI_VONG.push(rec); nk('đi vòng bộ chặn', rec.loai + ' ' + rec.ngan);
         // bản dán Console không chặn được lối đi vòng → ngừng bấm nút nghiệp vụ cho tới hết lần chạy (chỉ đọc)
-        if (!coCong && chanGhi && !DUNG_BAM) { DUNG_BAM = true; console.warn('%c[ita] ĐÃ NGỪNG BẤM NÚT NGHIỆP VỤ / MỞ FORM cho tới hết lần chạy này (để không lọt lệnh ghi). Các màn vẫn được đọc. Muốn kiểm đủ form: dùng bản Tampermonkey.', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px'); }
-        if (DI_VONG.length === 1) console.warn('%c[ita] CÓ YÊU CẦU MẠNG KHÔNG ĐI QUA BỘ CHẶN: ' + rec.loai + ' ' + rec.ngan + '\nỨng dụng gọi mạng bằng tham chiếu cũ — bộ chặn ghi có thể không bảo vệ hết. Nên dùng bản Tampermonkey (cài móc từ lúc trang bắt đầu tải).', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px');
+        if (chanGhi && !DUNG_BAM) { DUNG_BAM = true; console.warn('%c[ita] ĐÃ NGỪNG BẤM NÚT NGHIỆP VỤ / MỞ FORM cho tới hết lần chạy này (để không lọt lệnh ghi). Các màn vẫn được đọc.', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px'); }
+        if (DI_VONG.length === 1) console.warn('%c[ita] CÓ YÊU CẦU MẠNG KHÔNG ĐI QUA BỘ CHẶN: ' + rec.loai + ' ' + rec.ngan + '\nỨng dụng gọi mạng bằng tham chiếu cũ — bộ chặn ghi có thể không bảo vệ hết.', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px');
       }
     });
     PO.observe({ type: 'resource', buffered: false });
@@ -254,7 +269,7 @@ async function itaAudit(over, trangThaiTiep) {
   } catch (e) {}
   // bản 3.5: nút nghiệp vụ chỉ bấm khi lá chắn có từ đầu trang và chưa thấy lệnh đi vòng
   // [gộp 3.23 + 3.6] Nút nghiệp vụ (gồm nút của các bước trong đặc tả) cần được mở để đọc form.
-  //  - Tampermonkey (lá chắn từ đầu trang): mở như 3.6.
+  //  - Lá chắn có từ đầu trang: mở như 3.6.
   //  - Dán Console: 3.6 tắt hẳn; 3.23 vẫn mở nhưng NGỪNG ngay khi thấy một lệnh mạng đi vòng bộ chặn.
   //    Giữ cách của 3.23 (không có thì gần hết ca đặc tả thành CHƯA KIỂM). Muốn an toàn tuyệt đối: ita.chay({ moNutKhiDanConsole: false }).
   const nvOk = () => !!(C.moNutNghiepVu && !BYPASS.length && !DUNG_BAM && !NGUNG_BAM_TRUOC && ((LC && LC.som) || C.moNutKhiDanConsole !== false));
@@ -283,6 +298,22 @@ async function itaAudit(over, trangThaiTiep) {
     }
     return (SB = best);
   };
+  // [1.4] app không có menu trái: thanh điều hướng trên (header / navbar / menubar), không nằm trong vùng chính, có ≥ 3 link nội bộ
+  const linkNoiBo = r => [...r.querySelectorAll('a[href]')].filter(a => { if (!vis(a)) return false; const h = a.getAttribute('href') || ''; if (/^(#|javascript:|mailto:|tel:)/i.test(h)) return false; try { return new URL(h, location.href).origin === location.origin; } catch (e) { return false; } });
+  let TT = null;
+  const thanhTren = () => {
+    if (TT && TT.isConnected && vis(TT)) return TT;
+    const m = document.querySelector('main, [role=main]');
+    const c = [...document.querySelectorAll('header nav, nav, [role=navigation], [role=menubar], header, [class*=navbar], [class*=Navbar], [class*=topbar], [class*=TopBar], [class*=top-nav], [class*=header-menu]')]
+      .filter(e => vis(e) && !e.closest('#' + PANEL) && !(m && m.contains(e)) && e.getBoundingClientRect().top < 160 && e.getBoundingClientRect().width >= 420)
+      .map(e => { const r = e.getBoundingClientRect(); return { e, n: linkNoiBo(e).length, s: r.width * r.height }; })
+      .filter(x => x.n >= 3).sort((a, b) => b.n - a.n || a.s - b.s)[0];
+    return (TT = c ? c.e : null);
+  };
+  // menu trái chỉ tính khi có ≥ 3 mục (side() có thể trả một khối hẹp bất kỳ có 1–2 link)
+  const menuTrai = () => { const s = side(); return s && s.querySelectorAll('a,button,[role=menuitem]').length >= 3 ? s : null; };
+  let MENU_KIEU = '';   // 'trai' | 'tren' | 'lien-ket' | 'man' — đặt ở phần menu bên dưới
+  const menuEl = () => MENU_KIEU === 'tren' ? thanhTren() : (MENU_KIEU === 'lien-ket' || MENU_KIEU === 'man') ? null : side();
   const mainEl = () => document.querySelector('main, [role=main], #main, [class*=main-content], [class*=page-content]') || document.body;
   // Hộp thoại / ngăn kéo (drawer) của các bộ thư viện giao diện thường gặp
   const DIALOG_SEL = 'dialog[open],[role=dialog],[role=alertdialog],.ant-modal-content,.ant-drawer-content,.el-dialog,.el-drawer,.MuiDialog-paper,.MuiDrawer-paper,.modal.show .modal-content,.p-dialog,.v-dialog,.v-navigation-drawer--temporary';
@@ -305,19 +336,50 @@ async function itaAudit(over, trangThaiTiep) {
 
   // Lỗi điều khiển để thoát sớm khi bấm Dừng
   const DUNG = { __itaDung: true };
+  // [1.1] phiên chính còn không: (1) app về màn đăng nhập → mất; (2) hồ sơ khai kiem_phien → gọi thử; (3) dịch vụ khác vẫn trả 2xx → còn;
+  //       401 ở ≥ 2 dịch vụ → mất; 401 chỉ ở một dịch vụ không phải dịch vụ chính (gọi nhiều nhất) → còn
+  // trả { con, ly_do }: ly_do là bằng chứng ghi vào báo cáo
+  async function phienCon(k) {
+    await sleep(1200);
+    if ([...document.querySelectorAll('input[type=password]')].some(vis) && !(side() || thanhTren())) return { con: false, ly_do: 'app chuyển về màn đăng nhập (có ô mật khẩu, không còn menu)' };
+    const kp = DU_AN.kiem_phien;
+    if (kp && kp.duong_dan) { try { const r = await of.call(window, kp.duong_dan, { method: kp.phuong_thuc || 'GET', credentials: 'include' }); const mat = [401, 419, 440].includes(r.status);
+      return { con: !mat, ly_do: 'lệnh kiểm phiên của hồ sơ ' + (kp.phuong_thuc || 'GET') + ' ' + kp.duong_dan + ' trả ' + r.status }; } catch (e) {} }
+    const ok = LOG.find(l => l.t >= k.luc && typeof l.s === 'number' && l.s < 400 && dichVu(duongCua(l.u)) !== k.dv);
+    if (ok) return { con: true, ly_do: 'sau lệnh 401, dịch vụ ' + dichVu(duongCua(ok.u)) + ' vẫn trả ' + ok.s };
+    const dvs = [...new Set(DV401.map(x => x.dv))];
+    if (dvs.length >= 2) return { con: false, ly_do: '401 ở ' + dvs.length + ' dịch vụ: ' + dvs.join(', ') };
+    return k.dv !== dvChinh() ? { con: true, ly_do: '401 chỉ ở dịch vụ phụ ' + k.dv + ' (dịch vụ chính ' + (dvChinh() || '?') + ' không báo 401)' }
+      : { con: false, ly_do: '401 ở dịch vụ chính ' + k.dv + ' (dịch vụ được gọi nhiều nhất trong lần chạy)' };
+  }
   async function kiemCo() {
     while (CO.tamDung && !CO.dung) { CO.tienDo = '⏸ Tạm dừng'; await sleep(250); }
+    if (CHO_KIEM_PHIEN && !CO.dung) { const k = CHO_KIEM_PHIEN;
+      const kq = await phienCon(k); const o = DV401.find(x => x.dv === k.dv); if (o) o.ly_do = kq.ly_do;
+      if (kq.con) { PHIEN_CON.add(k.dv); CHO_KIEM_PHIEN = null; nk('401 dịch vụ phụ', k.dv + ' — phiên chính vẫn còn (' + kq.ly_do + '), ghi lỗi API, chạy tiếp'); console.warn('[ita] ' + k.s + ' ở dịch vụ ' + k.dv + ' nhưng phiên chính vẫn còn (' + kq.ly_do + '): ghi lỗi API, chạy tiếp.'); }
+      else {
+        // [1.1] mất phiên thật: DỪNG HẲN. Không tự chờ đăng nhập rồi chạy tiếp (chạy tiếp ở đúng chỗ này dễ lặp mất phiên mãi).
+        CHO_KIEM_PHIEN = null; const noi = HIENTAI || DANG || location.pathname;
+        MAT_PHIEN = k.s + ' ' + k.duong + ' (đang ở: ' + noi + ')'; MAT_PHIEN_LY_DO = kq.ly_do; MAT_PHIEN_LAP = '';
+        const khoa = KEY_MAT_PHIEN + '|' + location.origin + '|' + bam(((window.__itaHoSo || {}).ten) || '') + '|' + bam(TK || '?');
+        try { const cu = JSON.parse(localStorage.getItem(khoa) || 'null'); if (cu && cu.noi === noi) MAT_PHIEN_LAP = cu.luc; localStorage.setItem(khoa, JSON.stringify({ noi, luc: new Date().toLocaleString('vi-VN') })); } catch (e) {}
+        nk('mất phiên', MAT_PHIEN + ' — ' + kq.ly_do + (MAT_PHIEN_LAP ? ' — LẶP LẠI ở cùng màn (lần trước ' + MAT_PHIEN_LAP + ')' : '')); CO.dung = true; } }
     if (CO.dung) throw DUNG;
     kiemManLoi();
   }
   async function settle(extra = 0) {
     await kiemCo();
     const t0 = Date.now(); await sleep(250 + extra);
+    const vi = {}; let ly = '';
     while (Date.now() - t0 < C.waitMax) {
-      if (!(inflight > 0 || pendingJson > 0 || Date.now() - lastNet < C.idle || isLoading())) break;
-      await sleep(150); await kiemCo();
+      ly = inflight > 0 ? 'mang' : pendingJson > 0 ? 'json' : Date.now() - lastNet < C.idle ? 'chua_im' : isLoading() ? 'dang_tai' : '';
+      if (!ly) break;
+      const t1 = Date.now(); await sleep(150); await kiemCo(); vi[ly] = (vi[ly] || 0) + Date.now() - t1;
     }
-    return Date.now() - t0;
+    const ms = Date.now() - t0, m = tgMuc();
+    m.cho_ms += ms; m.lan_cho++; m.cho_max_ms = Math.max(m.cho_max_ms, ms); if (ly) m.het_han++;
+    for (const k in vi) m.vi[k] += vi[k];
+    return ms;
   }
 
   function setVal(el, v) {
@@ -395,6 +457,8 @@ async function itaAudit(over, trangThaiTiep) {
   };
   const DS = (trangThaiTiep && trangThaiTiep.ds) || { coChu: {}, mauChu: {}, mauNen: {}, boGoc: {}, doBong: {}, lechLuoi: {}, nut: {} };
   const NT = (trangThaiTiep && trangThaiTiep.nt) || { tu: {}, nhan: {}, ngoai: {}, nfd: {}, ngay: {} };
+  // [1.1] cùng một màu viết hai kiểu (color(srgb …) và rgb(…)) → một giá trị
+  const chuanMau = c => { const m = /^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)$/.exec(String(c)); if (!m) return c; const v = [m[1], m[2], m[3]].map(x => Math.round(parseFloat(x) * 255)); return m[4] != null && m[4] !== '1' ? 'rgba(' + v.join(', ') + ', ' + m[4] + ')' : 'rgb(' + v.join(', ') + ')'; };
   const themDS = (bangGT, gt, man) => { const o = bangGT[gt] || (bangGT[gt] = { n: 0, so_man: 0, man: [] }); o.n++; if (o._l !== man) { o._l = man; o.so_man++; if (o.man.length < 4) o.man.push(man); } };
   const trongSuot = c => !c || c === 'transparent' || /rgba\([^)]*,\s*0\)$/.test(c);
   const doBao = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return 0; const v = m[1].split(',').map(parseFloat); if (v.length > 3 && v[3] < 0.5) return 0; return Math.max(v[0], v[1], v[2]) - Math.min(v[0], v[1], v[2]); };
@@ -403,8 +467,8 @@ async function itaAudit(over, trangThaiTiep) {
     let nutChinh = 0;
     for (const e of els) {
       const cs = getComputedStyle(e);
-      if ([...e.childNodes].some(n => n.nodeType === 3 && n.nodeValue.trim())) { themDS(DS.coChu, Math.round(parseFloat(cs.fontSize) * 2) / 2 + 'px', man); themDS(DS.mauChu, cs.color, man); }
-      if (!trongSuot(cs.backgroundColor)) themDS(DS.mauNen, cs.backgroundColor, man);
+      if ([...e.childNodes].some(n => n.nodeType === 3 && n.nodeValue.trim())) { themDS(DS.coChu, Math.round(parseFloat(cs.fontSize) * 2) / 2 + 'px', man); themDS(DS.mauChu, chuanMau(cs.color), man); }
+      if (!trongSuot(cs.backgroundColor)) themDS(DS.mauNen, chuanMau(cs.backgroundColor), man);
       if (cs.borderRadius && cs.borderRadius !== '0px') themDS(DS.boGoc, cs.borderRadius, man);
       if (cs.boxShadow && cs.boxShadow !== 'none') themDS(DS.doBong, cut(cs.boxShadow, 60), man);
       const luoi = chuanDS.luoi || 4;
@@ -412,8 +476,11 @@ async function itaAudit(over, trangThaiTiep) {
       if (e.matches('button,[role=button],input[type=submit],input[type=button],a[class*=btn],a[class*=button]') && !e.disabled && e.getAttribute('aria-disabled') !== 'true') {
         const nhan = (e.textContent || e.value || '').trim().replace(/\s+/g, ' ');
         if (nhan && nhan.length <= 30 && !e.closest('table,[role=grid],nav,aside')) {
-          const kieu = [cs.backgroundColor, cs.color, cs.borderTopColor, cs.borderRadius, Math.round(e.getBoundingClientRect().height) + 'px'].join(' · ');
-          const o = DS.nut[canon(nhan)] || (DS.nut[canon(nhan)] = { nhan, kieu: {} }); themDS(o.kieu, kieu, man);
+          const kieu = [chuanMau(cs.backgroundColor), chuanMau(cs.color), chuanMau(cs.borderTopColor), cs.borderRadius, Math.round(e.getBoundingClientRect().height) + 'px'].join(' · ');
+          // [1.1] nút đang được chọn (tab / bộ lọc đang bật) so riêng, không tính là «cùng nhãn khác kiểu»
+          const dangChon = e.getAttribute('aria-pressed') === 'true' || e.getAttribute('aria-selected') === 'true' || !!e.getAttribute('aria-current') || /(^|[\s_-])(active|selected|is-active|is-selected|current|checked|highlight|p-highlight)([\s_-]|$)/i.test(cls(e));
+          const kn = canon(nhan) + (dangChon ? ' ·đang chọn' : '');
+          const o = DS.nut[kn] || (DS.nut[kn] = { nhan: nhan + (dangChon ? ' (đang chọn)' : ''), kieu: {} }); themDS(o.kieu, kieu, man);
           if (doBao(cs.backgroundColor) >= 60) nutChinh++;
         }
       }
@@ -421,7 +488,7 @@ async function itaAudit(over, trangThaiTiep) {
     return nutChinh;
   }
   function thuThapNgonTu(main, man) {
-    const sb = side();
+    const sb = menuEl();
     const nodes = [...main.querySelectorAll('button,a,th,label,h1,h2,h3,h4,[role=tab],legend,[role=menuitem]'), ...(sb ? sb.querySelectorAll('a,button,[role=menuitem]') : [])].filter(e => vis(e) && !inDialog(e));
     const ds = nodes.map(e => (e.textContent || '').trim().replace(/\s+/g, ' ')).filter(t => t.length >= 2 && t.length <= 40);
     main.querySelectorAll('input[placeholder],textarea[placeholder]').forEach(e => { if (vis(e)) ds.push(e.placeholder.trim()); });
@@ -450,10 +517,11 @@ async function itaAudit(over, trangThaiTiep) {
     const ngay = DINH_DANG_NGAY.filter(([, re]) => re.test(text)).map(([t]) => t);
     const soCham = /\b\d{1,3}(?:\.\d{3})+(?![\d.]|,\d)/.test(text), soPhay = /\b\d{1,3}(?:,\d{3})+(?![\d,]|\.\d)/.test(text);
     let lechMenu = '';
-    let laMenu = false; try { laMenu = menuItems.some(m => m.ten === name); } catch (e) {}
+    let laMenu = false, tenCung = [name]; try { const mi = menuItems.find(m => m.ten === name); laMenu = !!mi; const tuyen = x => { try { return new URL(x, location.href).pathname.replace(/\/+$/, ''); } catch (e) { return x; } };
+      if (mi && mi.href) tenCung = menuItems.filter(x => x.href && tuyen(x.href) === tuyen(mi.href)).map(x => x.ten); } catch (e) {}   // [1.1]
     if (laMenu) { const h = [...main.querySelectorAll('h1')].find(vis) || [...main.querySelectorAll('h2')].find(vis);
       if (h) { const a = new Set(canon(name.split(' › ').pop()).match(/\p{L}{2,}/gu) || []), b = new Set(canon(txt(h)).match(/\p{L}{2,}/gu) || []);
-        const bang = x => canon(x).toLowerCase().replace(/\s+/g, ' ').trim(); if (a.size && b.size && bang(name.split(' › ').pop()) !== bang(txt(h))) lechMenu = 'menu "' + cut(name.split(' › ').pop(), 40) + '" ≠ tiêu đề "' + cut(txt(h), 40) + '"'; } }
+        const bang = x => canon(x).toLowerCase().replace(/\s+/g, ' ').trim(); if (a.size && b.size && tenCung.every(tn => bang(tn.split(' › ').pop()) !== bang(txt(h)))) lechMenu = 'menu "' + cut(name.split(' › ').pop(), 40) + '" ≠ tiêu đề "' + cut(txt(h), 40) + '"'; } }
     let nutChinh = 0;
     if (C.kiemThietKe) { try { nutChinh = thuThapThietKe(main, name); } catch (e) {} }
     if (C.kiemNgonTu) { try { thuThapNgonTu(main, name); } catch (e) {} }
@@ -506,7 +574,7 @@ async function itaAudit(over, trangThaiTiep) {
   const khopNut = (e, re) => [txt(e), e.getAttribute('title'), e.getAttribute('aria-label'), e.getAttribute('data-original-title'), e.getAttribute('data-tooltip')]
     .some(x => x && x.trim().length < 60 && (re.test(x.trim()) || re.test(canon(x.trim()))));
   const tenNut = e => { for (const x of [txt(e), e.getAttribute('title'), e.getAttribute('aria-label')]) if (x && /\p{L}/u.test(x)) return x.trim(); return chuNut(e); };
-  const trongMenu = e => { const s = side(); return !!(s && s.contains(e)); };
+  const trongMenu = e => { const s = menuEl(); return !!(s && s.contains(e)); };
 
   // querySelectorAll xuyên Shadow DOM mở và iframe cùng nguồn
   function deepAll(root, sel) {
@@ -614,6 +682,56 @@ async function itaAudit(over, trangThaiTiep) {
     return ds;   // giữ nguyên mục trùng để báo "lựa chọn trùng"
   }
 
+  /* ---------- [1.4] bước 17d: ô chọn tuỳ biến (div / combobox) — vai trò, trạng thái, bàn phím ----------
+   * Chỉ chạy với ô vừa mở được bằng chuột (docLuaChon trả danh sách). Không chọn gì. Căn cứ WCAG 2.2: 4.1.2 (tên, vai trò, giá trị), 2.1.1 (bàn phím);
+   * Esc đóng danh sách là cách làm của ARIA APG (không phải tiêu chí WCAG) → chỉ ghi nhận. Phím giả lập không kích hoạt hành vi mặc định của trình
+   * duyệt, nên «không mở được bằng phím» là CHƯA KIỂM (cần thử tay), không kết luận lệch. Trong hộp thoại không gửi Esc (có thể đóng cả form). */
+  async function kiemChonTuyBien(e, i, man, vung, nhan) {
+    const khoa = [man, vung, nhan].map(norm).join('|'); if (CT_DA.has(khoa)) return; CT_DA.add(khoa);
+    const trig = e.querySelector('.ant-select-selector,[class*=select__control],.el-select__wrapper,.el-input__wrapper,.p-dropdown-trigger,.p-multiselect-trigger,.select2-selection,.ng-select-container') || i || e;
+    const popupHien = () => [...document.querySelectorAll(POPUP_SEL)].some(p => vis(p) && !trongMenu(p) && !p.closest('#' + PANEL));
+    const dong = async () => { try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (x) {} document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); await sleep(150); };
+    const moChuot = async () => { trig.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); await sleep(150); if (!popupHien()) { trig.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })); trig.click(); } await settle(0); return popupHien(); };
+    const ghi = (kq, ca, qs, cc) => B17.ct.push({ kq, man, vung, o: nhan || '(ô không nhãn)', ca, quan_sat: qs, can_cu: cc });
+    const vaiEl = [e, ...e.querySelectorAll('[role=combobox],[aria-haspopup],[role=button],[role=listbox]')].find(x => /^(combobox|listbox)$/.test(x.getAttribute('role') || '') || (x.getAttribute('aria-haspopup') && x.getAttribute('aria-haspopup') !== 'false')) || null;
+    const banPhim = (i && i.matches && i.matches('input,select,textarea,button')) ? i : (vaiEl || trig);
+    const nhanPhim = x => x.matches('input,select,textarea,button,a[href],summary') ? !x.disabled : x.tabIndex >= 0 || (x.getAttribute('tabindex') != null && +x.getAttribute('tabindex') >= 0);
+    // (1) vai trò
+    if (!vaiEl) ghi('LỆCH', 'VAI_TRO', 'ô chọn tuỳ biến không khai role="combobox" / aria-haspopup: trình đọc màn hình không biết đây là ô chọn', 'WCAG 2.2 — 4.1.2 Tên, vai trò, giá trị');
+    else ghi('ĐẠT', 'VAI_TRO', 'có ' + (vaiEl.getAttribute('role') ? 'role="' + vaiEl.getAttribute('role') + '"' : 'aria-haspopup="' + vaiEl.getAttribute('aria-haspopup') + '"'), 'WCAG 2.2 — 4.1.2 Tên, vai trò, giá trị');
+    // (2) đưa con trỏ bàn phím tới được
+    const toi = [banPhim, ...e.querySelectorAll('input,button,[tabindex]')].some(x => x && nhanPhim(x));
+    ghi(toi ? 'ĐẠT' : 'LỆCH', 'TOI_BANG_PHIM', toi ? 'có phần tử nhận phím (Tab tới được)' : 'không có phần tử nào nhận phím (không tabindex, không phải ô nhập / nút): người dùng bàn phím không tới được ô', 'WCAG 2.2 — 2.1.1 Bàn phím');
+    // (3) trạng thái mở / đóng (aria-expanded) + vai trò của lựa chọn
+    await dong();
+    const exEl = [vaiEl, e, ...e.querySelectorAll('[aria-expanded]')].find(x => x && x.hasAttribute('aria-expanded'));
+    const ex0 = exEl ? exEl.getAttribute('aria-expanded') : null;
+    const mo = await moChuot();
+    if (!mo) { ghi('CHƯA KIỂM', 'TRANG_THAI', 'mở lại bằng chuột không được, bỏ các phép sau', ''); await dong(); return; }
+    const ex1 = exEl ? exEl.getAttribute('aria-expanded') : null;
+    if (!exEl) ghi(vaiEl && vaiEl.getAttribute('role') === 'combobox' ? 'LỆCH' : 'GHI NHẬN', 'TRANG_THAI', 'không có aria-expanded: trình đọc màn hình không biết danh sách đang mở hay đóng', 'WCAG 2.2 — 4.1.2' + (vaiEl && vaiEl.getAttribute('role') === 'combobox' ? ' (role combobox bắt buộc aria-expanded)' : ''));
+    else ghi(ex0 !== 'true' && ex1 === 'true' ? 'ĐẠT' : 'LỆCH', 'TRANG_THAI', 'aria-expanded khi đóng «' + ex0 + '», khi mở «' + ex1 + '»', 'WCAG 2.2 — 4.1.2 Tên, vai trò, giá trị');
+    const pop = [...document.querySelectorAll(POPUP_SEL)].filter(p => vis(p) && !trongMenu(p)).pop();
+    const ops = [...document.querySelectorAll(OPT_SEL)].filter(o => vis(o) && !trongMenu(o) && !o.closest('#' + PANEL));
+    if (ops.length) { const thieu = ops.filter(o => o.getAttribute('role') !== 'option').length, laLB = pop && pop.getAttribute('role') === 'listbox';
+      ghi(!thieu ? 'ĐẠT' : laLB ? 'LỆCH' : 'GHI NHẬN', 'VAI_LUA_CHON', !thieu ? ops.length + ' lựa chọn đều có role="option"' : thieu + '/' + ops.length + ' lựa chọn không có role="option"' + (laLB ? ' trong khung role="listbox"' : ''), 'WCAG 2.2 — 4.1.2'); }
+    // (4) Esc đóng danh sách (ngoài hộp thoại)
+    if (!inDialog(e)) {
+      const dich = document.activeElement && document.activeElement !== document.body ? document.activeElement : banPhim;
+      dich.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, bubbles: true })); await sleep(150);
+      if (popupHien() && pop) { pop.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, bubbles: true })); await sleep(150); }
+      ghi(popupHien() ? 'GHI NHẬN' : 'ĐẠT', 'ESC_DONG', popupHien() ? 'bấm Esc danh sách vẫn mở' : 'Esc đóng danh sách', 'ARIA APG — mẫu combobox (cách làm khuyến nghị, không phải tiêu chí WCAG)');
+    }
+    await dong();
+    // (5) mở bằng phím (ArrowDown, rồi Space) khi con trỏ đang ở ô
+    if (toi) {
+      try { banPhim.focus(); } catch (x) {}
+      for (const [key, code] of [['ArrowDown', 'ArrowDown'], [' ', 'Space']]) { if (popupHien()) break; (document.activeElement || banPhim).dispatchEvent(new KeyboardEvent('keydown', { key, code, bubbles: true })); await sleep(200); }
+      ghi(popupHien() ? 'ĐẠT' : 'CHƯA KIỂM', 'MO_BANG_PHIM', popupHien() ? 'mở được bằng phím mũi tên xuống / Space' : 'phím giả lập không mở được danh sách — phím giả lập không kích hoạt hành vi mặc định của trình duyệt, cần thử tay', 'WCAG 2.2 — 2.1.1 Bàn phím');
+      await dong();
+    }
+  }
+
   // Ghi một trường; trùng với lần quét trước thì bỏ, trùng trong cùng lần quét thì giữ (để bắt nhãn trùng)
   function ghiTruong(f, local) {
     // khoá theo đúng màn (cả đường tab), không theo nhóm menu — tránh gộp nhầm trường cùng tên ở màn khác
@@ -669,7 +787,7 @@ async function itaAudit(over, trangThaiTiep) {
         else if (i.type === 'radio' && i.name) luaChon = [...cont.querySelectorAll('input[type=radio][name="' + CSS.escape(i.name) + '"]')].map(r => txt(r.closest('label') || r.parentElement)).filter(Boolean);
         else if (/radio-group|checkbox-group/i.test(cls(e)) || e.getAttribute('role') === 'radiogroup') luaChon = [...e.querySelectorAll('label,[role=radio]')].map(txt).filter(Boolean);
         else if (i.list) luaChon = [...i.list.options].map(o => o.value);
-        else if (C.moDropdownTuyBien && !khoa && moChon < C.maxMoChon) { moChon++; try { luaChon = await docLuaChon(e, i); if (luaChon === null) khongMo = true; } catch (x) { if (x === DUNG || x === SAP_MAN) throw x; } }
+        else if (C.moDropdownTuyBien && !khoa && moChon < C.maxMoChon) { moChon++; try { luaChon = await docLuaChon(e, i); if (luaChon === null) khongMo = true; else await kiemChonTuyBien(e, i, man, vung, nh.t); } catch (x) { if (x === DUNG || x === SAP_MAN) throw x; } }   // [1.4] 17d
       }
       let gt = '';
       if (i.type === 'password') gt = '(ẩn)';
@@ -837,7 +955,7 @@ async function itaAudit(over, trangThaiTiep) {
       skipped.push({ man, chu: tenNut(e), ly_do: 'nút đang khoá' + (lyDo ? ' — ' + lyDo : ' — không ghi lý do') });
       return;
     }
-    if (DUNG_BAM) { skipped.push({ man, chu: tenNut(e), ly_do: 'không bấm: ứng dụng có yêu cầu mạng đi vòng bộ chặn, bản dán Console không chặn được — dùng bản Tampermonkey' }); return; }
+    if (DUNG_BAM) { skipped.push({ man, chu: tenNut(e), ly_do: 'không bấm: ứng dụng có yêu cầu mạng đi vòng bộ chặn, bản dán Console không chặn được' }); return; }
     const oTruoc = new Set(deepAll(document.body, FIELD_SEL).filter(x => visField(x, innerInput(x) || x)));
     const popTruoc = new Set([...document.querySelectorAll(POP_MO)].filter(vis));
     resetLog(); DANG_MO_NUT = true;
@@ -873,7 +991,7 @@ async function itaAudit(over, trangThaiTiep) {
       const guiNgay = BLOCK.length > chan0 ? BLOCK.slice(chan0, chan0 + 2).join(' | ') : '';
       skipped.push({ man, chu: tenNut(e), ly_do: guiNgay ? 'bấm là gửi lệnh ghi ngay, không hỏi xác nhận, không mở form (đã chặn: ' + guiNgay + ')' : 'bấm nhưng không thấy form mở' });
       // gán lệnh ghi bị chặn cho đúng màn đang kiểm (trước đây bị dồn sang màn kế tiếp)
-      if (guiNgay) { const r0 = [...res].reverse().find(r => r.tab === man); if (r0) { r0.chan_ghi = [r0.chan_ghi, BLOCK.splice(chan0).slice(0, 2).join(' | ')].filter(Boolean).join(' | '); } }
+      if (guiNgay) { const r0 = [...res].reverse().find(r => r.tab === man); if (r0) { r0.chan_ghi = [r0.chan_ghi, BLOCK.splice(chan0).slice(0, 2).map(x => '[công cụ bấm «' + tenNut(e) + '»] ' + x).join(' | ')].filter(Boolean).join(' | '); } }   // [1.1] ghi rõ do công cụ bấm
       if (guiNgay) ghiTruong(mkTruong(man, 'nút «' + tenNut(e) + '»', { nhan: tenNut(e), loai: 'nút gửi ngay', loi: 'bấm là gửi lệnh ghi ngay, không có hộp xác nhận / form nhập (đã chặn: ' + guiNgay + ')' }), new Set());
       await dongForm(before, mid, path);   // trường hợp nút mở menu nhỏ hoặc đổi trang ngầm
       return;
@@ -1018,13 +1136,14 @@ async function itaAudit(over, trangThaiTiep) {
   async function chayAxe(man, vung) {
     if (!window.axe || C.kiemTroNang === false || AXE_DA.has(man)) return null;
     AXE_DA.add(man);
-    const o = { man, url: location.pathname + location.search };
+    const o = { man, url: location.pathname + location.search }, ta = Date.now();
     try {
       const ngu = vung && vung.isConnected ? vung : { exclude: [['#' + PANEL]] };
       const r = await window.axe.run(ngu, { runOnly: { type: 'tag', values: AXE_THE }, resultTypes: ['violations', 'incomplete'], elementRef: false, ancestry: false, xpath: false });
       const gon = ds => ds.map(v => ({ id: v.id, muc: v.impact || '', sc: scAxe(v.tags), help: v.help, so: v.nodes.length }));   // không giữ bộ chọn CSS của axe: có thể mang giá trị thuộc tính (tên người, số giấy tờ)
       o.vi_pham = gon(r.violations); o.can_xem = gon(r.incomplete).slice(0, 20);
     } catch (e) { o.loi = String(e && e.message || e).slice(0, 160); }
+    const m = tgMuc(); m.axe_ms += Date.now() - ta; m.lan_axe++;
     AXE_KQ.push(o); return o;
   }
   const MUC_AXE = { critical: 'nghiêm trọng nhất', serious: 'nghiêm trọng', moderate: 'vừa', minor: 'nhẹ' }, THU_AXE = ['critical', 'serious', 'moderate', 'minor'];
@@ -1061,15 +1180,18 @@ async function itaAudit(over, trangThaiTiep) {
     return { sau: i.value, gia, bao, tn: l1.tn, chan: [bao, l1.tn.length ? 'trình duyệt báo không hợp lệ (' + l1.tn.join(', ') + ')' : ''].filter(Boolean).join('; ') };
   }
   async function kiemO(cont, man, nut) {
-    if (!GH || !cont || !cont.isConnected) return;
+    if (!cont || !cont.isConnected) return;
     const o = deepAll(cont, FIELD_SEL).map(e => ({ e, i: innerInput(e) || e })).filter(x => visField(x.e, x.i));
     for (const { e, i } of o) {
       if (!/^(INPUT|TEXTAREA)$/.test(i.tagName) || !/^(text|search|tel|email|url|number|textarea)$/.test(i.type || 'text')) continue;
       await kiemCo();
       const ten = i.getAttribute('name') || '', nhan = nhanTruong(e, i).t || ten;
-      if (!ten) { KO_DEM.o_khong_name++; continue; }
-      const ds = GH.o[ten];
-      if (!ds) { KO_DEM.o_khong_khai++; continue; }
+      const ds = GH && ten ? GH.o[ten] : null;
+      if (!ds) {   // [1.4] không có khai báo của app cho ô này → thử theo chính thuộc tính trên ô
+        if (GH) { if (!ten) KO_DEM.o_khong_name++; else KO_DEM.o_khong_khai++; }
+        try { await thuBienDom(e, i, man, nut, nhan); } catch (x) { if (x === DUNG || x === SAP_MAN) throw x; }
+        continue;
+      }
       KO_DEM.o_da_xet++;
       const ghi = (kq, ca, gt, mong, qs, k) => KO_KQ.push({ kq, man, form: nut, o: nhan, name: ten, ca, gia_tri: gt == null ? '' : hienGT(gt), mong_doi: mong, quan_sat: qs, can_cu: canCuO(ten, k ? [k] : ds) });
       const { k, theoO } = chonKhai(ds, i);
@@ -1140,6 +1262,70 @@ async function itaAudit(over, trangThaiTiep) {
       } finally { goO(i, goc); if (i.value !== goc) datGT(i, goc); }
     }
   }
+  /* ---------- [1.4] bước 17b: thử biên ô theo khai báo trên chính ô (DOM) ----------
+   * Dùng khi không có gioi-han-o.json / TC cho ô (dự án chưa có tài liệu). Căn cứ: thuộc tính app tự đặt trên ô
+   * (required, min, max, step, maxlength, minlength, pattern, type email/url). Không bấm Lưu; trả giá trị cũ sau khi thử.
+   * Kết quả: ĐẠT (ô nhận đúng / báo ngay trên màn) · GHI NHẬN (chỉ trình duyệt đánh dấu, màn không hiện thông báo; hoặc ô không khai gì)
+   * · KHÁC KHAI BÁO (ô tự khai giới hạn mà vẫn nhận giá trị sai, không báo; hoặc báo sai giá trị hợp lệ) · CHƯA KIỂM (gõ giả lập không đủ). */
+  const B17 = Object.assign({ kd: [], kdDa: [], kdDem: { o_da_xet: 0, o_khong_khai: 0 }, bb: [], bbDa: [], ct: [], ctDa: [] }, (trangThaiTiep && trangThaiTiep.b17) || {});
+  const KD_DA = new Set(B17.kdDa), BB_DA = new Set(B17.bbDa), CT_DA = new Set(B17.ctDa);
+  const b17Luu = () => Object.assign(B17, { kdDa: [...KD_DA], bbDa: [...BB_DA], ctDa: [...CT_DA] });
+  const MAX_CA_DOM = 400;   // giới hạn số dòng thử biên DOM mỗi lượt (báo cáo không phình)
+  const chuMau = n => 'a'.repeat(Math.max(0, n));
+  function reMau(p) { for (const f of ['v', 'u', '']) { try { return new RegExp('^(?:' + p + ')$', f); } catch (e) {} } return null; }
+  async function thuBienDom(e, i, man, nut, nhan) {
+    if (i.disabled || i.readOnly || B17.kd.length >= MAX_CA_DOM) return;
+    const ten = i.getAttribute('name') || '', khoa = [man, nut, nhan || ten, i.type].map(norm).join('|');
+    if (KD_DA.has(khoa)) return; KD_DA.add(khoa);
+    const so = i.type === 'number', at = x => i.getAttribute(x);
+    const req = !!(i.required || at('aria-required') === 'true' || e.getAttribute('aria-required') === 'true');
+    const mn = at('min'), mx = at('max'), st = at('step'), ml = i.maxLength > 0 ? i.maxLength : 0, nl = i.minLength > 0 ? i.minLength : 0, pt = at('pattern');
+    const khai = [req && 'required', so && mn != null && mn !== '' && 'min ' + mn, so && mx != null && mx !== '' && 'max ' + mx, so && st && st !== 'any' && 'step ' + st,
+      ml && 'maxlength ' + ml, nl && 'minlength ' + nl, pt && 'pattern ' + pt, /^(email|url)$/.test(i.type) && 'type ' + i.type].filter(Boolean);
+    const canCu = 'thuộc tính trên ô: ' + (khai.join(', ') || 'không có');
+    const ghi = (kq, ca, gt, mong, qs) => B17.kd.push({ kq, man, form: nut, o: nhan || ten || '(ô không nhãn)', name: ten, ca, gia_tri: gt == null ? '' : hienGT(gt), mong_doi: mong, quan_sat: qs, can_cu: canCu });
+    if (!khai.length) { B17.kdDem.o_khong_khai++; ghi('GHI NHẬN', 'KHONG_KHAI', null, '', 'ô không khai giới hạn nào (required, maxlength, min / max, pattern): không có căn cứ để thử biên'); return; }
+    B17.kdDem.o_da_xet++;
+    // giá trị hợp lệ theo khai báo: không được bị báo
+    const hopLe = async (ca, v) => { const r = await thuO(e, i, v); ghi(r.chan ? 'KHÁC KHAI BÁO' : 'ĐẠT', ca, v, 'nhận, không báo', r.chan ? 'giá trị hợp lệ theo khai báo của ô nhưng ' + r.chan : 'ô nhận, không báo'); };
+    // giá trị sai theo khai báo: ô phải báo (hoặc không nhận)
+    const phaiChan = async (ca, v, mong, khongNhan, khongGoDuoc) => {
+      const r = await thuO(e, i, v);
+      if (r.bao) return ghi('ĐẠT', ca, v, mong, 'ô báo ngay trên màn: ' + r.bao);
+      if (khongNhan && khongNhan(r.sau)) return ghi('ĐẠT', ca, v, mong, 'ô không nhận: còn ' + hienGT(r.sau));
+      if (r.tn.length) return ghi('GHI NHẬN', ca, v, mong, 'chỉ trình duyệt đánh dấu không hợp lệ (' + r.tn.join(', ') + '), màn không hiện thông báo khi rời ô — người dùng chỉ biết khi bấm Lưu');
+      if (khongGoDuoc && !r.gia) return ghi('CHƯA KIỂM', ca, v, mong, khongGoDuoc);
+      ghi('KHÁC KHAI BÁO', ca, v, mong, 'ô nhận ' + hienGT(r.sau) + ', rời ô không báo, trình duyệt không đánh dấu');
+    };
+    const goc = i.value;
+    try {
+      if (req) await phaiChan('BAT_BUOC_TRONG', '', 'báo ô bắt buộc');
+      if (so) {
+        const b = st && st !== 'any' && isFinite(+st) && +st > 0 ? +st : 1, d = leTP(b) + 1, a = mn !== null && mn !== '' && isFinite(+mn) ? +mn : null, z = mx !== null && mx !== '' && isFinite(+mx) ? +mx : null;
+        if (a != null) { await hopLe('BIEN_MIN', soChu(a, d)); await phaiChan('DUOI_MIN', soChu(a - b, d), 'báo nhỏ hơn ' + mn); }
+        if (z != null) { await hopLe('BIEN_MAX', soChu(z, d)); await phaiChan('TREN_MAX', soChu(z + b, d), 'báo lớn hơn ' + mx); }
+        if (st && st !== 'any' && isFinite(+st) && +st > 0) await phaiChan('SAI_BUOC', soChu((a != null ? a : 0) + b / 2, d + 1), 'báo sai bước ' + st);
+      } else {
+        if (ml && !pt) {
+          await hopLe('DUNG_TOI_DA', chuMau(ml));
+          await phaiChan('QUA_DAI', chuMau(ml + 1), 'ô cắt còn ' + ml + ' ký tự hoặc báo', x => x.length <= ml, 'không giả lập được gõ phím trên ô này (đã gán thẳng giá trị); trình duyệt không áp maxlength cho giá trị gán thẳng');
+        }
+        if (nl > 1 && !pt) {
+          const v = chuMau(nl - 1), r = await thuO(e, i, v);
+          ghi(r.chan ? 'ĐẠT' : 'CHƯA KIỂM', 'QUA_NGAN', v, 'báo chưa đủ ' + nl + ' ký tự', r.chan || 'rời ô không thấy báo; trình duyệt chỉ xét minlength khi người dùng gõ phím thật (giả lập không đủ)');
+        }
+        if (pt) {
+          const re = reMau(pt), sai = re && ['@@ ##', 'a', '0', 'Ω', '-'].find(v => !re.test(v));
+          if (!re) ghi('CHƯA KIỂM', 'SAI_MAU', null, '', 'pattern trên ô không đọc được bằng biểu thức chính quy');
+          else if (sai == null) ghi('CHƯA KIỂM', 'SAI_MAU', null, '', 'công cụ không tìm được giá trị sai mẫu để thử');
+          else await phaiChan('SAI_MAU', sai, 'báo sai định dạng');
+        }
+        if (i.type === 'email') await phaiChan('SAI_EMAIL', 'abc', 'báo sai định dạng email');
+        if (i.type === 'url') await phaiChan('SAI_URL', 'abc', 'báo sai định dạng địa chỉ web');
+      }
+    } finally { goO(i, goc); if (i.value !== goc) datGT(i, goc); }
+  }
+
   // mid = null khi đang ở trang hồ sơ chi tiết (quay lại bằng lùi trang)
   async function moCacForm(mid, path, man) {
     if (!(C.kiemKeTruong && C.moFormDeKiemKe && chanGhi)) return;    // chỉ mở form khi đang chặn ghi
@@ -1285,9 +1471,9 @@ async function itaAudit(over, trangThaiTiep) {
     try {
       const rows = [], add = (muc, ket_qua, ok, goi_y) => rows.push({ '': ok ? '✔' : '⚠', muc, ket_qua, goi_y: ok ? '' : goi_y });
       const mo = e => !e ? '(không có)' : e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + ((e.getAttribute('class') || '').trim() ? '.' + e.getAttribute('class').trim().split(/\s+/).slice(0, 2).join('.') : '');
-      const sb = side(), mucMenu = sb ? [...sb.querySelectorAll('a[href],[role=link],[role=menuitem]')].filter(vis) : [];
-      add('Lá chắn', LC && LC.som ? 'có từ đầu trang (Tampermonkey)' : 'cài lúc dán Console', !!(LC && LC.som), 'Nút nghiệp vụ và tự chạy tiếp sẽ tắt; lệnh đi vòng (nếu có) được ghi lại');
-      add('Thanh menu', sb ? mo(sb) + ' · ' + mucMenu.length + ' mục · vd: ' + mucMenu.slice(0, 4).map(txt).filter(Boolean).map(x => cut(x, 18)).join(', ') : '(không thấy)', !!sb && mucMenu.length >= 3, 'Công cụ sẽ không chạy được — báo lại để chỉnh cách dò menu');
+      const sb = menuTrai() || thanhTren(), mucMenu = sb ? [...sb.querySelectorAll('a[href],[role=link],[role=menuitem]')].filter(vis) : [];
+      add('Lá chắn', LC && LC.som ? 'có từ đầu trang' : 'cài lúc dán Console', !!(LC && LC.som), 'Nút nghiệp vụ và tự chạy tiếp sẽ tắt; lệnh đi vòng (nếu có) được ghi lại');
+      add('Thanh menu', sb ? mo(sb) + ' · ' + mucMenu.length + ' mục · vd: ' + mucMenu.slice(0, 4).map(txt).filter(Boolean).map(x => cut(x, 18)).join(', ') : '(không thấy)', !!sb && mucMenu.length >= 3, 'Không có menu trái / thanh điều hướng trên: công cụ sẽ đi theo link nội bộ trên trang đầu, không có link thì chỉ kiểm màn hiện tại');
       const m = mainEl(); add('Vùng chính', mo(m), m !== document.body, 'Đang dùng cả trang — menu/header có thể bị tính vào nội dung');
       const t = [...m.querySelectorAll('table')].filter(x => vis(x) && !inDialog(x)).sort((a, b) => b.rows.length - a.rows.length)[0];
       add('Bảng dữ liệu', t ? 'table · ' + t.querySelectorAll('tbody tr').length + ' dòng' : '(màn này không có)', true, '');
@@ -1361,6 +1547,7 @@ async function itaAudit(over, trangThaiTiep) {
 
   /* ---------- kiểm một màn ---------- */
   async function audit(name, ms, coTab) {
+    try { const sg = chuKyMan(); if (!SIG_MAN.has(sg)) SIG_MAN.set(sg, name); } catch (e) {}   // [1.1]
     const main = mainEl(), text = main.innerText || '';
     const ae = apiErrs();
     const pct = [...new Set((text.match(/-?\d[\d.,]*\s?%/g) || []).filter(p => { const n = viNum(p); return n > 100 || n < 0; }))].slice(0, 4).join(', ');
@@ -1439,42 +1626,87 @@ async function itaAudit(over, trangThaiTiep) {
     const m = mainEl(), set = new Set();
     m.querySelectorAll('[role=tab],[aria-pressed],[role=tablist] a,[role=tablist] button').forEach(e => set.add(e));
     m.querySelectorAll('[class]').forEach(c => { if (TABCLS.test(cls(c))) c.querySelectorAll(':scope > a, :scope > button, :scope > [role=button], :scope > li > a, :scope > li > button, :scope > div > a, :scope > div > button').forEach(e => set.add(e)); });
-    m.querySelectorAll('a[href]').forEach(a => { let u; try { u = new URL(a.href, location.href); } catch (e) { return; } if (u.origin !== location.origin || a.closest('table,[role=grid],[role=row],[role=rowgroup]')) return; if ((u.pathname === location.pathname && u.search !== location.search) || u.pathname.startsWith(location.pathname.replace(/\/$/, '') + '/')) set.add(a); });
+    m.querySelectorAll('a[href]').forEach(a => { let u; try { u = new URL(a.href, location.href); } catch (e) { return; } if (u.origin !== location.origin || a.closest('table,[role=grid],[role=row],[role=rowgroup]') || laTuyenMenu(u)) return; if ((u.pathname === location.pathname && u.search !== location.search) || u.pathname.startsWith(location.pathname.replace(/\/$/, '') + '/')) set.add(a); });
     m.querySelectorAll('button').forEach(b => { if (/\s\d[\d.]*$/.test(txt(b)) && b.parentElement.querySelectorAll(':scope > button').length >= 2) set.add(b); });
-    return [...set].filter(e => vis(e) && !inDialog(e) && !e.closest('table,thead,[role=grid]'));
+    // [1.1] không phải tab: ô chỉ có số (ô lịch, số trang) và phần tử nằm trong lịch / phân trang
+    return [...set].filter(e => vis(e) && !inDialog(e) && !trongMenu(e) && !e.closest('table,thead,[role=grid]') && !/^\s*\d{1,4}\s*$/.test(txt(e))
+      && !e.closest('[class*=calendar],[class*=Calendar],[class*=datepicker],[class*=date-picker],[class*=pagination],[class*=Pagination],[class*=paginator],[class*=pager]'));
   }
+  // [1.1] link trỏ tới đúng đường dẫn của một mục menu (thẻ «điều hướng nhanh» trên trang chủ…) không phải tab: vòng menu sẽ ghé
+  // [1.3] so CẢ đường dẫn + tham số: link có bộ lọc (/members?status=…) là màn khác mục menu (/members) — vẫn là tab (DQTV «Xem danh sách»)
+  const tuyenGon = x => { try { const u = new URL(x, location.href); return u.pathname.replace(/\/+$/, '') + u.search; } catch (e) { return String(x); } };
+  const laTuyenMenu = u => { try { const p = u.pathname.replace(/\/+$/, '') + u.search; return p !== location.pathname.replace(/\/+$/, '') + location.search && menuItems.some(mi => mi.href && tuyenGon(mi.href) === p); } catch (e) { return false; } };
+  // [1.1] chữ ký nội dung màn: bấm tab mà ra đúng nội dung một màn đã kiểm (thẻ số liệu và tab lọc cùng một bộ lọc) → không kiểm lại
+  const SIG_MAN = new Map();
+  const chuKyMan = () => location.pathname + '|' + bam(sigOf(mainEl()).slice(0, 20000));
   const keyOf = e => txt(e) + '|' + (e.getAttribute('href') || '');
   const findCand = k => tabCands().find(e => keyOf(e) === k);
 
   /* ---------- menu — SỬA LỖI 3: định danh theo đường dẫn, không theo chữ ---------- */
-  const sb = side();
-  if (!sb) throw new Error('Không tìm thấy thanh menu bên trái');
-  const expandAll = async () => { for (let k = 0; k < 3; k++) { const closed = [...side().querySelectorAll('[aria-expanded=false]')].filter(vis); if (!closed.length) break; for (const g of closed) { try { g.click(); } catch (e) {} await sleep(120); } } };
-  await expandAll();
+  // [1.4] nguồn menu theo thứ tự: menu trái → thanh điều hướng trên → link nội bộ trên trang đầu → chỉ màn hiện tại
+  // (trước 1.4: không có menu trái thì dừng hẳn — app chỉ có thanh trên hoặc không có menu (ITIM, web tiếng Anh) không chạy được)
+  const TRANG_DAU = location.pathname + location.search;
+  const expandAll = async () => { const g0 = menuEl(); if (!g0) return; for (let k = 0; k < 3; k++) { const closed = [...g0.querySelectorAll('[aria-expanded=false]')].filter(vis); if (!closed.length) break; for (const g of closed) { try { g.click(); } catch (e) {} await sleep(120); } } };
   const MENU_SEL = 'a[href],[role=link],[role=menuitem],button,[class*=nav-item],[class*=menu-item],li';
 
   // Gắn mã định danh cho từng mục menu, kèm tên nhóm cha (để phân biệt mục trùng tên)
   const menuItems = [];
-  (function chuanBiMenu() {
-    let cand = [...side().querySelectorAll('a[href]')];
-    if (cand.length < 3) cand = [...side().querySelectorAll(MENU_SEL)].filter(e => !e.querySelector('a,button,[role=menuitem]') || e.matches('a,button'));
-    const seen = new Set(); let id = 0;
+  let NGUON_MENU = '';
+  function chuanBiMenu(goc) {
+    let cand = [...goc.querySelectorAll('a[href]')];
+    if (cand.length < 3) cand = [...goc.querySelectorAll(MENU_SEL)].filter(e => !e.querySelector('a,button,[role=menuitem]') || e.matches('a,button'));
+    const seen = new Set(); let id = menuItems.length;
     for (const e of cand) {
       const t = txt(e).replace(/\s\d+$/, '');
       if (!t || t.length > 60 || NAV_SKIP.test(t) || e.getAttribute('aria-expanded') !== null) continue;
       if (C.chiMenu && !C.chiMenu.test(t)) continue; if (C.boQuaMenu && C.boQuaMenu.test(t)) continue;
       // tên nhóm cha gần nhất (nếu menu có nhóm)
-      let nhom = ''; for (let p = e.parentElement, i = 0; p && p !== side() && i < 6; p = p.parentElement, i++) { const h = p.querySelector(':scope > [aria-expanded], :scope > .group-title, :scope > [class*=group], :scope > [class*=heading]'); if (h && h !== e) { nhom = txt(h).replace(/\s\d+$/, '').replace(/\s*của tôi\s*$/i, '').trim(); break; } }   // [S1] bỏ nhãn động
+      let nhom = ''; for (let p = e.parentElement, i = 0; p && p !== goc && i < 6; p = p.parentElement, i++) { const h = p.querySelector(':scope > [aria-expanded], :scope > .group-title, :scope > [class*=group], :scope > [class*=heading]'); if (h && h !== e) { nhom = txt(h).replace(/\s\d+$/, '').replace(/\s*của tôi\s*$/i, '').trim(); break; } }   // [S1] bỏ nhãn động
       const ten = nhom && nhom !== t ? nhom + ' › ' + t : t;
       const key = (e.getAttribute('href') || '') + '|' + ten;
       if (seen.has(key)) continue; seen.add(key);
       const mid = 'm' + (id++); try { e.dataset.itaMenu = mid; } catch (x) {}
       menuItems.push({ mid, ten, href: e.getAttribute('href') || '' });
     }
-  })();
-  const findByMid = mid => side().querySelector('[data-ita-menu="' + mid + '"]') || document.querySelector('[data-ita-menu="' + mid + '"]');
+  }
+  // [1.4] không có menu: link nội bộ trên trang đầu (một lần mỗi đường dẫn + tham số), bỏ link hành động / nguy hiểm / trong bảng
+  function chuanBiLienKet() {
+    const daCo = new Set([TRANG_DAU.replace(/\/+$/, '')]); let id = menuItems.length, boQua = 0;
+    menuItems.push({ mid: 'm' + (id++), ten: (txt(document.querySelector('h1') || document.createElement('i')) || document.title || 'Trang đầu').slice(0, 60), href: TRANG_DAU, dau: true });
+    for (const a of linkNoiBo(document.body)) {
+      if (a.closest('table,[role=grid],[role=row],#' + PANEL)) continue;
+      const t = txt(a).replace(/\s\d+$/, ''), u = new URL(a.getAttribute('href'), location.href), k = u.pathname.replace(/\/+$/, '') + u.search;
+      if (!t || t.length > 60 || daCo.has(k)) continue;
+      if (NAV_SKIP.test(t) || SKIP_DAU.test(t) || duongHanhDong(a) || duongNguyHiem(a)) { skipped.push({ man: '(tìm menu)', chu: t, ly_do: 'link hành động: không dùng làm mục menu' }); boQua++; continue; }
+      if (C.chiMenu && !C.chiMenu.test(t)) continue; if (C.boQuaMenu && C.boQuaMenu.test(t)) continue;
+      daCo.add(k); const mid = 'm' + (id++); try { a.dataset.itaMenu = mid; } catch (x) {}
+      menuItems.push({ mid, ten: t, href: a.getAttribute('href'), lienKet: true });
+      if (menuItems.length >= 41) break;   // trang đầu + tối đa 40 link
+    }
+  }
+  if (menuTrai()) { MENU_KIEU = 'trai'; await expandAll(); chuanBiMenu(side()); NGUON_MENU = 'menu trái'; }
+  else if (thanhTren()) { MENU_KIEU = 'tren'; await expandAll(); chuanBiMenu(thanhTren()); NGUON_MENU = 'thanh điều hướng trên'; }
+  else if (side()) { MENU_KIEU = 'trai'; chuanBiMenu(side()); NGUON_MENU = 'menu trái (ít mục)'; }   // giữ cách cũ: khối menu trái có mục không phải a/button
+  if (!menuItems.length) {
+    MENU_KIEU = 'lien-ket'; chuanBiLienKet();
+    if (menuItems.length > 1) NGUON_MENU = 'link nội bộ trên trang đầu (không có menu trái / thanh điều hướng trên)';
+    else { MENU_KIEU = 'man'; NGUON_MENU = 'chỉ màn hiện tại (không có menu, không có link nội bộ)'; }
+  }
+  console.log('[ita] Nguồn menu: ' + NGUON_MENU + ' — ' + menuItems.length + ' mục');
+  const findByMid = mid => { const g = menuEl(); return (g && g.querySelector('[data-ita-menu="' + mid + '"]')) || document.querySelector('[data-ita-menu="' + mid + '"]'); };
+  // [1.4] về trang đầu bằng điều hướng trong app (pushState + popstate, như hồ sơ mẫu); app không nghe popstate thì không về được
+  async function veTrangDau() {
+    if (location.pathname + location.search === TRANG_DAU) return true;
+    try { history.pushState({}, '', TRANG_DAU); dispatchEvent(new PopStateEvent('popstate', { state: {} })); } catch (e) {}
+    await settle(200); return location.pathname + location.search === TRANG_DAU;
+  }
   async function openMenu(mid) {
-    let it = findByMid(mid); if (!it) { await expandAll(); it = findByMid(mid); } if (!it) return false;
+    const mi = menuItems.find(x => x.mid === mid) || {};
+    if (mi.dau || MENU_KIEU === 'man') { const ok = await veTrangDau(); if (ok) nk('mở menu', mi.ten || TRANG_DAU); return ok; }
+    let it = findByMid(mid);
+    // link nằm ở trang đầu: về trang đầu rồi tìm lại — theo đường dẫn + chữ, vì app dựng lại trang thì mất dấu data-ita-menu
+    if (!it && mi.lienKet) { await veTrangDau(); it = findByMid(mid) || linkNoiBo(document.body).find(a => a.getAttribute('href') === mi.href && txt(a).replace(/\s\d+$/, '') === mi.ten && !a.closest('table,[role=grid],#' + PANEL)) || null; }
+    if (!it) { await expandAll(); it = findByMid(mid); } if (!it) return false;
     it.scrollIntoView({ block: 'center' }); nk('mở menu', txt(it).slice(0, 80)); it.click();
     // ứng dụng hỏi "rời trang khi chưa lưu?" (do form vừa mở để kiểm kê) → đồng ý rời, không lưu
     await sleep(200);
@@ -1498,7 +1730,7 @@ async function itaAudit(over, trangThaiTiep) {
       const laTabTT = e.matches('[role=tab]') || !!e.closest('[role=tablist]') || /^(đã|chờ|đang|chưa|quá hạn|sắp|hết|bị|tất cả)(\s|$)/i.test(canon(t)) || /\s\d[\d.]*$/.test(t);
       if (NAV_SKIP.test(t)) { skipped.push({ man: label, chu: t, ly_do: 'đăng xuất' }); continue; }
       if (duongHanhDong(e)) { skipped.push({ man: label, chu: t, ly_do: 'đường dẫn hành động' }); continue; }
-      if (SKIP.test(t) && !laTabTT) { skipped.push({ man: label, chu: t, ly_do: 'nút/link hành động' }); continue; }
+      if ((e.matches('a[href]') ? SKIP_DAU.test(t) : SKIP.test(t)) && !laTabTT) { skipped.push({ man: label, chu: t, ly_do: 'nút/link hành động' }); continue; }   // [1.1] link: chỉ xét chữ đầu
       const href = e.getAttribute('href'); if (href) { try { const u = new URL(href, location.href); if (VISITED.has(u.pathname + u.search)) continue; } catch (x) {} }
       if (e.getAttribute('aria-selected') === 'true' || e.getAttribute('aria-pressed') === 'true' || e.getAttribute('aria-current')) continue;
       keys.push(k);
@@ -1512,7 +1744,9 @@ async function itaAudit(over, trangThaiTiep) {
       const name = label + ' › ' + (/^(xem|xem danh sách|xem tất cả|chi tiết)$/i.test(t0) && hf ? t0 + ' (' + boGoc(hf) + ')' : t0);
       if (SAP_TEN.has(name) || (hf && SAP_TUYEN.has(chuanTuyen(hf)))) { const sx = SAP.find(x => x.man === name || x.duong_dan === chuanTuyen(hf)) || {}; skipped.push({ man: label, chu: t0, ly_do: 'màn sập ở lần trước (' + (sx.duong_dan || '') + ')' + (sx.loi_da_biet ? ' — LỖI ĐÃ BIẾT ' + sx.loi_da_biet.ma : '') + ' — bỏ qua' }); continue; }
       HIENTAI = name;
-      resetLog(); nk('mở tab', name); e.click(); const ms = await settle(); await audit(name, ms); CO.tienDo = name;
+      resetLog(); nk('mở tab', name); e.click(); const ms = await settle();
+      { const sg = chuKyMan(), cu = SIG_MAN.get(sg); if (cu && cu !== name) { skipped.push({ man: label, chu: t0, ly_do: 'nội dung trùng màn «' + cu + '» (cùng đường dẫn, cùng nội dung): không kiểm lại' }); nk('màn trùng', name + ' = ' + cu); continue; } }   // [1.1]
+      await audit(name, ms); CO.tienDo = name;
       await closeDialog();
       await moCacForm(mid, [...path, k], name);   // form riêng của tab (nếu có)
       // mở hồ sơ đầu của tab (tab "Chờ duyệt 3", "Bị trả lại 1"… có nút và form khác tab chính); bỏ tab đếm 0
@@ -1586,6 +1820,104 @@ async function itaAudit(over, trangThaiTiep) {
   }
 
   /* ---------- thử ô nhập / ô chọn ---------- */
+  /* ---------- [1.4] bước 17c: bất biến của danh sách — sắp xếp, phân trang (chỉ đọc: bấm tiêu đề cột, nút trang) ----------
+   * Căn cứ là chính màn: dòng «Tổng N», mũi tên aria-sort, danh sách trước khi bấm. Lệnh lấy dữ liệu bị bộ chặn ghi chặn → CHƯA KIỂM. */
+  const MAX_COT_SAP = 2, MAX_TRANG = 5;
+  const chupDS = () => { const t = bangChinh(), o = output(); const rows = t ? [...t.querySelectorAll('tbody tr')].filter(r => vis(r) && r.cells.length > 1) : []; return { t, rows, chu: rows.map(r => [...r.cells].map(c => txt(c)).join(' · ')), total: o.total, n: rows.length }; };
+  const ghiBB = (kq, man, phep, dt, qs, cc) => B17.bb.push({ kq, man, phep, doi_tuong: dt, quan_sat: qs, can_cu: cc });
+  const giongThuTu = (a, b) => a.length === b.length && a.every((x, k) => x === b[k]);
+  const giongTapHop = (a, b) => giongThuTu(a.slice().sort(), b.slice().sort());
+  // kiểu cột theo giá trị: số, ngày (dd/mm/yyyy [hh:mm], yyyy-mm-dd), chữ
+  const NGAY_VN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/, NGAY_ISO = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/;
+  function giaTriCot(ds) {
+    const v = ds.map(x => x.split(/\n/)[0].trim()).filter(Boolean);
+    if (v.length && v.every(x => /^-?[\d.,]+\s?%?$/.test(x))) return { kieu: 'số', v: v.map(viNum) };
+    if (v.length && v.every(x => NGAY_VN.test(x))) return { kieu: 'ngày', v: v.map(x => { const m = NGAY_VN.exec(x); return Date.UTC(+m[3], m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)); }) };
+    if (v.length && v.every(x => NGAY_ISO.test(x))) return { kieu: 'ngày', v: v.map(x => { const m = NGAY_ISO.exec(x); return Date.UTC(+m[1], m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0)); }) };
+    return { kieu: 'chữ', v };
+  }
+  const SS_VI = new Intl.Collator('vi', { sensitivity: 'base', numeric: true }).compare, SS_MA = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+  const theoThuTu = (v, ss, chieu) => v.every((x, k) => !k || (chieu > 0 ? ss(v[k - 1], x) <= 0 : ss(v[k - 1], x) >= 0));
+  // xét thứ tự một cột: trả { ok, chieu, ghiChu }
+  function xetThuTu(chuCot, aria) {
+    const { kieu, v } = giaTriCot(chuCot);
+    if (new Set(v.map(String)).size < 3) return { ok: null, ghiChu: 'cột có ít hơn 3 giá trị khác nhau trên trang' };
+    const ss = kieu === 'chữ' ? SS_VI : (a, b) => a - b;
+    const chieuCan = aria === 'ascending' ? [1] : aria === 'descending' ? [-1] : [1, -1];
+    for (const c of chieuCan) if (theoThuTu(v, ss, c)) return { ok: true, chieu: c, kieu };
+    if (kieu === 'chữ') for (const [ss2, ten] of [[SS_MA, 'bảng mã (chữ hoa trước, «Đ» sau «Z»)'], [(a, b) => SS_MA(a.toLowerCase(), b.toLowerCase()), 'bảng mã không phân biệt hoa thường']])
+      for (const c of chieuCan) if (theoThuTu(v, ss2, c)) return { ok: 'ma', chieu: c, kieu, ghiChu: 'theo ' + ten + ', không theo thứ tự chữ cái tiếng Việt' };
+    return { ok: false, kieu, chieuCan };
+  }
+  const nutSapXep = th => th.querySelector('button,[role=button],a') || th;
+  const coSapXep = th => th.hasAttribute('aria-sort') || /sort/i.test(cls(th)) || !!th.querySelector('[class*=sort],[class*=Sort],[aria-sort]') || (!!th.querySelector('button') && !th.querySelector('input'));
+  async function bamChoDoi(el) { const b0 = BLOCK.length; resetLog(); el.click(); await settle(300); return { chan: BLOCK.length > b0 ? BLOCK.slice(b0, b0 + 1).join('') : '', loi: apiErrs()[0] || '' }; }
+  async function kiemSapXep(mid, path, label) {
+    const d0 = chupDS(); if (!d0.t || d0.n < 3) return;
+    const ths = [...d0.t.querySelectorAll('thead th,thead [role=columnheader]')].filter(th => vis(th) && txt(th) && coSapXep(th));
+    const coPhanTrang = d0.total != null && d0.total > d0.n;
+    for (const th0 of ths.slice(0, MAX_COT_SAP)) {
+      await kiemCo();
+      const ten = txt(th0).slice(0, 40), idx = th0.cellIndex, dt = 'cột «' + ten + '»';
+      const ccGoc = 'tiêu đề cột có nút sắp xếp' + (th0.hasAttribute('aria-sort') ? ' (aria-sort)' : '') + '; danh sách trước khi bấm' + (d0.total != null ? '; dòng «Tổng ' + d0.total + '» của màn' : '');
+      let doi = false, ketLuan = null;
+      for (let lan = 1; lan <= 2 && !ketLuan; lan++) {
+        const th = [...(bangChinh() || d0.t).querySelectorAll('thead th,thead [role=columnheader]')].find(x => txt(x).slice(0, 40) === ten); if (!th) { ketLuan = ['CHƯA KIỂM', 'không tìm lại được tiêu đề cột sau lần bấm ' + (lan - 1)]; break; }
+        const r = await bamChoDoi(nutSapXep(th)); nk('sắp xếp', label + ' › ' + ten + ' (lần ' + lan + ')');
+        if (r.chan) { ketLuan = ['CHƯA KIỂM', 'lệnh lấy dữ liệu bị bộ chặn ghi chặn: ' + r.chan]; break; }
+        const d = chupDS(); if (!d.t) { ketLuan = ['LỆCH', 'bấm sắp xếp, bảng biến mất' + (r.loi ? ' (API lỗi: ' + r.loi + ')' : '')]; break; }
+        if (r.loi) { ketLuan = ['LỆCH', 'API lỗi khi sắp xếp: ' + r.loi]; break; }
+        if (d.n !== d0.n) { ketLuan = ['LỆCH', 'lần bấm ' + lan + ': số dòng đổi ' + d0.n + ' → ' + d.n]; break; }
+        if (d0.total != null && d.total != null && d.total !== d0.total) { ketLuan = ['LỆCH', 'lần bấm ' + lan + ': tổng đổi ' + d0.total + ' → ' + d.total]; break; }
+        if (!coPhanTrang && !giongTapHop(d.chu, d0.chu)) { ketLuan = ['LỆCH', 'lần bấm ' + lan + ': danh sách không còn đúng các dòng cũ (mất / thêm dòng) dù không phân trang']; break; }
+        if (!giongThuTu(d.chu, d0.chu)) doi = true;
+        const thMoi = [...d.t.querySelectorAll('thead th,thead [role=columnheader]')].find(x => txt(x).slice(0, 40) === ten);
+        const tt = xetThuTu(d.rows.map(rw => rw.cells[idx] ? txt(rw.cells[idx]) : ''), thMoi && thMoi.getAttribute('aria-sort'));
+        if (tt.ok === false) { ketLuan = ['LỆCH', 'lần bấm ' + lan + ': cột (' + tt.kieu + ') không theo thứ tự ' + (tt.chieuCan.length === 1 ? (tt.chieuCan[0] > 0 ? 'tăng (aria-sort ascending)' : 'giảm (aria-sort descending)') : 'tăng hay giảm')]; break; }
+        if (tt.ok === 'ma') { ketLuan = ['GHI NHẬN', 'lần bấm ' + lan + ': cột sắp ' + tt.ghiChu]; break; }
+        if (tt.ok === null) { ketLuan = ['CHƯA KIỂM', tt.ghiChu]; break; }
+      }
+      if (!ketLuan) ketLuan = doi ? ['ĐẠT', 'hai lần bấm: số dòng, tổng giữ nguyên' + (coPhanTrang ? '' : ', đúng các dòng cũ') + '; cột theo thứ tự tăng / giảm'] : giaTriCot(d0.rows.map(rw => rw.cells[idx] ? txt(rw.cells[idx]) : '')).v.length < 3 ? ['CHƯA KIỂM', 'ít giá trị'] : ['LỆCH', 'bấm tiêu đề cột hai lần, thứ tự danh sách không đổi'];
+      ghiBB(ketLuan[0], label, 'sắp xếp', dt, ketLuan[1], ccGoc);
+      // trả về thứ tự ban đầu: bấm tiếp tối đa 2 lần, không được thì mở lại màn
+      for (let k = 0; k < 2 && !giongThuTu(chupDS().chu, d0.chu); k++) { const th = [...((bangChinh() || {}).querySelectorAll ? bangChinh().querySelectorAll('thead th,thead [role=columnheader]') : [])].find(x => txt(x).slice(0, 40) === ten); if (!th) break; await bamChoDoi(nutSapXep(th)); }
+      if (!giongThuTu(chupDS().chu, d0.chu)) { if (mid) await restore(mid, path); }
+    }
+  }
+  const PAGER = '[class*=pagination],[class*=Pagination],[class*=paginator],[class*=Paginator],[class*=pager],[class*=Pager],nav[aria-label*=pag i],[role=navigation][aria-label*=trang i]';
+  const nutTrangSau = () => { const m = mainEl(); const ds = [...m.querySelectorAll(PAGER)].filter(vis).flatMap(p => [...p.querySelectorAll('button,a,[role=button],li')]);
+    return ds.find(b => vis(b) && !inDialog(b) && (/^(›|»|>|sau|tiếp|trang sau|next|next page)$/i.test(txt(b)) || /next|trang sau|tiếp/i.test(b.getAttribute('aria-label') || '') || b.getAttribute('rel') === 'next' || /(^|[\s_-])next([\s_-]|$)/i.test(cls(b)))) || null; };
+  const khoaNut = b => !b || b.disabled || b.getAttribute('aria-disabled') === 'true' || /(^|[\s_-])(disabled|is-disabled)([\s_-]|$)/i.test(cls(b)) || /(^|[\s_-])disabled([\s_-]|$)/i.test(cls(b.parentElement || b));
+  async function kiemPhanTrang(mid, path, label) {
+    const d0 = chupDS(); let nut = nutTrangSau(); if (!d0.t || !d0.n || !nut || khoaNut(nut)) return;
+    const cc = 'nút trang sau trên màn; trang trước đó' + (d0.total != null ? '; dòng «Tổng ' + d0.total + '» của màn' : '');
+    const daThay = new Set(d0.chu), trungTrong = d0.chu.length !== daThay.size; let tong = d0.n, truoc = d0, ketLuan = null, trang = 1, het = false;
+    while (trang < MAX_TRANG && !ketLuan) {
+      await kiemCo();
+      const r = await bamChoDoi(nut); trang++; nk('phân trang', label + ' › trang ' + trang);
+      if (r.chan) { ketLuan = ['CHƯA KIỂM', 'lệnh lấy trang bị bộ chặn ghi chặn: ' + r.chan]; break; }
+      if (r.loi) { ketLuan = ['LỆCH', 'API lỗi khi sang trang ' + trang + ': ' + r.loi]; break; }
+      const d = chupDS(); if (!d.t) { ketLuan = ['LỆCH', 'sang trang ' + trang + ', bảng biến mất']; break; }
+      if (giongThuTu(d.chu, truoc.chu)) { ketLuan = ['LỆCH', 'bấm sang trang ' + trang + ', danh sách không đổi']; break; }
+      if (d0.total != null && d.total != null && d.total !== d0.total) { ketLuan = ['LỆCH', 'trang ' + trang + ': tổng đổi ' + d0.total + ' → ' + d.total]; break; }
+      const trung = trungTrong ? [] : d.chu.filter(x => daThay.has(x));
+      if (trung.length) { ketLuan = ['LỆCH', trung.length + ' dòng ở trang ' + trang + ' đã có ở trang trước (vd «' + cut(trung[0], 50) + '»)']; break; }
+      d.chu.forEach(x => daThay.add(x)); tong += d.n; truoc = d;
+      nut = nutTrangSau(); if (!nut || khoaNut(nut)) { het = true; break; }
+    }
+    if (!ketLuan) ketLuan = het && d0.total != null ? (tong === d0.total ? ['ĐẠT', trang + ' trang, cộng ' + tong + ' dòng = tổng ' + d0.total + ', không dòng trùng'] : ['LỆCH', 'cộng ' + trang + ' trang ra ' + tong + ' dòng, màn ghi tổng ' + d0.total])
+      : ['ĐẠT', 'đã xét ' + trang + ' trang' + (het ? '' : ' (dừng ở ' + MAX_TRANG + ' trang)') + ': mỗi trang đổi nội dung, không dòng trùng' + (d0.total == null ? '; màn không ghi tổng để cộng' : '')];
+    ghiBB(ketLuan[0], label, 'phân trang', 'danh sách', ketLuan[1], cc);
+    if (mid) await restore(mid, path);   // về trang 1
+  }
+  async function kiemDanhSach(mid, path, label) {
+    if (BB_DA.has(label)) return; BB_DA.add(label);
+    // xoá lọc không về danh sách cũ (lỗi đã ghi ở phép lọc): mở lại màn để sắp xếp / phân trang xét trên danh sách gốc
+    if (mid && B17.bb.some(x => x.man === label && x.phep === 'lọc' && x.kq === 'LỆCH')) { await restore(mid, path); nk('mở lại màn', label + ' — danh sách còn kẹt bộ lọc'); }
+    await kiemSapXep(mid, path, label);
+    await kiemPhanTrang(mid, path, label);
+  }
+
   async function tryInputs(label) {
     const m = mainEl();
     const boxes = [...m.querySelectorAll('input[type=search],input[type=text],input:not([type])')].filter(e => vis(e) && !inDialog(e) && !e.readOnly && !e.disabled && /tìm|lọc|search|tra cứu|họ tên|mã|số/i.test(labelOf(e)));
@@ -1618,6 +1950,8 @@ async function itaAudit(over, trangThaiTiep) {
         inputs.push({ man: label, o: lab, loai: 'tìm · ' + v.ten, gia_tri: v.giaTri.slice(0, 40), so_dong_truoc: base.rows, so_dong_sau: o.rows, tong_ghi: o.total, ms, loi: loi.join(' | ') });
       }
       setVal(box, orig); await settle(500);
+      { const o2 = output(), v = o2.rows === base.rows && (base.total == null || o2.total == null || o2.total === base.total);   // [1.4] 17c
+        ghiBB(v ? 'ĐẠT' : 'LỆCH', label, 'lọc', 'ô «' + lab + '»', v ? 'xoá từ khoá: về đúng ' + base.rows + ' dòng' + (base.total != null ? ', tổng ' + base.total : '') : 'xoá từ khoá: ' + base.rows + ' → ' + o2.rows + ' dòng' + (base.total != null ? ', tổng ' + base.total + ' → ' + o2.total : ''), 'danh sách trước khi gõ từ khoá'); }
     }
     if (C.thuOChon > 0) for (const sel of [...m.querySelectorAll('select')].filter(e => vis(e) && !inDialog(e) && !e.disabled).slice(0, 4)) {
       const lab = labelOf(sel).slice(0, 40) || 'ô chọn', orig = sel.value, base = output();
@@ -1639,6 +1973,8 @@ async function itaAudit(over, trangThaiTiep) {
       if (opts.length >= 2 && khongDoi === opts.length) inputs.push({ man: label, o: lab, loai: 'chọn · tổng hợp', gia_tri: opts.map(txt).slice(0, 4).join(', '), so_dong_truoc: base.rows, so_dong_sau: base.rows, tong_ghi: base.total, ms: 0,
         loi: '[cần xác nhận] thử ' + opts.length + ' lựa chọn, nội dung màn không đổi lần nào — bộ lọc có thể không có tác dụng' });
       setVal(sel, orig); await settle(300);
+      if (opts.length) { const o2 = output(), v = o2.rows === base.rows && (base.total == null || o2.total == null || o2.total === base.total);   // [1.4] 17c
+        ghiBB(v ? 'ĐẠT' : 'LỆCH', label, 'lọc', 'ô chọn «' + lab + '»', v ? 'trả lựa chọn cũ: về đúng ' + base.rows + ' dòng' : 'trả lựa chọn cũ: ' + base.rows + ' → ' + o2.rows + ' dòng' + (base.total != null ? ', tổng ' + base.total + ' → ' + o2.total : ''), 'danh sách trước khi đổi lựa chọn'); }
     }
   }
 
@@ -1687,12 +2023,19 @@ async function itaAudit(over, trangThaiTiep) {
   if (choGhiMoiTruong) console.log('%c[ita] MỞ GHI: ' + host + ' nằm trong moiTruongKiemThu, mức ' + C.mucQuyTrinh, 'color:#b60;font-weight:bold');
 
   let idx = 0, dungGiuaChung = false;
+  const MENU_TUYEN = new Map();   // [1.1] đường dẫn + tham số → tên mục menu đã kiểm
   try {
     for (const mi of (C.chiChayKichBan ? [] : danhSach)) {
-      if (DA_XONG.has(mi.ten)) { idx++; continue; }
+      const khMenu = (() => { try { const u = new URL(mi.href, location.href); return mi.href ? u.pathname.replace(/\/+$/, '') + u.search : ''; } catch (e) { return ''; } })();
+      if (DA_XONG.has(mi.ten)) { if (khMenu && !MENU_TUYEN.has(khMenu)) MENU_TUYEN.set(khMenu, mi.ten); idx++; continue; }   // [1.1] chạy tiếp: vẫn nhớ đường dẫn của mục đã xong
       const tuyenMi = mi.href ? chuanTuyen(mi.href) : '';
       if (SAP_TEN.has(mi.ten) || (tuyenMi && SAP_TUYEN.has(tuyenMi))) { idx++; const sx = SAP.find(x => x.man === mi.ten || x.duong_dan === tuyenMi) || {}; missing.push(mi.ten + ' (bỏ qua: màn sập ' + (sx.duong_dan || '') + (sx.loi_da_biet ? ' — LỖI ĐÃ BIẾT ' + sx.loi_da_biet.ma + (sx.loi_da_biet.yc ? '/' + sx.loi_da_biet.yc : '') : '') + ')'); DA_XONG.add(mi.ten); continue; }
-      GOC = mi.ten; DANG = mi.ten; HIENTAI = mi.ten; luuCkpt();
+      // [1.1] mục menu trỏ ĐÚNG cùng đường dẫn + tham số với mục đã kiểm (tên tổ chức và «Trang chủ» cùng một trang) → không kiểm lại
+      { const kh = khMenu;
+        const cu = kh && MENU_TUYEN.get(kh); if (cu) { idx++; skipped.push({ man: mi.ten, chu: mi.ten, ly_do: 'mục menu cùng đường dẫn với «' + cu + '» đã kiểm: không kiểm lại' }); DA_XONG.add(mi.ten); continue; }
+        if (kh) MENU_TUYEN.set(kh, mi.ten); }
+      GOC = mi.ten; DANG = mi.ten; HIENTAI = mi.ten; TG_MUC = mi.ten; luuCkpt();
+      const tMuc = Date.now();
       CO.tienDo = (++idx) + '/' + danhSach.length + ' ' + mi.ten;
       console.log('[ita] ' + CO.tienDo);
       // Mất kết nối máy chủ (phần lớn lệnh gọi lỗi mạng) → bỏ kết quả của mục này, chờ rồi thử lại; quá 3 lần thì ghi "chưa kiểm được"
@@ -1711,6 +2054,7 @@ async function itaAudit(over, trangThaiTiep) {
         }
         const ms = await settle(); await audit(mi.ten, ms);
         try { await tryInputs(mi.ten); } catch (e) { if (e === DUNG || e === SAP_MAN) throw e; inputs.push({ man: mi.ten, loi: 'lỗi khi thử ô: ' + e.message }); }
+        try { await kiemDanhSach(mi.mid, [], mi.ten); } catch (e) { if (e === DUNG || e === SAP_MAN) throw e; skipped.push({ man: mi.ten, chu: 'danh sách', ly_do: 'lỗi khi kiểm sắp xếp / phân trang: ' + e.message }); }   // [1.4] 17c
         await moCacForm(mi.mid, [], mi.ten);   // mở form Thêm mới… của màn để kiểm kê trường
         if (C.moHoSoDau) { try { await openFirstRow(mi.mid, mi.ten); } catch (e) { if (e === DUNG || e === SAP_MAN) throw e; } }
         try { await moHoSoTheoTrangThai(mi.mid, [], mi.ten); } catch (e) { if (e === DUNG || e === SAP_MAN) throw e; skipped.push({ man: mi.ten, chu: 'trạng thái', ly_do: 'lỗi khi mở hồ sơ theo trạng thái: ' + e.message }); }
@@ -1734,13 +2078,29 @@ async function itaAudit(over, trangThaiTiep) {
         try { await closeDialog(); } catch (x) {}
       }
       if (matMang) missing.push(mi.ten + ' (chưa kiểm được: mất kết nối máy chủ sau 4 lần thử)');
+      tgMuc().tong_ms += Date.now() - tMuc;
       DA_XONG.add(mi.ten);
       luuCkpt();   // lưu điểm dừng sau mỗi mục
+    }
+    // [1.1] hồ sơ mẫu (dataset của dự án): mở thẳng từng hồ sơ, kiểm như hồ sơ đầu (kể cả form của nút); không mở được thì ghi lý do
+    for (const hm of (C.chiChayKichBan ? [] : (HO_SO_MAU || []))) {
+      await kiemCo();
+      const ten = '[hồ sơ mẫu] ' + hm.ma + (hm.nhan_chang ? ' › «' + hm.nhan_chang + '»' : '');
+      if (hm.tai_khoan && !String(TK || '').toLowerCase().includes(String(hm.tai_khoan).toLowerCase())) { HSM_KQ.push({ ma: hm.ma, duong_dan: hm.duong_dan, ket_qua: 'không mở', ly_do: 'hồ sơ mẫu dành cho tài khoản «' + hm.tai_khoan + '»' }); continue; }
+      if (DA_XONG.has(ten)) continue;
+      HIENTAI = ten; TG_MUC = ten; CO.tienDo = ten; resetLog(); nk('mở hồ sơ mẫu', hm.ma + ' ' + hm.duong_dan);
+      try { history.pushState({}, '', hm.duong_dan); dispatchEvent(new PopStateEvent('popstate', { state: {} })); } catch (e) {}
+      const ms = await settle(300), toi = chuanTuyen(location.pathname) === chuanTuyen(hm.duong_dan), loiApi = apiErrs();
+      if (!toi) { HSM_KQ.push({ ma: hm.ma, duong_dan: hm.duong_dan, ket_qua: 'không mở được', ly_do: 'app chuyển sang ' + location.pathname + ' (hồ sơ không còn, sai quyền, hoặc app không nhận điều hướng)' }); DA_XONG.add(ten); continue; }
+      try { await audit(ten, ms, true); await moCacForm(null, [], ten); await closeDialog(); }
+      catch (e) { if (e === DUNG) throw e; if (e !== SAP_MAN) throw e; SAP_MOI = null; }
+      HSM_KQ.push({ ma: hm.ma, duong_dan: hm.duong_dan, ket_qua: loiApi.length ? 'đã mở, có lỗi API' : 'đã mở', ly_do: loiApi.slice(0, 2).join(' | ') });
+      DA_XONG.add(ten); luuCkpt();
     }
     for (const k of C.kichBan || []) { console.log('[ita] Kịch bản: ' + k.man); await runScenario(k); }
   } catch (e) {
     if (e === SAP_MAN) { dungGiuaChung = true; SAP_MOI = null; nk('dừng', 'màn sập ngoài vòng menu (kịch bản)'); }
-    else if (e === DUNG) { dungGiuaChung = true; if (APP_SAP) { nk('dừng do ứng dụng sập', APP_SAP); console.warn('[ita] DỪNG: ứng dụng báo màn hình hỏng ở "' + APP_SAP + '" — tải lại trang rồi chạy tiếp, bỏ qua màn này.'); } else if (MAT_PHIEN) { nk('dừng do mất phiên', MAT_PHIEN); console.warn('[ita] DỪNG: mất phiên đăng nhập — ' + MAT_PHIEN + '. Đăng nhập lại cùng tài khoản rồi bấm Chạy để chạy tiếp.'); } else console.log('%c[ita] Đã dừng theo yêu cầu', 'color:#b60'); }
+    else if (e === DUNG) { dungGiuaChung = true; if (APP_SAP) { nk('dừng do ứng dụng sập', APP_SAP); console.warn('[ita] DỪNG: ứng dụng báo màn hình hỏng ở "' + APP_SAP + '" — tải lại trang rồi chạy tiếp, bỏ qua màn này.'); } else if (MAT_PHIEN) { nk('dừng do mất phiên', MAT_PHIEN); console.warn('[ita] DỪNG HẲN (không tự chạy tiếp): ' + MAT_PHIEN_LY_DO + (MAT_PHIEN_LAP ? ' — LẶP LẠI ở cùng màn.' : '') + ' — '); console.warn('[ita] DỪNG: mất phiên đăng nhập — ' + MAT_PHIEN + '. Đăng nhập lại cùng tài khoản rồi bấm Chạy để chạy tiếp.'); } else console.log('%c[ita] Đã dừng theo yêu cầu', 'color:#b60'); }
     else throw e;
   } finally {
     goHook();
@@ -1749,9 +2109,9 @@ async function itaAudit(over, trangThaiTiep) {
   }
 
   function luuCkpt() {
-    const goc = { origin: location.origin, tk: TK, ts: Date.now(), luot: LUOT, matKq: MAT_KQ, dang: DANG, sap: SAP, boQuaDoTaiLai: BO_DO_TAI_LAI, ngungBam: DUNG_BAM || NGUNG_BAM_TRUOC, xong: [...DA_XONG], visited: [...VISITED], ds: DS, nt: NT };
+    const goc = { origin: location.origin, tk: TK, ts: Date.now(), luot: LUOT, matKq: MAT_KQ, dang: DANG, sap: SAP, boQuaDoTaiLai: BO_DO_TAI_LAI, ngungBam: DUNG_BAM || NGUNG_BAM_TRUOC, xong: [...DA_XONG], visited: [...VISITED], ds: DS, nt: NT, doTg: DO_TG };
     let chu = '';
-    try { chu = hoaChuoi(Object.assign({ res, inputs, truong: TRUONG, tcKq: TC_KQ, tcDa: [...TC_DA], koKq: KO_KQ, koDa: [...KO_DA], koDem: KO_DEM, buocMay: BUOC_MAY, axeKq: AXE_KQ }, goc)); localStorage.setItem(ckptKey(), chu); CKPT_GON = false; return; } catch (e) {}
+    try { chu = hoaChuoi(Object.assign({ res, inputs, truong: TRUONG, tcKq: TC_KQ, tcDa: [...TC_DA], koKq: KO_KQ, koDa: [...KO_DA], koDem: KO_DEM, buocMay: BUOC_MAY, axeKq: AXE_KQ, b17: b17Luu() }, goc)); localStorage.setItem(ckptKey(), chu); CKPT_GON = false; return; } catch (e) {}
     // [10a] localStorage hết chỗ: bản đầy đủ sang IndexedDB (kho lớn), localStorage chỉ giữ bản gọn để biết tiến độ
     if (chu) luuCkptLon(ckptKey(), chu).catch(e => nk('điểm dừng đầy đủ không lưu được', String(e && e.message || e)));
     // [S2] đầy chỗ: vẫn giữ tiến độ + màn sập (bản gọn) để tải lại không chạy lại từ đầu; kết quả chi tiết chỉ còn trong trang
@@ -1771,8 +2131,9 @@ async function itaAudit(over, trangThaiTiep) {
   THAP.push('ma_enum_lo', 'cat_chu_khong_tooltip', 'chuoi_dai_khong_ngat', 'dinh_dang_ngay_tron', 'dinh_dang_so_tron', 'tieu_de_lech_menu', 'nut_chinh_nhieu');
   const CAN_XN = {
     nghi_ngo_so_lech: () => 'số trên màn có thể do giao diện tự tính',
-    chan_ghi: () => 'màn tự gửi lệnh ghi khi chỉ mở xem — có thể là đánh dấu đã đọc/thống kê',
-    api_loi: v => (String(v).split(' | ').every(x => /^404 /.test(x)) ? '404 có thể chỉ là "chưa có dữ liệu" — mở màn xem vùng đó hiển thị gì' : ''),
+    chan_ghi: v => String(v).split(' | ').every(x => x.startsWith('[công cụ bấm')) ? 'lệnh ghi do CÔNG CỤ bấm nút gửi ngay (không hỏi xác nhận) — không phải màn tự gửi' : 'màn tự gửi lệnh ghi khi chỉ mở xem — có thể là đánh dấu đã đọc/thống kê',
+    api_loi: v => (String(v).split(' | ').every(x => /^404 /.test(x)) ? '404 có thể chỉ là "chưa có dữ liệu" — mở màn xem vùng đó hiển thị gì'
+      : String(v).split(' | ').some(x => /^(401|419|440) /.test(x) && PHIEN_CON.has(dichVu(x.replace(/^\d+ /, '')))) ? '401 ở dịch vụ phụ, phiên chính vẫn còn — thường do cấu hình xác thực / quyền của dịch vụ đó' : ''),
     dinh_dang_so_tron: () => 'dấu chấm/phẩy có thể là số thập phân',
     tieu_de_lech_menu: () => 'tên khác nhưng có thể cùng nghĩa',
     nut_chinh_nhieu: () => 'kiểm bằng mắt nút nào là hành động chính',
@@ -1781,7 +2142,11 @@ async function itaAudit(over, trangThaiTiep) {
   const coXss = r => /XSS|5xx/.test((r.quy_trinh_loi || '') + (r.api_loi || ''));
   // [3.26.1] chỉ phép kiểm có căn cứ mới được tính mức; còn lại là «ghi nhận»
   const coCC = (r, k) => r[k] && coCanCu(k, r[k]);
-  const mucDo = r => (CAO.some(k => coCC(r, k)) || coXss(r) || /⚠/.test(r.quy_trinh_loi || '')) ? 'cao' : TB.some(k => coCC(r, k)) ? 'trung bình' : THAP.some(k => coCC(r, k)) ? 'thấp' : '';
+  // [1.1] lỗi WCAG lấy mức theo axe: critical → cao, serious → trung bình, còn lại → thấp (trước: luôn thấp)
+  const wcagMuc = v => /\(nghiêm trọng nhất/.test(v) ? 'cao' : /\(nghiêm trọng[,)]/.test(v) ? 'trung bình' : 'thấp';
+  const mucDo0 = r => (CAO.some(k => coCC(r, k)) || coXss(r) || /⚠/.test(r.quy_trinh_loi || '')) ? 'cao' : TB.some(k => coCC(r, k)) ? 'trung bình' : THAP.some(k => coCC(r, k)) ? 'thấp' : '';
+  const HANG_MUC = { 'cao': 3, 'trung bình': 2, 'thấp': 1, '': 0 };
+  const mucDo = r => { const a = mucDo0(r), b = coCC(r, 'wcag_loi') ? wcagMuc(r.wcag_loi) : ''; return HANG_MUC[b] > HANG_MUC[a] ? b : a; };
   const CHECK = [...CAO, ...TB, ...THAP, 'chan_ghi', 'nghi_ngo_so_lech'];
   // Gộp các màn trùng (cùng tên màn + URL): xảy ra khi chạy tiếp sau tải lại, mục menu đang dở được chạy lại;
   // lần chạy lại không thu thêm trường đã có nên hiện "0 trường" — giữ bản có nhiều trường nhất, bổ sung ô còn trống.
@@ -1802,7 +2167,7 @@ async function itaAudit(over, trangThaiTiep) {
   const inputIssues = inputs.filter(i => i.loi);
 
   // 3.6: gom theo mẫu lỗi / thành phần — một lỗi component trên nhiều màn = 1 dòng
-  const mucCua = (k, v) => !coCanCu(k, v) ? 'ghi nhận' : CAO.includes(k) || (k === 'quy_trinh_loi' && /⚠/.test(v)) ? 'cao' : TB.includes(k) ? 'trung bình' : THAP.includes(k) ? 'thấp' : 'nghi ngờ';
+  const mucCua = (k, v) => !coCanCu(k, v) ? 'ghi nhận' : k === 'wcag_loi' ? wcagMuc(v) : CAO.includes(k) || (k === 'quy_trinh_loi' && /⚠/.test(v)) ? 'cao' : TB.includes(k) ? 'trung bình' : THAP.includes(k) ? 'thấp' : 'nghi ngờ';
   const MAU = {}; let ccHien = '';   // căn cứ của mẫu đang gom (đặt trước mỗi lượt gọi themMau)
   const themMau = (khoa, loai, muc, chiTiet, man, xn) => {
     const o = MAU[khoa] || (MAU[khoa] = { loai, muc_do: muc, chi_tiet: chiTiet, nguyen_tac: NGUYEN_TAC[loai] || '', can_cu: ccHien, so_man: 0, vi_du_man: [], can_xac_nhan: xn || '', _m: new Set() });
@@ -1817,7 +2182,7 @@ async function itaAudit(over, trangThaiTiep) {
     else if (k === 'api_loi' || k === 'api_cham' || k === 'chan_ghi') { for (const p of String(r[k]).split(' | ')) { const c = duongMau(p.replace(/^\d+ms /, '')); themMau(k + '·' + c, k, muc, c, r.tab, k === 'api_loi' ? (CAN_XN.api_loi(p) || '') : xn); } }
     else if (k === 'chu_la') { for (const p of String(r[k]).split(', ')) themMau(k + '·' + p, k, muc, p, r.tab, xn); }
     else if (k === 'du_lieu_nhay_cam') { for (const p of String(r[k]).split(' | ')) themMau(k + '·' + p.split(' «')[0], k, muc, p.split(' «')[0], r.tab, xn); }
-    else if (k === 'wcag_loi') { for (const p of String(r[k]).split(' · ')) themMau(k + '·' + p.split(' ')[0], k, muc, p.replace(/ ×\d+$/, ''), r.tab, xn); }   // [11a] mỗi luật axe một mẫu
+    else if (k === 'wcag_loi') { for (const p of String(r[k]).split(' · ')) themMau(k + '·' + p.split(' ')[0], k, mucCua(k, p), p.replace(/ ×\d+$/, ''), r.tab, xn); }   // [1.1] mức theo từng luật   // [11a] mỗi luật axe một mẫu
     else if (['js_loi', 'quy_trinh_loi', 'dinh_dang_ngay_tron', 'dinh_dang_so_tron', 'rong_nhung_api_loi', 'tieu_de_lech_menu', 'phan_tram_vo_ly', 'truong_loi'].includes(k)) { const ct = String(r[k]).replace(/\s+/g, ' ').slice(0, 120); themMau(k + '·' + ct.replace(/\d+/g, 'N'), k, muc, ct, r.tab, xn); }
     else themMau(k, k, muc, '', r.tab, xn);
   }
@@ -1865,12 +2230,20 @@ async function itaAudit(over, trangThaiTiep) {
 
   const ketQua = {
     url: location.origin, luc: new Date().toLocaleString('vi-VN'), thoi_gian_s: Math.round((Date.now() - tStart) / 1000),
-    dung_giua_chung: dungGiuaChung, ly_do_dung: !dungGiuaChung ? '' : (APP_SAP ? 'app kẹt ở màn báo lỗi sau khi một màn sập ("' + APP_SAP + '"): đã tải lại trang. Bản dán Console: dán lại đúng tệp bundle để chạy tiếp các mục chưa chạy.' : MAT_PHIEN ? 'mất phiên đăng nhập (' + MAT_PHIEN + '): đăng nhập lại cùng tài khoản để chạy tiếp.' : 'dừng theo lệnh người chạy hoặc lỗi công cụ.'), menu_chua_chay: danhSach.map(x => x.ten).filter(t => !DA_XONG.has(t)), tai_khoan: TK || '(không nhận ra — khai chon_tai_khoan trong hồ sơ hoặc dacTa.vaiChon)', quyen_may_chu: QUYEN_MAY_CHU,
-    mat_phien: MAT_PHIEN, loi_403: MA403.slice(0, 100), man_loi_nang: SAP, man_sap: SAP, diem_dung_gon: CKPT_GON, muc_mat_ket_qua: MAT_KQ, buoc_may_chu: BUOC_MAY, quy_tac: (window.__itaQuyTac || {}).meta || null, thao_tac_cuoi: docNK().slice(-15),
+    thoi_gian_theo_muc: Object.entries(DO_TG).map(([muc, o]) => Object.assign({ muc }, o)).sort((a, b) => (b.tong_ms || b.cho_ms) - (a.tong_ms || a.cho_ms)),   // [1.4c]
+    dung_giua_chung: dungGiuaChung, ly_do_dung: !dungGiuaChung ? '' : (APP_SAP ? 'app kẹt ở màn báo lỗi sau khi một màn sập ("' + APP_SAP + '"): đã tải lại trang. Bản dán Console: dán lại đúng tệp bundle để chạy tiếp các mục chưa chạy.' : MAT_PHIEN ? 'DỪNG HẲN vì mất phiên đăng nhập (' + MAT_PHIEN + '). Căn cứ: ' + (MAT_PHIEN_LY_DO || 'mã 401') + '.'
+      + (MAT_PHIEN_LAP ? ' LẶP LẠI: lần chạy trước (' + MAT_PHIEN_LAP + ') cũng mất phiên đúng ở màn này — đăng nhập lại rồi chạy tiếp sẽ lặp lại; kiểm tay màn này (có thể màn gọi đăng xuất / xoá phiên, hoặc tài khoản bị khoá) hoặc loại nó bằng ita.chay({ boQuaMenu: /…/ }).' : '')
+      + ' Công cụ KHÔNG tự chạy tiếp (tránh vòng lặp). Muốn chạy phần còn lại: đăng nhập lại cùng tài khoản rồi bấm Chạy.' : 'dừng theo lệnh người chạy hoặc lỗi công cụ.'), menu_chua_chay: danhSach.map(x => x.ten).filter(t => !DA_XONG.has(t)), tai_khoan: TK || '(không nhận ra — khai chon_tai_khoan trong hồ sơ hoặc dacTa.vaiChon)', quyen_may_chu: QUYEN_MAY_CHU,
+    nguon_menu: NGUON_MENU,   // [1.4]
+    du_lieu_du_an: tomTatDuLieu(), tep_khong_nap_duoc: khongNhanGanNhat().slice(0, 50),   // [1.3]
+    cau_hinh: { bo: C.__bo, khac_mac_dinh: Object.entries(C.__nguon || {}).map(([k, n]) => ({ khoa: k, gia_tri: hoaChuoi(C[k]).slice(0, 120), nguon: n })), da_luu: Object.keys(docCfgLuu()) },   // [1.2]
+    mat_phien: MAT_PHIEN, mat_phien_can_cu: MAT_PHIEN_LY_DO, mat_phien_lap_lai: MAT_PHIEN_LAP, loi_403: MA403.slice(0, 100),
+    dich_vu_401: DV401.map(x => Object.assign({ phien_chinh_con: PHIEN_CON.has(x.dv) }, x)), ho_so_mau: HSM_KQ.slice(), giao_dien_thuan: !!DU_AN.giao_dien_thuan,   // [1.1]
+    man_loi_nang: SAP, man_sap: SAP, diem_dung_gon: CKPT_GON, muc_mat_ket_qua: MAT_KQ, buoc_may_chu: BUOC_MAY, quy_tac: (window.__itaQuyTac || {}).meta || null, thao_tac_cuoi: docNK().slice(-15),
     muc_quy_trinh: 1, co_dac_ta: !!C.dacTa, mo_ghi: choGhiMoiTruong,
-    phien_ban: PHIEN_BAN, cach_nap: window.__itaNguon === 'userscript' ? 'Tampermonkey (cổng chặn từ đầu trang)' : 'dán Console',
+    phien_ban: PHIEN_BAN, cach_nap: 'dán Console',
     ten_mien: location.hostname, cua_so: innerWidth + '×' + innerHeight + ' (tỉ lệ ' + (window.devicePixelRatio || 1) + ')',
-    danh_sach_menu: danhSach.map(x => x.ten), di_vong_bo_chan: DI_VONG.slice(), ngung_bam_do_di_vong: DUNG_BAM || NGUNG_BAM_TRUOC, co_cong_fetch: coCong,
+    danh_sach_menu: danhSach.map(x => x.ten), di_vong_bo_chan: DI_VONG.slice(), ngung_bam_do_di_vong: DUNG_BAM || NGUNG_BAM_TRUOC,
     du_lieu_nap: NAP_DA_DUNG.slice(), mau_loi, he_thong_thiet_ke: dsKq, ngon_tu: ntKq, la_chan_tu_dau_trang: !!(LC && LC.som), nut_nghiep_vu_da_bat: nvOk(),
     lenh_di_vong_bo_chan: [...new Set(BYPASS)].slice(0, 20),
     so_muc_menu: danhSach.length, so_man_da_kiem: resG.length, man_co_van_de: issues.length,
@@ -1888,6 +2261,9 @@ async function itaAudit(over, trangThaiTiep) {
     form_da_mo: [...new Set(TRUONG.filter(f => /^form( nghiệp vụ)? «/.test(f.vung)).map(f => f.man + ' | ' + f.vung.split(' › ')[0].split(' · ')[0]))],
     tc_nhap_kq: TC_KQ,
     kiem_o: GH ? { nguon: GH._nguon, dem: KO_DEM, dong: KO_KQ } : null,
+    bien_o_dom: { dem: B17.kdDem, dong: B17.kd },   // [1.4] 17b
+    bat_bien_ds: B17.bb,   // [1.4] 17c
+    o_chon_tuy_bien: B17.ct,   // [1.4] 17d
     kiem_tro_nang: window.axe ? { cong_cu: 'axe-core ' + window.axe.version, bo_luat: AXE_THE, ds: AXE_KQ } : null,   // [11a]
     do_phu_quy_trinh: DO_PHU,   // bước 9: tài liệu × app × TC v7 × rà soát (70-nap.js, bo-doc/90)
     o_chon_cot_bo_qua: SO_CHON_COT,
@@ -1912,7 +2288,7 @@ async function itaAudit(over, trangThaiTiep) {
 
   console.log('%c[ita] Xong: ' + res.length + ' màn · ' + issues.length + ' có vấn đề (cao: ' + ketQua.man_cao + ', TB: ' + ketQua.man_trung_binh + ') · ' + inputs.length + ' lần thử ô (' + inputIssues.length + ' lỗi)', 'color:#070;font-weight:bold');
   console.table(issues.map(r => ({ màn: r.tab, mức: r.muc_do, api_lỗi: r.api_loi || '', js: r.js_loi || '', quy_trình: r.quy_trinh_loi || '' })));
-  console.log('%c[ita] Kiểm kê: ' + TRUONG.length + ' trường · ' + ketQua.truong_co_loi + ' trường có lỗi · ' + ketQua.so_form_da_mo + ' form đã đọc được' + ((DUNG_BAM || NGUNG_BAM_TRUOC) ? ' (CÓ PHẦN CHẠY Ở CHẾ ĐỘ NGỪNG BẤM NÚT NGHIỆP VỤ vì có yêu cầu mạng đi vòng — chạy lại bằng Tampermonkey để đọc đủ form)' : '') + (thieuTruong.length ? ' · THIẾU ' + thieuTruong.length + ' trường so với danh mục mong đợi' : '') + '. Xuất: ita.xuat("truong")', 'color:#0b3d66;font-weight:bold');
+  console.log('%c[ita] Kiểm kê: ' + TRUONG.length + ' trường · ' + ketQua.truong_co_loi + ' trường có lỗi · ' + ketQua.so_form_da_mo + ' form đã đọc được' + ((DUNG_BAM || NGUNG_BAM_TRUOC) ? ' (CÓ PHẦN CHẠY Ở CHẾ ĐỘ NGỪNG BẤM NÚT NGHIỆP VỤ vì có yêu cầu mạng đi vòng — form chưa đọc đủ)' : '') + (thieuTruong.length ? ' · THIẾU ' + thieuTruong.length + ' trường so với danh mục mong đợi' : '') + '. Xuất: ita.xuat("truong")', 'color:#0b3d66;font-weight:bold');
   if (ketQua.doi_chieu_dac_ta) {
     const d = ketQua.doi_chieu_dac_ta;
     console.log('%c[ita] Đối chiếu đặc tả ' + gonMaDT(d.quy_trinh.map(q => q.ma)) + ':\n  ' + demBang(d).join('\n  '), 'color:#6a1b9a;font-weight:bold');

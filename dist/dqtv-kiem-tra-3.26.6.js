@@ -35,8 +35,7 @@ window.__dqtvGoiSan = [{"ten":"quy-trinh/tai-lieu-05-11/00-tong-the.md","gz":"H4
  * ------------------------------------------------------------------
  * (Ghi chú bản 3.5 bên dưới vẫn đúng)
  * Bản 3.5 sửa so với 3.4 (rút từ lỗi đã tái hiện khi chạy thử):
- *   [1] LÁ CHẮN cài ngay khi nạp. Bản Tampermonkey nạp ở document-start → lá chắn có mặt TRƯỚC mã ứng dụng,
- *       nên lệnh ghi qua fetch/XHR mà ứng dụng giữ sẵn cũng bị chặn. Ngoài lúc chạy kiểm lá chắn cho qua hết.
+ *   [1] LÁ CHẮN cài ngay khi nạp. Ngoài lúc chạy kiểm lá chắn cho qua hết.
  *   [2] Chặn form.submit() gọi thẳng (3.4 để lọt POST và làm trang chuyển đi).
  *   [3] Ngoại lệ choPhepPost chỉ áp cho POST (3.4 cho qua cả PUT/DELETE tới /auth, /search…).
  *   [4] Phát hiện lệnh mạng đi vòng bộ chặn (khi dán Console) → ghi "lenh_di_vong_bo_chan".
@@ -45,7 +44,7 @@ window.__dqtvGoiSan = [{"ten":"quy-trinh/tai-lieu-05-11/00-tong-the.md","gz":"H4
  *   [7] Mở ghi: so tên máy chủ CHÍNH XÁC; chanGhi/mucQuyTrinh/moiTruongKiemThu KHÔNG lưu, chỉ truyền khi chạy.
  *       DQTV_MAC_DINH cũ chỉ dùng trong phiên. nhapCauHinh có kiểm khoá.
  *   [8] Nút nghiệp vụ (moNutNghiepVu) và tự chạy tiếp sau tải lại CHỈ hoạt động khi lá chắn có từ đầu trang
- *       (bản Tampermonkey) và chưa thấy lệnh đi vòng. Dán Console thì tự tắt, có thông báo.
+ *       và chưa thấy lệnh đi vòng. Dán Console thì tự tắt, có thông báo.
  *   [9] Bảng điều khiển escape dữ liệu; ghi kịch bản bỏ ô mật khẩu/OTP; chayLaiLoi không chạy chồng;
  *       "Mở lại màn" điều hướng trong app, không tải lại trang.
  * Mục đích: Bên A tự kiểm giao diện để bắt (1) lỗi mã và (2) lỗi quy trình,
@@ -128,10 +127,7 @@ window.__dqtvGoiSan = [{"ten":"quy-trinh/tai-lieu-05-11/00-tong-the.md","gz":"H4
 
 (function () {
 'use strict';
-// Nguồn nạp của LẦN NÀY: bản userscript đặt cờ ngay trước khi chạy; dán vào Console thì không có cờ → "console".
-// (Dán vào Console luôn chạy trong chính trang, nên không cần kiểm tra thêm.)
-window.__dqtvNguon = window.__dqtvNguonMoi || 'console';
-try { delete window.__dqtvNguonMoi; } catch (e) { window.__dqtvNguonMoi = undefined; }
+
 
 /* ============================================================= *
  * 0. LÁ CHẮN — cài ngay khi nạp (bản 3.5)                         *
@@ -394,15 +390,7 @@ function nk(loai, noiDung) {
 const docNK = () => { try { return JSON.parse(localStorage.getItem(KEY_NK) || '[]'); } catch (e) { return []; } };
 let MAT_PHIEN = '';   // có giá trị khi API trả 401 trong lúc chạy
 let APP_SAP = '';     // có giá trị khi ứng dụng hiện màn hình hỏng: dừng ngay, tải lại trang, chạy tiếp và bỏ qua màn đó
-// Mã có đang chạy trong chính trang không (thử chèn một thẻ script nhỏ rồi xem trang có thấy biến không)
-function laTrangThat() {
-  try {
-    const k = '__dqtvKiem' + Math.random().toString(36).slice(2);
-    const s = document.createElement('script'); s.textContent = 'window["' + k + '"]=1';
-    (document.head || document.documentElement).appendChild(s); s.remove();
-    const ok = window[k] === 1; try { delete window[k]; } catch (e) {} return ok;
-  } catch (e) { return false; }
-}
+
 const bam = s => { let h = 5381; for (const c of String(s)) h = ((h << 5) + h + c.codePointAt(0)) >>> 0; return h.toString(36); };
 const ckptKey = () => KEY_CKPT + '|' + bam(TK || '?');
 const lastKeyTK = () => KEY_LAST + '|' + bam(TK || '?');
@@ -602,9 +590,7 @@ async function dqtvAudit(over, trangThaiTiep) {
   }
 
   // fetch — SỬA LỖI 1: trả promise ngay, không await thân JSON (không chặn ứng dụng)
-  // Bản Tampermonkey cài sẵn "cổng" fetch từ lúc trang bắt đầu tải (__dqtvFetchGoc / __dqtvFetchCong):
-  // mã ứng dụng lỡ giữ tham chiếu fetch cũ vẫn phải đi qua bộ chặn này.
-  const of = window.__dqtvFetchGoc || window.fetch;
+  const of = window.fetch;
   const QUA_MOC = new Set(), DI_VONG = [];
   const ghiQua = u => { try { QUA_MOC.add(new URL(u, location.href).href); } catch (e) {} };
   const moFetch = function (input, init) {
@@ -683,7 +669,7 @@ async function dqtvAudit(over, trangThaiTiep) {
   let PO = null, DUNG_BAM = false;
   const T_MOC = performance.now();   // thời điểm cài móc: yêu cầu bắt đầu trước mốc này (đang dở lúc bấm Chạy) không tính là đi vòng
   const NGUNG_BAM_TRUOC = !!(trangThaiTiep && trangThaiTiep.ngungBam);   // phần đã chạy trước khi tải lại có ở chế độ ngừng bấm không
-  const coCong = !!window.__dqtvFetchGoc && !!window.__dqtvCongSom;   // bản Tampermonkey: có cổng fetch cài từ đầu → tham chiếu cũ vẫn bị chặn
+
   try {
     PO = new PerformanceObserver(l => {
       for (const e of l.getEntries()) {
@@ -695,8 +681,8 @@ async function dqtvAudit(over, trangThaiTiep) {
         const rec = { url: u, ngan: u.replace(location.origin, ''), loai: e.initiatorType, man: CO.tienDo || location.pathname, luc: new Date().toLocaleTimeString('vi-VN') };
         DI_VONG.push(rec); nk('đi vòng bộ chặn', rec.loai + ' ' + rec.ngan);
         // bản dán Console không chặn được lối đi vòng → ngừng bấm nút nghiệp vụ cho tới hết lần chạy (chỉ đọc)
-        if (!coCong && chanGhi && !DUNG_BAM) { DUNG_BAM = true; console.warn('%c[dqtv] ĐÃ NGỪNG BẤM NÚT NGHIỆP VỤ / MỞ FORM cho tới hết lần chạy này (để không lọt lệnh ghi). Các màn vẫn được đọc. Muốn kiểm đủ form: dùng bản Tampermonkey.', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px'); }
-        if (DI_VONG.length === 1) console.warn('%c[dqtv] CÓ YÊU CẦU MẠNG KHÔNG ĐI QUA BỘ CHẶN: ' + rec.loai + ' ' + rec.ngan + '\nỨng dụng gọi mạng bằng tham chiếu cũ — bộ chặn ghi có thể không bảo vệ hết. Nên dùng bản Tampermonkey (cài móc từ lúc trang bắt đầu tải).', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px');
+        if (chanGhi && !DUNG_BAM) { DUNG_BAM = true; console.warn('%c[dqtv] ĐÃ NGỪNG BẤM NÚT NGHIỆP VỤ / MỞ FORM cho tới hết lần chạy này (để không lọt lệnh ghi). Các màn vẫn được đọc.', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px'); }
+        if (DI_VONG.length === 1) console.warn('%c[dqtv] CÓ YÊU CẦU MẠNG KHÔNG ĐI QUA BỘ CHẶN: ' + rec.loai + ' ' + rec.ngan + '\nỨng dụng gọi mạng bằng tham chiếu cũ — bộ chặn ghi có thể không bảo vệ hết.', 'color:#fff;background:#c62828;font-weight:bold;padding:4px 8px');
       }
     });
     PO.observe({ type: 'resource', buffered: false });
@@ -728,7 +714,7 @@ async function dqtvAudit(over, trangThaiTiep) {
   } catch (e) {}
   // bản 3.5: nút nghiệp vụ chỉ bấm khi lá chắn có từ đầu trang và chưa thấy lệnh đi vòng
   // [gộp 3.23 + 3.6] Nút nghiệp vụ (gồm nút của các bước trong đặc tả) cần được mở để đọc form.
-  //  - Tampermonkey (lá chắn từ đầu trang): mở như 3.6.
+  //  - Lá chắn có từ đầu trang: mở như 3.6.
   //  - Dán Console: 3.6 tắt hẳn; 3.23 vẫn mở nhưng NGỪNG ngay khi thấy một lệnh mạng đi vòng bộ chặn.
   //    Giữ cách của 3.23 (không có thì gần hết ca đặc tả thành CHƯA KIỂM). Muốn an toàn tuyệt đối: dqtv.chay({ moNutKhiDanConsole: false }).
   const nvOk = () => !!(C.moNutNghiepVu && !BYPASS.length && !DUNG_BAM && !NGUNG_BAM_TRUOC && ((LC && LC.som) || C.moNutKhiDanConsole !== false));
@@ -1311,7 +1297,7 @@ async function dqtvAudit(over, trangThaiTiep) {
       skipped.push({ man, chu: tenNut(e), ly_do: 'nút đang khoá' + (lyDo ? ' — ' + lyDo : ' — không ghi lý do') });
       return;
     }
-    if (DUNG_BAM) { skipped.push({ man, chu: tenNut(e), ly_do: 'không bấm: ứng dụng có yêu cầu mạng đi vòng bộ chặn, bản dán Console không chặn được — dùng bản Tampermonkey' }); return; }
+    if (DUNG_BAM) { skipped.push({ man, chu: tenNut(e), ly_do: 'không bấm: ứng dụng có yêu cầu mạng đi vòng bộ chặn, bản dán Console không chặn được' }); return; }
     const oTruoc = new Set(deepAll(document.body, FIELD_SEL).filter(x => visField(x, innerInput(x) || x)));
     const popTruoc = new Set([...document.querySelectorAll(POP_MO)].filter(vis));
     resetLog(); DANG_MO_NUT = true;
@@ -1760,7 +1746,7 @@ async function dqtvAudit(over, trangThaiTiep) {
       const rows = [], add = (muc, ket_qua, ok, goi_y) => rows.push({ '': ok ? '✔' : '⚠', muc, ket_qua, goi_y: ok ? '' : goi_y });
       const mo = e => !e ? '(không có)' : e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + ((e.getAttribute('class') || '').trim() ? '.' + e.getAttribute('class').trim().split(/\s+/).slice(0, 2).join('.') : '');
       const sb = side(), mucMenu = sb ? [...sb.querySelectorAll('a[href],[role=link],[role=menuitem]')].filter(vis) : [];
-      add('Lá chắn', LC && LC.som ? 'có từ đầu trang (Tampermonkey)' : 'cài lúc dán Console', !!(LC && LC.som), 'Nút nghiệp vụ và tự chạy tiếp sẽ tắt; lệnh đi vòng (nếu có) được ghi lại');
+      add('Lá chắn', LC && LC.som ? 'có từ đầu trang' : 'cài lúc dán Console', !!(LC && LC.som), 'Nút nghiệp vụ và tự chạy tiếp sẽ tắt; lệnh đi vòng (nếu có) được ghi lại');
       add('Thanh menu', sb ? mo(sb) + ' · ' + mucMenu.length + ' mục · vd: ' + mucMenu.slice(0, 4).map(txt).filter(Boolean).map(x => cut(x, 18)).join(', ') : '(không thấy)', !!sb && mucMenu.length >= 3, 'Công cụ sẽ không chạy được — báo lại để chỉnh cách dò menu');
       const m = mainEl(); add('Vùng chính', mo(m), m !== document.body, 'Đang dùng cả trang — menu/header có thể bị tính vào nội dung');
       const t = [...m.querySelectorAll('table')].filter(x => vis(x) && !inDialog(x)).sort((a, b) => b.rows.length - a.rows.length)[0];
@@ -2338,9 +2324,9 @@ async function dqtvAudit(over, trangThaiTiep) {
     dung_giua_chung: dungGiuaChung, ly_do_dung: !dungGiuaChung ? '' : (APP_SAP ? 'app kẹt ở màn báo lỗi sau khi một màn sập ("' + APP_SAP + '"): đã tải lại trang. Bản dán Console: dán lại đúng tệp bundle để chạy tiếp các mục chưa chạy.' : MAT_PHIEN ? 'mất phiên đăng nhập (' + MAT_PHIEN + '): đăng nhập lại cùng tài khoản để chạy tiếp.' : 'dừng theo lệnh người chạy hoặc lỗi công cụ.'), menu_chua_chay: danhSach.map(x => x.ten).filter(t => !DA_XONG.has(t)), tai_khoan: TK || '(không nhận ra — khai dacTa.vaiChon)',
     mat_phien: MAT_PHIEN, loi_403: MA403.slice(0, 100), man_loi_nang: SAP, man_sap: SAP, diem_dung_gon: CKPT_GON, muc_mat_ket_qua: MAT_KQ, buoc_may_chu: BUOC_MAY, quy_tac: (window.__dqtvQuyTac || {}).meta || null, thao_tac_cuoi: docNK().slice(-15),
     muc_quy_trinh: 1, co_dac_ta: !!C.dacTa, mo_ghi: choGhiMoiTruong,
-    phien_ban: PHIEN_BAN, cach_nap: window.__dqtvNguon === 'userscript' ? 'Tampermonkey (cổng chặn từ đầu trang)' : 'dán Console',
+    phien_ban: PHIEN_BAN, cach_nap: 'dán Console',
     ten_mien: location.hostname, cua_so: innerWidth + '×' + innerHeight + ' (tỉ lệ ' + (window.devicePixelRatio || 1) + ')',
-    danh_sach_menu: danhSach.map(x => x.ten), di_vong_bo_chan: DI_VONG.slice(), ngung_bam_do_di_vong: DUNG_BAM || NGUNG_BAM_TRUOC, co_cong_fetch: coCong,
+    danh_sach_menu: danhSach.map(x => x.ten), di_vong_bo_chan: DI_VONG.slice(), ngung_bam_do_di_vong: DUNG_BAM || NGUNG_BAM_TRUOC,
     du_lieu_nap: NAP_DA_DUNG.slice(), mau_loi, he_thong_thiet_ke: dsKq, ngon_tu: ntKq, la_chan_tu_dau_trang: !!(LC && LC.som), nut_nghiep_vu_da_bat: nvOk(),
     lenh_di_vong_bo_chan: [...new Set(BYPASS)].slice(0, 20),
     so_muc_menu: danhSach.length, so_man_da_kiem: resG.length, man_co_van_de: issues.length,
@@ -2382,7 +2368,7 @@ async function dqtvAudit(over, trangThaiTiep) {
 
   console.log('%c[dqtv] Xong: ' + res.length + ' màn · ' + issues.length + ' có vấn đề (cao: ' + ketQua.man_cao + ', TB: ' + ketQua.man_trung_binh + ') · ' + inputs.length + ' lần thử ô (' + inputIssues.length + ' lỗi)', 'color:#070;font-weight:bold');
   console.table(issues.map(r => ({ màn: r.tab, mức: r.muc_do, api_lỗi: r.api_loi || '', js: r.js_loi || '', quy_trình: r.quy_trinh_loi || '' })));
-  console.log('%c[dqtv] Kiểm kê: ' + TRUONG.length + ' trường · ' + ketQua.truong_co_loi + ' trường có lỗi · ' + ketQua.so_form_da_mo + ' form đã đọc được' + ((DUNG_BAM || NGUNG_BAM_TRUOC) ? ' (CÓ PHẦN CHẠY Ở CHẾ ĐỘ NGỪNG BẤM NÚT NGHIỆP VỤ vì có yêu cầu mạng đi vòng — chạy lại bằng Tampermonkey để đọc đủ form)' : '') + (thieuTruong.length ? ' · THIẾU ' + thieuTruong.length + ' trường so với danh mục mong đợi' : '') + '. Xuất: dqtv.xuat("truong")', 'color:#0b3d66;font-weight:bold');
+  console.log('%c[dqtv] Kiểm kê: ' + TRUONG.length + ' trường · ' + ketQua.truong_co_loi + ' trường có lỗi · ' + ketQua.so_form_da_mo + ' form đã đọc được' + ((DUNG_BAM || NGUNG_BAM_TRUOC) ? ' (CÓ PHẦN CHẠY Ở CHẾ ĐỘ NGỪNG BẤM NÚT NGHIỆP VỤ vì có yêu cầu mạng đi vòng — form chưa đọc đủ)' : '') + (thieuTruong.length ? ' · THIẾU ' + thieuTruong.length + ' trường so với danh mục mong đợi' : '') + '. Xuất: dqtv.xuat("truong")', 'color:#0b3d66;font-weight:bold');
   if (ketQua.doi_chieu_dac_ta) {
     const d = ketQua.doi_chieu_dac_ta;
     console.log('%c[dqtv] Đối chiếu đặc tả ' + gonMaDT(d.quy_trinh.map(q => q.ma)) + ':\n  ' + demBang(d).join('\n  '), 'color:#6a1b9a;font-weight:bold');
@@ -3233,7 +3219,7 @@ function sangHTML(kq) {
 <style>body{font:14px system-ui;margin:24px;color:#1a1a1a}h1{font-size:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}tr.cao td{background:#fdecea}tr.tb td{background:#fff6e5}.m{color:#666}</style>
 <h1>DQTV — kết quả kiểm giao diện</h1>
 <p><b>Tài khoản:</b> ${esc(kq.tai_khoan || '')}${kq.dung_giua_chung ? ' · <b style="color:#c62828">LẦN CHẠY BỊ DỪNG GIỮA CHỪNG — kết quả chưa đủ</b>' : ''}</p>${(kq.muc_mat_ket_qua || []).length ? '<p style="color:#c62828"><b>MẤT KẾT QUẢ KHI TRANG TẢI LẠI — ' + kq.muc_mat_ket_qua.length + ' mục menu đã chạy nhưng không đọc lại được kết quả, màn và TC của các mục này không có trong báo cáo:</b> ' + kq.muc_mat_ket_qua.map(esc).join(' · ') + '</p>' : ''}${kq.dung_giua_chung ? `<p style="color:#c62828"><b>Lý do dừng:</b> ${esc(kq.ly_do_dung || '')}${(kq.menu_chua_chay || []).length ? '<br><b>Mục menu chưa chạy (' + kq.menu_chua_chay.length + '):</b> ' + kq.menu_chua_chay.map(esc).join(' · ') : ''}</p>` : ''}
-<p class=m>Công cụ bản ${esc(kq.phien_ban || '≤3.10')} · nạp bằng ${esc(kq.cach_nap || '?')} · cửa sổ ${esc(kq.cua_so || '?')}${kq.ngung_bam_do_di_vong ? ' · <b style="color:#c62828">có phần chạy ở chế độ ngừng bấm nút nghiệp vụ (bản dán Console gặp yêu cầu mạng đi vòng bộ chặn) — form chưa kiểm đủ; chạy lại từ đầu bằng Tampermonkey: dqtv.chayLaiTuDau()</b>' : ''}</p>
+<p class=m>Công cụ bản ${esc(kq.phien_ban || '≤3.10')} · nạp bằng ${esc(kq.cach_nap || '?')} · cửa sổ ${esc(kq.cua_so || '?')}${kq.ngung_bam_do_di_vong ? ' · <b style="color:#c62828">có phần chạy ở chế độ ngừng bấm nút nghiệp vụ (bản dán Console gặp yêu cầu mạng đi vòng bộ chặn) — form chưa kiểm đủ (xem mục «Yêu cầu mạng không đi qua bộ chặn» bên dưới)</b>' : ''}</p>
 <p class=m>${esc(kq.url)} · ${esc(kq.luc)} · ${kq.so_man_da_kiem} màn đã kiểm · cao ${kq.man_cao}, trung bình ${kq.man_trung_binh}, ghi nhận ${kq.man_ghi_nhan || 0} · ${kq.o_nhap_co_loi} lỗi ô nhập · ${kq.doi_chieu_dac_ta ? 'đối chiếu đặc tả: ' + esc(gonMaDT(kq.doi_chieu_dac_ta.quy_trinh.map(q => q.ma))) : 'mức quy trình ' + kq.muc_quy_trinh + (kq.co_dac_ta ? ' (có đặc tả)' : ' (chưa nạp đặc tả)')}</p>
 <p class=m><b>Dữ liệu đã nạp:</b> ${(kq.du_lieu_nap || []).length ? Object.values(kq.du_lieu_nap.reduce((g, x) => { const k = x.bo_doc + (x.goi_san ? '|g' : ''); (g[k] = g[k] || []).push(x); return g; }, {})).map(n => n.length > 3 ? esc(n.length + ' tệp ' + n[0].bo_doc + (n[0].goi_san ? ' (đóng gói sẵn trong tệp dán)' : ' (đã nạp)') + ': ' + n.slice(0, 3).map(x => x.tep).join(', ') + '…') : n.map(x => esc(x.tep) + ' (bộ đọc ' + esc(x.bo_doc) + ', ' + (x.so_bang ? x.so_bang + ' bảng, ' : '') + (x.so_muc ? x.so_muc + ' mục, ' : '') + 'mã băm ' + esc(x.bam) + ', ' + (x.goi_san ? 'đóng gói sẵn ' : 'nạp ') + esc(x.luc) + ')').join('; ')).join('; ') : 'không có. Chỉ kiểm giao diện chung, không đối chiếu quy trình / UC / TC.'}</p>
 ${htmlDacTa(kq)}
@@ -3248,7 +3234,7 @@ ${(kq.thao_tac_cuoi || []).length ? `<h2 style="font-size:16px;margin-top:28px">
 <h2 style="font-size:16px;margin-top:28px">Form đã mở để kiểm kê (${(kq.form_da_mo || []).length})</h2>
 <p class=m>${(kq.form_da_mo || []).map(esc).join('<br>') || 'Không mở được form nào — xem cột "Nút trên màn" bên dưới để biết tên nút thật'}${kq.o_chon_cot_bo_qua ? '<br>Đã bỏ ' + kq.o_chon_cot_bo_qua + ' ô đánh dấu thuộc bảng chọn cột hiển thị (không phải trường dữ liệu)' : ''}</p>
 ${(() => { const r0 = (kq.man_da_kiem || []).filter(r => !r.so_truong && !r.nut_tren_man); return r0.length ? `<h2 style="font-size:16px;margin-top:28px">Màn không có trường nào và không có nút nào (${r0.length})</h2><p class=m>Màn trống với vai đang đăng nhập: có thể đúng theo phân quyền, hoặc thiếu chức năng / thiếu dữ liệu — cần đối chiếu đặc tả.</p><table><thead><tr><th>Màn</th><th>URL</th></tr></thead><tbody>${r0.map(r => `<tr><td>${esc(r.tab)}</td><td>${esc(r.url)}</td></tr>`).join('')}</tbody></table>` : ''; })()}
-${(kq.di_vong_bo_chan || []).length ? `<h2 style="font-size:16px;margin-top:28px;color:#b3261e">Yêu cầu mạng không đi qua bộ chặn (${kq.di_vong_bo_chan.length})</h2><p class=m>Ứng dụng gọi mạng bằng tham chiếu cũ nên bộ chặn ghi không thấy. Không biết phương thức (đọc hay ghi). Nên chạy bằng bản Tampermonkey (cài móc từ lúc trang bắt đầu tải) và báo Bên B kiểm tra mã gọi API này.</p><table><thead><tr><th>Giờ</th><th>Loại</th><th>Đường dẫn</th><th>Đang ở màn</th></tr></thead><tbody>${kq.di_vong_bo_chan.map(x => `<tr class="tb"><td>${esc(x.luc)}</td><td>${esc(x.loai)}</td><td>${esc(x.ngan)}</td><td>${esc(x.man)}</td></tr>`).join('')}</tbody></table>` : ''}
+${(kq.di_vong_bo_chan || []).length ? `<h2 style="font-size:16px;margin-top:28px;color:#b3261e">Yêu cầu mạng không đi qua bộ chặn (${kq.di_vong_bo_chan.length})</h2><p class=m>Ứng dụng gọi mạng bằng tham chiếu cũ nên bộ chặn ghi không thấy. Không biết phương thức (đọc hay ghi). Nên báo Bên B kiểm tra mã gọi API này.</p><table><thead><tr><th>Giờ</th><th>Loại</th><th>Đường dẫn</th><th>Đang ở màn</th></tr></thead><tbody>${kq.di_vong_bo_chan.map(x => `<tr class="tb"><td>${esc(x.luc)}</td><td>${esc(x.loai)}</td><td>${esc(x.ngan)}</td><td>${esc(x.man)}</td></tr>`).join('')}</tbody></table>` : ''}
 ${(() => { const p = kq.do_phu_quy_trinh; if (!p) return ''; const rs = x => x.ra_soat && x.ra_soat.length ? ' · rà soát ' + esc(x.ra_soat.join(', ')) : ''; return `<h2 style="font-size:16px;margin-top:28px">Độ phủ quy trình — tài liệu × app × TC v7</h2><p class=m>Nguồn so với app: ${esc((p.nguon_trang_thai || {}).app || 'chưa có tệp trạng thái')}${(p.nguon_trang_thai || {}).ra_soat ? ' · số báo cáo rà soát lấy từ ' + esc(p.nguon_trang_thai.ra_soat) : ''}. TC rơi vào các mục dưới ghi «chưa chạy» kèm lý do ở mục «Phủ danh mục TC», không tính là lỗi app.</p><ul><li><b>Tài liệu chưa có TC v7 nào (${p.chua_co_tc_v7.length}):</b> ${p.chua_co_tc_v7.map(x => esc(x.ma) + ' (' + x.so_buoc + ' bước)').join(' · ') || '—'}</li><li><b>Tài liệu tả quy trình app không còn (${p.tai_lieu_app_khong_co.length}):</b> ${p.tai_lieu_app_khong_co.map(x => esc(x.tep) + ' → ' + esc(x.tep_app) + rs(x)).join('<br>') || '—'}</li><li><b>App có quy trình, chưa có tài liệu nên chưa có TC (${p.app_chua_co_tai_lieu.length}):</b> ${p.app_chua_co_tai_lieu.map(x => esc(x.tep_app) + ' (' + esc(x.entity || '') + ': ' + esc((x.buoc || []).join(', ')) + ')' + rs(x)).join('<br>') || '—'}</li><li><b>Bước của tài liệu không có trong khai báo app:</b> ${p.so_buoc_app_khong_co} · <b>bước có «Từ chặng» khác app:</b> ${p.so_buoc_chang_khac}</li></ul>`; })()}
 ${htmlTroNang(kq)}
 ${(() => { const o = kq.kiem_o; if (!o) return ''; const thu = { 'KHÁC KHAI BÁO': 0, 'CHƯA KIỂM': 1, 'ĐẠT': 2 }, ds = (o.dong || []).slice().sort((a, b) => thu[a.kq] - thu[b.kq]); const dem = k => ds.filter(x => x.kq === k).length; return `<h2 style="font-size:16px;margin-top:28px">Kiểm ô theo khai báo giới hạn của app (${ds.length}) — bổ sung, chưa có mã TC v7</h2><p class=m>Căn cứ: ${esc(o.nguon.tep)} @${esc(o.nguon.ban)} — ${esc(o.nguon.ghi_chu)} Công cụ chỉ gõ rồi rời ô, không bấm Lưu: thấy ô có chặn trên màn hay không, chưa thấy máy chủ từ chối. Khác khai báo ${dem('KHÁC KHAI BÁO')} · chưa kiểm ${dem('CHƯA KIỂM')} · đạt ${dem('ĐẠT')} · ô đã xét ${o.dem.o_da_xet}, ô không mang name ${o.dem.o_khong_name}, ô không có trong khai báo ${o.dem.o_khong_khai}.</p>${ds.length ? `<table><thead><tr><th>Kết quả</th><th>Màn › form</th><th>Ô</th><th>Ca</th><th>Giá trị gõ</th><th>Mong đợi</th><th>Quan sát</th><th>Căn cứ</th></tr></thead><tbody>${ds.map(x => `<tr class="${x.kq === 'KHÁC KHAI BÁO' ? 'tb' : ''}"><td>${esc(x.kq)}</td><td>${esc(x.man)} › ${esc(x.form)}</td><td>${esc(x.o)}<div class=m>${esc(x.name)}</div></td><td>${esc(x.ca)}</td><td>${esc(x.gia_tri)}</td><td>${esc(x.mong_doi)}</td><td>${esc(x.quan_sat)}</td><td class=m>${esc(x.can_cu)}</td></tr>`).join('')}</tbody></table>` : ''}`; })()}
@@ -3282,12 +3268,7 @@ window.dqtv = {
 
   async chay(over) {
     if (CO.dangChay) { console.warn('[dqtv] Đang chạy rồi, không cần bấm lại. Muốn chạy lại thì bấm "■ Dừng" (hoặc gõ dqtv.dung()) trước.'); return; }
-    // Chạy từ userscript: phải chắc mã đang chạy trong chính trang (không phải vùng tách riêng của tiện ích),
-    // vì chỉ khi đó lệnh ghi của trang mới bị chặn được. Không chắc thì KHÔNG chạy.
-    if (window.__dqtvNguon === 'userscript' && !laTrangThat()) {
-      const t = 'Không chạy: userscript đang chạy tách khỏi trang nên không chặn được lệnh ghi. Kiểm tra dòng "@grant none" trong Tampermonkey, hoặc dán tệp vào Console.';
-      console.warn('[dqtv] ' + t); CO.tienDo = t; capNhatBang(); return;
-    }
+
     TK = taiKhoan();
     MAT_PHIEN = ''; APP_SAP = '';
     nk('bắt đầu chạy', TK);
@@ -3305,9 +3286,9 @@ window.dqtv = {
     catch (e) { console.log('%c[dqtv] LỖI: ' + (e && e.message || e), 'color:#fff;background:#b00;padding:2px 6px'); }
     // tới được đây là lần chạy đã kết thúc trong trang (xong, dừng hoặc lỗi) → bỏ cờ "đang chạy";
     // nếu trang tự tải lại giữa chừng thì không tới được đây, cờ còn lại để lần nạp sau chạy tiếp
-    // mất phiên: GIỮ cờ đang chạy để đăng nhập lại cùng tài khoản là chạy tiếp (bản Tampermonkey tự chạy tiếp)
+
     finally { if (window.__dqtvGoHook) window.__dqtvGoHook(); CO.dangChay = false; CO.lanTiep = 0; if (!window.__dqtvDangRoi && !MAT_PHIEN && !APP_SAP) { try { localStorage.removeItem(KEY_RUN); } catch (e) {} }
-    if (APP_SAP && window.__dqtvNguon !== 'userscript') console.log('%c[dqtv] ỨNG DỤNG SẬP Ở "' + APP_SAP + '" — TRANG SẼ TẢI LẠI.\nAPP KẸT MÀN BÁO LỖI SANG CẢ MÀN KHÁC.\nSAU KHI TRANG TẢI XONG: DÁN LẠI ĐÚNG TỆP BUNDLE NÀY (bản ' + PHIEN_BAN + ') VÀO CONSOLE. Công cụ tự chạy tiếp từ mục đang dở và bỏ qua các màn đã sập.\n(Dùng Tampermonkey thì không phải dán lại.)', 'color:#fff;background:#c62828;font-size:14px;font-weight:bold;padding:6px 10px');
+    if (APP_SAP) console.log('%c[dqtv] ỨNG DỤNG SẬP Ở "' + APP_SAP + '" — TRANG SẼ TẢI LẠI.\nAPP KẸT MÀN BÁO LỖI SANG CẢ MÀN KHÁC.\nSAU KHI TRANG TẢI XONG: DÁN LẠI ĐÚNG TỆP BUNDLE NÀY (bản ' + PHIEN_BAN + ') VÀO CONSOLE. Công cụ tự chạy tiếp từ mục đang dở và bỏ qua các màn đã sập.', 'color:#fff;background:#c62828;font-size:14px;font-weight:bold;padding:6px 10px');
     if (APP_SAP) { CO.tienDo = '⚠ Ứng dụng sập ở "' + APP_SAP + '". Đang tải lại trang để chạy tiếp (bản dán Console: dán lại tệp sau khi trang tải xong).'; setTimeout(() => { try { location.assign(location.origin + '/' + (location.pathname.split('/')[1] || '')); } catch (e) {} }, 1500); } if (MAT_PHIEN) { CO.tienDo = '⚠ Dừng vì mất phiên: ' + MAT_PHIEN + '. Đăng nhập lại cùng tài khoản — công cụ tự chạy tiếp.'; setTimeout(() => window.__dqtvChoDangNhap && window.__dqtvChoDangNhap(true), 1000); } capNhatBang(); }
   },
   // nạp bảng đặc tả quy trình (JSON chuyển từ YAML theo mẫu) — một bảng hoặc mảng nhiều bảng
@@ -3838,12 +3819,12 @@ addEventListener('beforeunload', () => { window.__dqtvDangRoi = true; });
 if (window.__dqtvDacTaNap) { try { napDacTaVao.chiBoNho = true; try { localStorage.removeItem('dqtv.dacta.v1'); localStorage.removeItem(KEY_DACTA); } catch (e) {} const ds = napDacTaVao(window.__dqtvDacTaNap, true); console.info('[dqtv] Đã nạp đặc tả đóng gói sẵn: ' + gonMaDT(ds.map(maQT)) + (napDacTaVao.noiLuu === 'bo_nho' ? ' (bộ lớn, chỉ giữ trong trang này: tải lại trang thì dán lại tệp)' : '') + '. Xem đủ: dqtv.xemDacTa(). Bấm "▶ Chạy": cùng một lần chạy vừa kiểm giao diện vừa đối chiếu đặc tả.'); } catch (e) { console.warn('[dqtv] Không nạp được đặc tả đóng gói sẵn: ' + e.message); } delete window.__dqtvDacTaNap; }
 
 // Dán lại lần nữa: gỡ bảng cũ để không bị hai bảng
-// 3.5: bản Tampermonkey nạp ở document-start → chờ trang có thân rồi mới vẽ bảng / chạy tiếp
+// chờ trang có thân rồi mới vẽ bảng / chạy tiếp
 function khoiDong() {
 const cu = document.getElementById('dqtv-panel-host'); if (cu) cu.remove();
 moBang();
 try { let n = 0, c = 0; for (let j = 0; j < localStorage.length; j++) { const k = localStorage.key(j); if (k && KHOA_CU.test(k)) { n++; c += (localStorage.getItem(k) || '').length; } } if (n) console.warn('[dqtv] Còn ' + n + ' khóa lưu của bản cũ (~' + Math.round(c / 1024) + ' nghìn ký tự) chiếm chỗ trình duyệt. Xuất báo cáo cũ nếu cần rồi gõ dqtv.donBoNho() để xoá.'); } catch (e) {}
-console.info('[dqtv] Đã nạp bản ' + PHIEN_BAN + ' (' + (window.__dqtvNguon === 'userscript' ? 'Tampermonkey' + (window.__dqtvFetchGoc && window.__dqtvCongSom ? ', có cổng chặn từ đầu trang' : '') : 'dán Console') + '; lá chắn ' + (typeof LC !== 'undefined' && LC && LC.som ? 'có từ đầu trang' : 'cài lúc dán') + '). Bảng ở góc phải trên (Alt+Shift+D để ẩn/hiện). Hoặc gõ dqtv.chay()');
+console.info('[dqtv] Đã nạp bản ' + PHIEN_BAN + ' (dán Console; lá chắn ' + (typeof LC !== 'undefined' && LC && LC.som ? 'có từ đầu trang' : 'cài lúc dán') + '). Bảng ở góc phải trên (Alt+Shift+D để ẩn/hiện). Hoặc gõ dqtv.chay()');
 // Trang tự tải lại giữa lúc đang chạy (ứng dụng chuyển trang cứng, hết phiên…) → chờ trang vẽ xong rồi chạy tiếp
 // Chỉ chạy tiếp khi ĐÚNG tài khoản đã bắt đầu lần chạy; đổi tài khoản thì không tự chạy.
 async function chayTiepSauTaiLai(choRaTruoc) {
@@ -3883,7 +3864,7 @@ async function chayTiepSauTaiLai(choRaTruoc) {
     CO.lanTiep = 0;
   } else CO.lanTiep = lan;
   CO.mocTiep = moc;
-  // 3.5: chỉ TỰ chạy tiếp khi lá chắn có từ đầu trang (bản Tampermonkey); dán Console thì hiện nút để người bấm
+  // 3.5: chỉ TỰ chạy tiếp khi lá chắn có từ đầu trang; dán Console thì hiện nút để người bấm
   if (!(LC && LC.som)) { nhaLaChan(); CO.tienDo = 'Có lượt chạy dở của "' + TK + '" — bấm Chạy để chạy tiếp.'; capNhatBang(); console.info('[dqtv] ' + CO.tienDo); return; }
   console.info('[dqtv] Trang vừa tải lại giữa lúc chạy — tự chạy tiếp cho tài khoản "' + TK + '" (lần ' + (CO.lanTiep || 1) + ').');
   await dqtv.chay(run.over);
