@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T03:45:22+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
+=======
+// ITA — máy kiểm giao diện, bản 1.0, đóng gói 2026-11-10T02:29:56+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
+>>>>>>> origin/dev
 if (!window.axe) {
 /*! axe v4.14.0
  * Copyright (c) 2015 - 2026 Deque Systems, Inc.
@@ -2151,14 +2155,12 @@ async function itaAudit(over, trangThaiTiep) {
   /* ---------- tìm tab con ---------- */
   const TABCLS = /(^|[\s_-])(tabs?|tab-?(bar|list|nav|group|s)|segment(ed)?(-?control)?|chips?|pills?|filter-?(bar|chips|tabs|group)|toggle-?group|btn-group|button-group|sub-?nav|subnav)([\s_-]|$)/i;
   function tabCands() {
-    const m = mainEl(), set = new Set();
+    const m = mainEl(), nav = side(), set = new Set();
     m.querySelectorAll('[role=tab],[aria-pressed],[role=tablist] a,[role=tablist] button').forEach(e => set.add(e));
     m.querySelectorAll('[class]').forEach(c => { if (TABCLS.test(cls(c))) c.querySelectorAll(':scope > a, :scope > button, :scope > [role=button], :scope > li > a, :scope > li > button, :scope > div > a, :scope > div > button').forEach(e => set.add(e)); });
     m.querySelectorAll('a[href]').forEach(a => { let u; try { u = new URL(a.href, location.href); } catch (e) { return; } if (u.origin !== location.origin || a.closest('table,[role=grid],[role=row],[role=rowgroup]') || laTuyenMenu(u)) return; if ((u.pathname === location.pathname && u.search !== location.search) || u.pathname.startsWith(location.pathname.replace(/\/$/, '') + '/')) set.add(a); });
     m.querySelectorAll('button').forEach(b => { if (/\s\d[\d.]*$/.test(txt(b)) && b.parentElement.querySelectorAll(':scope > button').length >= 2) set.add(b); });
-    // [1.1] không phải tab: ô chỉ có số (ô lịch, số trang) và phần tử nằm trong lịch / phân trang
-    return [...set].filter(e => vis(e) && !inDialog(e) && !trongMenu(e) && !e.closest('table,thead,[role=grid]') && !/^\s*\d{1,4}\s*$/.test(txt(e))
-      && !e.closest('[class*=calendar],[class*=Calendar],[class*=datepicker],[class*=date-picker],[class*=pagination],[class*=Pagination],[class*=paginator],[class*=pager]'));
+    return [...set].filter(e => vis(e) && !(nav && nav.contains(e)) && !inDialog(e) && !e.closest('table,thead,[role=grid]'));
   }
   // [1.1] link trỏ tới đúng đường dẫn của một mục menu (thẻ «điều hướng nhanh» trên trang chủ…) không phải tab: vòng menu sẽ ghé
   // [1.3] so CẢ đường dẫn + tham số: link có bộ lọc (/members?status=…) là màn khác mục menu (/members) — vẫn là tab (DQTV «Xem danh sách»)
@@ -2186,6 +2188,7 @@ async function itaAudit(over, trangThaiTiep) {
     const seen = new Set(); let id = menuItems.length;
     for (const e of cand) {
       const t = txt(e).replace(/\s\d+$/, '');
+      if (e.closest('header,[class*=logo],[class*=brand]')) continue;
       if (!t || t.length > 60 || NAV_SKIP.test(t) || e.getAttribute('aria-expanded') !== null) continue;
       if (C.chiMenu && !C.chiMenu.test(t)) continue; if (C.boQuaMenu && C.boQuaMenu.test(t)) continue;
       // tên nhóm cha gần nhất (nếu menu có nhóm)
@@ -2828,7 +2831,6 @@ async function itaAudit(over, trangThaiTiep) {
   capNhatBang();
   return ketQua;
 }
-
 /* ============================================================= *
  * 3b. KIỂU APP (bước 13c, 13d) — phần khác nhau theo CÁCH APP     *
  * CHẠY, hồ sơ dự án chọn bằng một dòng "kieu_app". Ma trận chấm   *
