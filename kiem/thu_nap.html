@@ -1,0 +1,47 @@
+<!doctype html><html><head><meta charset="utf-8"></head>
+<!-- Trang mẫu kiểm bước 6 (nút Nạp, bộ đọc). Chạy qua kiem/test_buoc6.py, không mở tay. ?buoc=1: nạp và chạy; ?buoc=2: tải lại, xem còn không, rồi xoá.
+     Bảng đặc tả dưới đây là MẪU THỬ do người viết phép kiểm soạn, không phải dữ liệu dự án. -->
+<body><header style="position:fixed;top:0;right:0;width:30%"><span>TQ Trợ lý mẫu</span></header>
+<aside style="position:fixed;left:0;top:0;width:200px;height:100vh"><a href="#/mau">Danh sách mẫu</a><br><a href="#/mau-2">Mẫu hai</a><br><a href="#/mau-3">Mẫu ba</a></aside>
+<main style="margin-left:220px"><h1>Danh sách mẫu</h1><button type="button">Thêm mới</button></main>
+<script>window.__loi = []; addEventListener('error', e => __loi.push(e.message));</script>
+<script src="tool.js"></script>
+<script>
+const MAU = { mau: { ten: 'MẪU THỬ — không phải dữ liệu dự án' }, dinh_danh: { ma: 'MAU', ten: 'MẪU THỬ' }, vai: [{ ma: 'TQ', nhan_dang_nhap: 'TQ Trợ lý mẫu' }],
+  buoc: [{ ma: 'B1', ten: 'Lập', nut: 'Thêm mới', vai: ['TQ'], duong_dan_man: '/thu.html', nguon: 'B' }] };
+addEventListener('load', () => setTimeout(async () => {
+  const kq = {}, buoc = new URLSearchParams(location.search).get('buoc');
+  kq.dang = 'bắt đầu';
+  try {
+  if (buoc === '1') {
+    kq.truoc = ita.vaiDacTa();
+    const g = window.__itaThu.goc();
+    kq.nut = [!!g.getElementById('r-nap'), !!g.getElementById('r-napthu')];
+    kq.bo_doc = window.__itaThu.BO_DOC.map(b => b.ten);
+    kq.dang = 'đang nạp';
+    const r = await ita.napTep([
+      new File([JSON.stringify(MAU)], 'mau-thu.json'),
+      new File([new Uint8Array([0x50, 0x4b, 3, 4, 0, 0])], 'MaTran_UC_TC_v7.zip'),
+      new File(['Mã TC,Kết quả\nX,Đạt'], 'tc.csv'),
+      new File(['{"x":1}'], 'khong-phai-dac-ta.json'),
+      new File(['{hỏng'], 'hong.json'),
+      new File([JSON.stringify([MAU, { dinh_danh: {} }])], 'mot-bang-sai.json')]);
+    kq.dang = 'đã nạp';
+    kq.nap = { dung: r.dung, khong_nhan: r.khong_nhan.map(x => x.tep + ': ' + x.ly_do) };
+    kq.sau = ita.vaiDacTa();
+    await ita.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false });
+    const khoa = Object.keys(localStorage).find(k => k.startsWith('ita.last.v1|'));
+    const c = khoa ? JSON.parse(localStorage.getItem(khoa)) : {};
+    kq.chay = { du_lieu_nap: c.du_lieu_nap, dong: ((c.doi_chieu_dac_ta || {}).ket_qua || []).map(k => k.kq + ' ' + k.ma + ' | ' + k.can_cu) };
+  } else {
+    kq.sau_tai_lai = ita.vaiDacTa();
+    kq.xem = (await ita.xemNap()).map(x => x['tệp']);
+    await ita.xoaNap();
+    kq.sau_xoa = ita.vaiDacTa();
+    kq.xem_sau_xoa = (await ita.xemNap()).length;
+  }
+  } catch (e) { kq.loi_trang_thu = e.message + ' @ ' + kq.dang; }
+  kq.loi_js = __loi.join(' | ') || 'không';
+  document.body.setAttribute('data-kq', JSON.stringify(kq));
+}, 800));
+</script></body></html>

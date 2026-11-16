@@ -1,0 +1,6 @@
+{ "loai": "ho-so-mau", "ho_so": [
+  { "ma": "HSM-KN-5", "duong_dan": "/87/motions/5", "nhan_chang": "Đã nộp", "quy_trinh": "kien-nghi" },
+  { "ma": "HSM-KN-999", "duong_dan": "/87/motions/999", "nhan_chang": "Đã duyệt" },
+  { "ma": "HSM-KHAC-TK", "duong_dan": "/87/motions/5", "tai_khoan": "ita.daibieu" },
+  { "ma": "", "duong_dan": "thieu-gach" }
+] }

@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"></head>
+<!-- Trang mẫu kiểm bước 7d + 9 (đóng gói sẵn quy trình, TC v7, trạng thái quy trình). Chạy qua kiem/test_buoc9.py, không mở tay. Không bấm Nạp. -->
+<body><header style="position:fixed;top:0;right:0;width:30%"><span>TQ Trợ lý mẫu</span></header>
+<aside style="position:fixed;left:0;top:0;width:200px;height:100vh"><a href="#/mau">Mẫu một</a><br><a href="#/mau-2">Mẫu hai</a><br><a href="#/mau-3">Mẫu ba</a></aside>
+<main style="margin-left:220px"><h1>Mẫu một</h1><p>Không có gì.</p></main>
+<script>window.__loi = []; addEventListener('error', e => __loi.push(e.message)); window.__t0 = performance.now();</script>
+<script src="tool.js"></script>
+<script>
+addEventListener('load', () => setTimeout(async () => {
+  const T = window.__itaThu, kq = {};
+  for (let i = 0; i < 240 && !T.NAP().length; i++) await new Promise(r => setTimeout(r, 250));   // chờ apDungNap lúc khởi động
+  kq.giay_nap = Math.round((performance.now() - __t0) / 100) / 10;
+  const nap = T.NAP();
+  kq.nap = { so_tep: nap.length, goi_san: nap.filter(x => x.goi_san).length, theo_bo_doc: nap.reduce((g, x) => (g[x.bo_doc] = (g[x.bo_doc] || 0) + 1, g), {}), so_muc_tc: nap.filter(x => x.bo_doc === 'v7-tc-csv').map(x => x.so_muc) };
+  const DM = T.DM(); kq.dm = DM ? { so_tc: DM.tc.length, khong_chay: Object.keys(DM.khong_chay).length, nhom: Object.values(DM.khong_chay).reduce((g, x) => (g[x.nhom] = (g[x.nhom] || 0) + 1, g), {}), tep: DM.meta.tep } : null;
+  kq.dm_mau = DM ? ['7.campaign-registration.B1.DUNG', '16.registration-decision.B3.DUNG'].map(m => DM.khong_chay[m] || null) : null;
+  kq.so_bang_dac_ta = T.docDacTa().length;
+  const P = T.DP(); kq.do_phu = P ? { chua_co_tc_v7: P.chua_co_tc_v7.map(x => x.ma), tai_lieu_app_khong_co: P.tai_lieu_app_khong_co.map(x => x.ma), app_chua_co_tai_lieu: P.app_chua_co_tai_lieu.length, bk: P.so_buoc_app_khong_co, ck: P.so_buoc_chang_khac } : null;
+  let loiChay = ''; try { await ita.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
+  const khoa = Object.keys(localStorage).find(k => k.startsWith('ita.last.')), kc = khoa ? JSON.parse(localStorage.getItem(khoa)) : null;
+  kq.loi_chay = loiChay;
+  kq.kq_co_do_phu = !!(kc && kc.do_phu_quy_trinh);
+  const html = kc ? T.sangHTML(kc) : '';
+  kq.html = { do_phu: html.includes('Độ phủ quy trình'), app_go: html.includes('award-campaign/workflow/campaign-registration.yaml'), nap_gon: /\d+ tệp quy-trinh-md \(đóng gói sẵn/.test(html) };
+  kq.loi_js = __loi.join(' | ') || 'không';
+  document.body.setAttribute('data-kq', JSON.stringify(kq));
+}, 300));
+</script></body></html>

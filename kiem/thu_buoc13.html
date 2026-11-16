@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8"></head>
+<!-- Trang mẫu kiểm bước 13b (hồ sơ dự án nạp được). Chạy qua kiem/test_buoc13.py, không mở tay. Dùng dist/ita.js (không gói dự án).
+     ?buoc=1: chưa có hồ sơ → không chạy, chặn mọi POST; nạp hồ sơ tên miền khác → bị khoá; nạp hồ sơ đúng tên miền → chạy.
+     ?buoc=2: tải lại → hồ sơ đã nạp còn, rồi xoá. Hồ sơ dưới đây là MẪU THỬ, không phải dữ liệu dự án. -->
+<body><header style="position:fixed;top:0;right:0;width:30%"><span>TQ Trợ lý mẫu</span></header>
+<aside style="position:fixed;left:0;top:0;width:200px;height:100vh"><a href="#/mau">Danh sách mẫu</a><br><a href="#/mau-2">Mẫu hai</a><br><a href="#/mau-3">Mẫu ba</a></aside>
+<main style="margin-left:220px"><h1>Danh sách mẫu</h1><button type="button">Thêm mới</button></main>
+<script>window.__loi = []; addEventListener('error', e => __loi.push(e.message)); window.__log = []; { const g = console.log; console.log = (...a) => { __log.push(a.map(String).join(' ')); return g.apply(console, a); }; }</script>
+<script src="tool.js"></script>
+<script>
+const hoSo = tenMien => JSON.stringify({ ten: 'MẪU THỬ', ten_mien: tenMien, post_cho_qua: ['/api/session'], _ghi_chu: 'MẪU THỬ — không phải dữ liệu dự án' });
+const LC = () => window.__itaLaChan;
+const kq = {}, buoc = new URLSearchParams(location.search).get('buoc');
+addEventListener('load', () => setTimeout(async () => {
+  kq.dang = 'bắt đầu';
+  try {
+    if (buoc === '1') {
+      kq.truoc = { ho_so: typeof window.__itaHoSo, ten_mien: String(ita.cauHinh().tenMienDuocChay),
+                   session: LC().ghiChat('POST', '/api/session'), khac: LC().ghiChat('POST', '/api/units/1/approve') };
+      await ita.chay({ tenMienDuocChay: null, tuTaiBaoCao: false });
+      kq.chay_khong_ho_so = window.__itaThu.co().tienDo;
+      kq.dang = 'nạp hồ sơ tên miền khác';
+      const r1 = await ita.napTep([new File([hoSo('khong-khop.vidu')], 'du-an/mau/ho-so.json')]);
+      kq.nap1 = r1.dung;
+      kq.sau_nap1 = { ten_mien: String(ita.cauHinh().tenMienDuocChay), session: LC().ghiChat('POST', '/api/session'), khac: LC().ghiChat('POST', '/api/units/1/approve') };
+      await ita.chay({ tuTaiBaoCao: false });   // ita.chay bắt lỗi và in «[ita] LỖI: …» (không ném ra ngoài)
+      kq.chay_sai_mien = { loi: __log.some(m => m.includes('ita: tên miền không được phép chạy')), co_ket_qua: Object.keys(localStorage).some(k => k.startsWith('ita.last.v1|')) };
+      kq.dang = 'nạp hồ sơ đúng tên miền';
+      await ita.napTep([new File([hoSo(location.hostname)], 'du-an/mau/ho-so.json')]);
+      await ita.chay({ kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false, kiemTroNang: false });
+      const khoa = Object.keys(localStorage).find(k => k.startsWith('ita.last.v1|'));
+      const c = khoa ? JSON.parse(localStorage.getItem(khoa)) : {};
+      kq.chay_dung_mien = { so_man: c.so_man_da_kiem, du_lieu_nap: (c.du_lieu_nap || []).map(x => x.tep + ' · ' + x.bo_doc) };
+    } else {
+      kq.sau_tai_lai = { ho_so: (window.__itaHoSo || {}).ten, ten_mien: String(ita.cauHinh().tenMienDuocChay), session: LC().ghiChat('POST', '/api/session') };
+      await ita.xoaNap();
+      kq.xem_sau_xoa = (await ita.xemNap()).length;
+    }
+  } catch (e) { kq.loi_trang_thu = e.message + ' @ ' + kq.dang; }
+  kq.loi_js = __loi.join(' | ') || 'không';
+  document.body.setAttribute('data-kq', JSON.stringify(kq));
+}, 800));
+</script></body></html>
