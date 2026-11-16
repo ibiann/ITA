@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rào cản ITA</title>
+<style>
+:root{
+  --bg:#f7f7f5; --mat:#ffffff; --chu:#1d1d1b; --phu:#5c5c57; --vien:#e2e1dc;
+  --chan:#b42318; --chan-nen:#fdecea; --nang:#b54708; --nang-nen:#fef0e1;
+  --vua:#8a6d00; --vua-nen:#fbf5dc; --nhe:#3f6212; --nhe-nen:#eef5e2;
+  --chua:#475467; --chua-nen:#eef0f3; --ma:#f0efea; --nhan:#1d4ed8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#161615; --mat:#1f1f1d; --chu:#ececea; --phu:#a3a39d; --vien:#33332f;
+    --chan:#f97066; --chan-nen:#3a1a17; --nang:#fdb022; --nang-nen:#36260f;
+    --vua:#e9c84a; --vua-nen:#302a10; --nhe:#a6d36b; --nhe-nen:#1f2a14;
+    --chua:#b0b8c4; --chua-nen:#262a30; --ma:#2a2a27; --nhan:#7aa2f7;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--chu);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:920px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:24px;line-height:1.3;margin:0 0 4px}
+h2{font-size:18px;margin:40px 0 12px}
+h3{font-size:16px;margin:0}
+p{margin:8px 0}
+.phu{color:var(--phu);font-size:14px}
+code{background:var(--ma);padding:1px 5px;border-radius:4px;font-size:13px;word-break:break-word}
+.the{background:var(--mat);border:1px solid var(--vien);border-radius:8px;padding:16px 20px;margin:12px 0}
+.muc{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;margin-right:8px;vertical-align:2px;white-space:nowrap}
+.m-chan{color:var(--chan);background:var(--chan-nen)} .m-nang{color:var(--nang);background:var(--nang-nen)}
+.m-vua{color:var(--vua);background:var(--vua-nen)} .m-nhe{color:var(--nhe);background:var(--nhe-nen)}
+.m-chua{color:var(--chua);background:var(--chua-nen)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--vien);vertical-align:top}
+th{font-weight:600;color:var(--phu);font-size:13px}
+.cuon{overflow-x:auto}
+.thanh{display:flex;align-items:center;gap:10px;margin:6px 0}
+.thanh .ten{flex:0 0 220px;font-size:14px}
+.thanh .ray{flex:1;height:12px;background:var(--ma);border-radius:6px;overflow:hidden}
+.thanh .day{height:100%;border-radius:6px}
+.thanh .so{flex:0 0 70px;font-size:13px;color:var(--phu)}
+dl{margin:10px 0 0;display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:14px}
+dt{color:var(--phu);font-weight:600}
+dd{margin:0}
+ul{margin:6px 0;padding-left:20px}
+li{margin:3px 0}
+.sua{border-left:3px solid var(--nang);padding-left:12px}
+@media (max-width:600px){
+  .thanh{flex-wrap:wrap}.thanh .ten{flex-basis:100%}
+  dl{grid-template-columns:1fr}dt{margin-top:6px}
+}
+</style>
+</head>
+<body>
+<main>
+<h1>Rào cản khi đem ITA sang dự án mới</h1>
+<p class="phu">16/11/2026 · Dựa trên mã nguồn <code>ITA-1.4/ITA/may/</code> (4.206 dòng). Chỉ đọc mã, chưa chạy ITA trên app thứ ba nào, chưa sửa gì.</p>
+
+<div class="the">
+<p><b>Kết luận ngắn:</b> rào cản thật sự chặn đường là chuyện <b>an toàn khi bấm và khi chặn lệnh</b> (rào cản 1). Các rào cản khác chỉ làm báo cáo nghèo đi hoặc ghi sai chữ. Không cái nào trong số đó làm hỏng app đang được kiểm.</p>
+</div>
+
+<h2>Thang mức dùng trong trang</h2>
+<div class="cuon"><table>
+<tr><th>Mức</th><th>Nghĩa</th></tr>
+<tr><td><span class="muc m-chan">Chặn đường</span></td><td>Chưa gỡ thì không nên đem tool sang dự án mới: có thể ghi dữ liệu thật, hoặc làm hỏng màn và tạo lỗi giả.</td></tr>
+<tr><td><span class="muc m-nang">Nặng</span></td><td>Tool vẫn chạy an toàn nhưng mất hẳn một nhóm phép kiểm chính.</td></tr>
+<tr><td><span class="muc m-vua">Vừa</span></td><td>Có kết quả nhưng chỉ ở mức «ghi nhận», hoặc ghi sai căn cứ, nên người đọc dễ hiểu sai.</td></tr>
+<tr><td><span class="muc m-nhe">Nhẹ</span></td><td>Làm phí lượt bấm hoặc thiếu một dòng thông tin, không sai kết quả.</td></tr>
+<tr><td><span class="muc m-chua">Chưa đo</span></td><td>Có dấu hiệu nhưng chưa có số liệu để xếp mức.</td></tr>
+</table></div>
+
+<h2>Nhìn nhanh</h2>
+<p class="phu">Độ dài thanh là mức nặng do tôi xếp theo thang trên, không phải số đo.</p>
+<div class="the">
+  <div class="thanh"><span class="ten">1. Phân biệt đọc / ghi, bấm nút lạ</span><span class="ray"><span class="day" style="width:100%;background:var(--chan)"></span></span><span class="so">Chặn đường</span></div>
+  <div class="thanh"><span class="ten">2. Đọc quyền máy chủ</span><span class="ray"><span class="day" style="width:75%;background:var(--nang)"></span></span><span class="so">Nặng</span></div>
+  <div class="thanh"><span class="ten">3. Căn cứ đúng / sai thiết kế</span><span class="ray"><span class="day" style="width:50%;background:var(--vua)"></span></span><span class="so">Vừa</span></div>
+  <div class="thanh"><span class="ten">4. Chữ riêng DQTV trong lõi</span><span class="ray"><span class="day" style="width:45%;background:var(--vua)"></span></span><span class="so">Vừa</span></div>
+  <div class="thanh"><span class="ten">5. Nhận vùng giao diện</span><span class="ray"><span class="day" style="width:25%;background:var(--nhe)"></span></span><span class="so">Nhẹ</span></div>
+  <div class="thanh"><span class="ten">6. Tốc độ</span><span class="ray"><span class="day" style="width:0"></span></span><span class="so">Chưa đo</span></div>
+</div>
+
+<h2>Từng rào cản</h2>
+
+<div class="the">
+<h3><span class="muc m-chan">Chặn đường</span>1. Không biết lệnh nào là đọc, nút nào là ghi</h3>
+<dl>
+<dt>Hiện trạng</dt><dd>
+<ul>
+<li>Tool chỉ cho lệnh POST đi qua khi lệnh đó có tên trong danh sách soạn tay của hồ sơ dự án (<code>10-la-chan.js:12</code>). Trên dự án mới, hồ sơ tạm có danh sách rỗng (<code>20-cau-hinh.js:181</code>), nên mọi POST đều bị chặn.</li>
+<li>Bấm nút: có hai nhánh (<code>30-loi-kiem.js:1033–1034</code>). Nhánh «nút mở form» có lọc qua danh sách từ cấm (Lưu, Gửi, Xoá, Đặt lại…). Nhánh «nút nghiệp vụ» thì <b>không lọc</b>: nút nào có chữ, ngắn dưới 60 ký tự là bấm. Nhánh này bật sẵn (<code>moNutNghiepVu: true</code>).</li>
+<li>Kết nối liên tục (WebSocket) chỉ bị chặn trong lúc đang mở form (<code>30-loi-kiem.js:216</code>).</li>
+</ul></dd>
+<dt>Đã xảy ra</dt><dd>Trên PMS, tool tự bấm «Bắt đầu phiên họp», «Có mặt», «Vắng mặt», «Chiếu». Các lệnh này bị chặn. Riêng «Đặt lại về cài đặt mặc định» không thấy ghi là bị chặn, kết quả chưa rõ. Màn xem trước máy chiếu (chỉ đọc) lại bị chặn nhầm.</dd>
+<dt>Vì sao chặn đường</dt><dd>Trên app lạ, tool rơi vào một trong hai hướng hỏng. App lấy dữ liệu bằng POST thì màn trống và báo cáo đầy lỗi do chính tool gây ra. App gửi lệnh qua kết nối liên tục thì lệnh có thể đi thật.</dd>
+<dt>Hướng nâng cấp</dt><dd>
+<ul>
+<li><b>Nút:</b> nhánh «nút nghiệp vụ» cũng phải qua danh sách từ cấm. Khi chưa có đặc tả, chỉ bấm nút thuộc loại xem (mở, xem, lọc, tab, đóng). Nút tên lạ thì ghi «chưa bấm».</li>
+<li><b>Lệnh:</b> thêm lượt dò. Tool chỉ đi qua các mục menu, không bấm gì trong màn, và ghi lại các POST app tự gửi khi trang vừa mở. Các POST này được cho qua ở lượt kiểm sau.</li>
+</ul></dd>
+<dt>Phê bình hướng này</dt><dd>
+<ul>
+<li>Lượt dò không chứng minh được một lệnh là «đọc». Nó chỉ chứng minh lệnh đó <b>người thường cũng gửi khi chỉ xem</b>. Ví dụ «đánh dấu đã xem» hay ghi nhật ký truy cập là lệnh ghi thật, nhưng người xem bình thường cũng gây ra. Cho qua những lệnh này thì mức an toàn bằng một người mở xem, không hơn.</li>
+<li>Trong lượt dò phải để POST đi qua thì mới thấy được chúng. Nghĩa là lượt dò chạy không có lớp chặn POST, chỉ có lớp «không bấm».</li>
+<li>Danh sách từ cấm dựa trên chữ trên nút, nên dự án dùng tiếng Anh hay nút chỉ có biểu tượng sẽ lọt. Cách chắc hơn là chỉ cho bấm những gì biết chắc an toàn, thay vì cấm những gì biết là nguy hiểm.</li>
+</ul></dd>
+</dl>
+</div>
+
+<div class="the">
+<h3><span class="muc m-nang">Nặng</span>2. Chỉ đọc được quyền của máy chủ ở 2 kiểu app</h3>
+<dl>
+<dt>Hiện trạng</dt><dd>Phép kiểm «nút hiện sai vai» so nút trên màn với danh sách bước mà máy chủ cho phép. Tool chỉ biết đọc danh sách này ở 2 kiểu app: <code>rest-buoc</code> (DQTV, <code>30-loi-kiem.js:64</code>) và <code>openslides</code> (PMS, <code>35-kieu-app.js</code>). Cả hai cách đọc đều viết riêng theo cấu trúc dữ liệu của từng app.</dd>
+<dt>Hệ quả</dt><dd>Trên app thứ ba, phép kiểm này không chạy. Tool vẫn an toàn, nhưng mất một trong các phép kiểm có giá trị nhất.</dd>
+<dt>Phê bình</dt><dd>Rào cản này <b>không gỡ chung được</b>. Mỗi app báo quyền theo một kiểu riêng, có app không báo cho trình duyệt mà tự ẩn nút luôn. Cách thực tế là mỗi dự án mới viết thêm một kiểu app, và báo cáo ghi rõ «chưa kiểm quyền» khi chưa có. Không nên hứa tool «tự hiểu» quyền của mọi app.</dd>
+</dl>
+</div>
+
+<div class="the">
+<h3><span class="muc m-vua">Vừa</span>3. Thiếu căn cứ để nói đúng hay sai về thiết kế</h3>
+<dl>
+<dt>Hiện trạng</dt><dd>
+<ul>
+<li>Tool <b>đã</b> gom số liệu trên mọi màn: cỡ chữ, màu chữ, màu nền, bo góc, đổ bóng, khoảng cách lệch lưới, nút cùng nhãn mà khác kiểu (<code>30-loi-kiem.js:449–461, 2190–2196</code>).</li>
+<li>Nhưng nó so số liệu đó với ngưỡng do chính tool đặt (ví dụ «tối đa 6 cỡ chữ», <code>20-cau-hinh.js:59</code>), ghi là «tự đặt — chỉ ghi nhận». Có tệp quy cách của dự án thì mới so cỡ chữ và bo góc với chuẩn thật (<code>30-loi-kiem.js:2206</code>).</li>
+<li>Tool chưa đọc các biến thiết kế (token) mà app khai trong CSS.</li>
+</ul></dd>
+<dt>Hướng nâng cấp</dt><dd>
+<ul>
+<li>Đọc biến thiết kế từ CSS của app. Đây là chuẩn do dev viết, nên có căn cứ.</li>
+<li>Với giá trị chiếm đa số, chỉ ra những giá trị lệch hiếm (ví dụ cỡ 13.5px trên PMS).</li>
+</ul></dd>
+<dt>Phê bình</dt><dd>
+<ul>
+<li>«Đa số» không phải là «đúng». App sai đồng đều thì vẫn trông nhất quán. Tool chỉ nên ghi «không nhất quán», không được ghi «sai chuẩn».</li>
+<li>Biến khai trong CSS chưa chắc là quy cách: nhiều thư viện giao diện tự khai hàng trăm biến mà app không dùng hết.</li>
+<li>Vì thế rào cản này chỉ hạ được từ «không có căn cứ» xuống «căn cứ yếu». Muốn có lỗi ở mức cao thì vẫn cần quy cách hoặc đặc tả của dự án. WCAG là căn cứ duy nhất dùng chung được cho mọi app.</li>
+</ul></dd>
+</dl>
+</div>
+
+<div class="the">
+<h3><span class="muc m-vua">Vừa</span>4. Lõi chung còn chữ riêng của DQTV</h3>
+<dl>
+<dt>Hiện trạng</dt><dd>
+<ul>
+<li>Tên các mắt xích có «tài liệu ↔ TC v7» (<code>50-doi-chieu-dac-ta.js:380</code>), và căn cứ «TC v7» được khai ở lõi (<code>10-la-chan.js:73</code>).</li>
+<li>Gợi ý việc tiếp theo trong báo cáo ghi «gửi Bên B» (<code>50-doi-chieu-dac-ta.js:384–389</code>, <code>60-bao-cao.js:84</code>).</li>
+</ul></dd>
+<dt>Đã xảy ra</dt><dd>Báo cáo PMS dẫn căn cứ «TC v7 KHUNG-CHUNG» dù không nạp TC nào, và ghi «Bên B».</dd>
+<dt>Phê bình</dt><dd>Việc sửa thì nhỏ: chuyển các chữ này sang hồ sơ dự án. Nhưng tác hại lớn hơn vẻ ngoài, vì nó làm sai cột căn cứ, mà cột căn cứ là thứ quyết định mức lỗi. Người đọc báo cáo tin một căn cứ không tồn tại.</dd>
+</dl>
+</div>
+
+<div class="the">
+<h3><span class="muc m-nhe">Nhẹ</span>5. Nhận vùng giao diện của app lạ</h3>
+<dl>
+<dt>Hiện trạng</dt><dd>
+<ul>
+<li>Tìm menu đã chạy chung cho mọi app: tool xét <code>nav</code>, <code>aside</code>, vùng có chữ «sidebar» trong tên, và vùng điều hướng (<code>30-loi-kiem.js:284</code>). Không có menu thì tool lấy các liên kết ở trang đầu.</li>
+<li>Chỗ hỏng thật: app đặt thanh đầu trang bên trong vùng nội dung chính thì tool coi đó là nút của màn (<code>30-loi-kiem.js:1005</code>). Trên PMS, tool bấm ô Tìm kiếm và nút tài khoản mỗi thứ 12 lần (24 trong 37 form đã mở).</li>
+<li>Tên tài khoản chỉ đọc được khi hồ sơ dự án khai chỗ hiện tên (<code>20-cau-hinh.js:144</code>). Không khai thì báo cáo ghi «không nhận ra».</li>
+</ul></dd>
+<dt>Phê bình</dt><dd>Lỗi này làm phí khoảng 2/3 lượt mở form trên PMS, nhưng không làm sai kết quả. Sửa được bằng cách nhận thanh đầu trang theo vị trí: nó dính ở mép trên và lặp lại giống hệt trên mọi màn.</dd>
+</dl>
+</div>
+
+<div class="the">
+<h3><span class="muc m-chua">Chưa đo</span>6. Tốc độ</h3>
+<dl>
+<dt>Hiện trạng</dt><dd>Nhật ký PMS cho thấy mỗi lần bấm mất khoảng 20 giây; ở màn Cài đặt có lần 81 giây, có lần 3 phút 32 giây. Mỗi lần bấm tool chờ tối đa 10 giây cho trang yên (<code>20-cau-hinh.js:83</code>) và chạy axe.</dd>
+<dt>Phê bình</dt><dd>Chưa biết thời gian mất vào chờ, vào axe hay vào chính app. Chưa nên xếp mức hay sửa gì trước khi đo. Việc đầu tiên là ghi thời gian từng bước vào báo cáo.</dd>
+</dl>
+</div>
+
+<h2>Hai chỗ tôi nói chưa đúng ở câu trả lời trước</h2>
+<div class="the sua">
+<ul>
+<li><b>Rào cản «căn cứ thiết kế»:</b> tôi đề xuất «gom cỡ chữ, bo góc… trên mọi màn» như một việc mới. Thật ra tool đã gom từ trước. Phần còn thiếu chỉ là cách chấm (lệch so với đa số) và việc đọc biến thiết kế trong CSS.</li>
+<li><b>Rào cản «nhận vùng giao diện»:</b> tôi nói cách tìm menu gắn với từng dự án. Sai: tìm menu đã chạy chung. Chỉ thanh đầu trang và tên tài khoản là phụ thuộc dự án. Vì vậy tôi hạ rào cản này từ «nhỏ hơn» xuống «Nhẹ».</li>
+</ul>
+</div>
+
+<h2>Thứ tự đề xuất</h2>
+<div class="cuon"><table>
+<tr><th>#</th><th>Việc</th><th>Mức</th><th>Cỡ việc (ước)</th></tr>
+<tr><td>1</td><td>Nhánh «nút nghiệp vụ» qua danh sách từ cấm; khi chưa có đặc tả chỉ bấm nút loại xem</td><td><span class="muc m-chan">Chặn đường</span></td><td>Nhỏ, sửa 1 chỗ</td></tr>
+<tr><td>2</td><td>Lượt dò để tự lập danh sách POST cho qua</td><td><span class="muc m-chan">Chặn đường</span></td><td>Vừa</td></tr>
+<tr><td>3</td><td>Chuyển chữ DQTV («TC v7», «Bên B») ra hồ sơ dự án</td><td><span class="muc m-vua">Vừa</span></td><td>Nhỏ</td></tr>
+<tr><td>4</td><td>Ghi thời gian từng bước vào báo cáo</td><td><span class="muc m-chua">Chưa đo</span></td><td>Nhỏ</td></tr>
+<tr><td>5</td><td>Nhận thanh đầu trang theo vị trí</td><td><span class="muc m-nhe">Nhẹ</span></td><td>Nhỏ</td></tr>
+<tr><td>6</td><td>Đọc biến thiết kế trong CSS, chấm «không nhất quán»</td><td><span class="muc m-vua">Vừa</span></td><td>Vừa</td></tr>
+<tr><td>—</td><td>Đọc quyền máy chủ: viết thêm kiểu app cho từng dự án mới khi cần</td><td><span class="muc m-nang">Nặng</span></td><td>Theo dự án</td></tr>
+</table></div>
+<p class="phu">Cỡ việc là ước lượng khi đọc mã, chưa tính thời gian kiểm thử trên app thật. Mọi thay đổi cần chạy lại trên DQTV và PMS để chắc không làm hỏng hai dự án đang dùng.</p>
+
+</main>
+</body>
+</html>
