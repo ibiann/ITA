@@ -70,7 +70,10 @@ const NGUYEN_TAC = {
 };
 // [3.26.1] Căn cứ của từng phép kiểm giao diện chung. Chỉ «sự việc», «chuẩn», «đặc tả» được tính mức (cao / trung bình / thấp).
 // «tự đặt» = ngưỡng hay luật do người viết công cụ đặt, chưa có tài liệu dự án nào nói: chỉ GHI NHẬN, không tính là lỗi.
-const SU_VIEC = 'sự việc', CHUAN = 'chuẩn', DAC_TA = 'đặc tả', TU_DAT = 'tự đặt', TC_PM = 'TC v7';   // [11b] TC_PM: phép kiểm làm đúng thao tác + kết quả mong đợi của một TC KHUNG-CHUNG
+const SU_VIEC = 'sự việc', CHUAN = 'chuẩn', DAC_TA = 'đặc tả', TU_DAT = 'tự đặt';
+// [gom chữ] phép kiểm có TC KHUNG-CHUNG.<ma> trong danh mục TC dự án đã nạp → căn cứ «đặc tả» (Sai); dự án không có TC đó → luật công cụ (Cần xem)
+const tcDuAn = (ma, mo_ta) => { const DM = window.__itaDanhMucTC || (typeof DM_V7 !== 'undefined' && DM_V7);
+  return DM && (DM.tc || []).some(t => t[0] === 'KHUNG-CHUNG.' + ma) ? [DAC_TA, 'TC của dự án KHUNG-CHUNG.' + ma + ': ' + mo_ta] : [TU_DAT, mo_ta + ' — luật công cụ đặt, danh mục TC của dự án không nói điều này']; };
 const CHU_LOI_MAY = /\b(NaN|undefined|null|\[object Object\]|Infinity|Invalid Date)\b/;
 const CAN_CU_KIEM = {
   api_loi: [SU_VIEC, 'máy chủ trả mã lỗi (HTTP ≥ 400) hoặc lỗi mạng'],
@@ -80,23 +83,28 @@ const CAN_CU_KIEM = {
   // [bước 2] ITA làm hỏng lệnh đọc dữ liệu của màn (như mất mạng) rồi mở lại màn; chỉ phản ứng sai rõ ràng mới là sự việc
   gia_loi_doc: v => /^(hiện «trống»|treo|màn trắng)/.test(v) ? [SU_VIEC, 'lệnh đọc dữ liệu đã thất bại mà màn ' + (/^treo/.test(v) ? 'vẫn quay «đang tải» sau 10 giây' : /^màn trắng/.test(v) ? 'trắng, không hiện gì' : 'báo «không có dữ liệu»: người dùng tưởng không có dữ liệu')] : [TU_DAT, 'tải dữ liệu thất bại nhưng không thấy thông báo lỗi — kỳ vọng do công cụ đặt'],
   so_dong_vuot_tong: [SU_VIEC, 'số dòng hiện ra lớn hơn tổng do chính màn đó ghi'],
-  chu_la: v => CHU_LOI_MAY.test(v) ? [SU_VIEC, 'màn hiện giá trị lỗi của máy (NaN, undefined, [object Object]…)'] : /[a-z][A-Z]|\b[A-Z]+_[A-Z]/.test(v) ? [TC_PM, 'KHUNG-CHUNG.MA_CHUA_DICH: không có giá trị dạng mã máy (CHỮ_HOA_GẠCH, camelCase)'] : [TU_DAT, 'chữ giống tên biến ({…}): công cụ đoán'],
-  ma_enum_lo: [TC_PM, 'KHUNG-CHUNG.MA_CHUA_DICH: không có giá trị dạng mã máy (CHỮ_HOA_GẠCH, camelCase)'],
-  cat_chu_khong_tooltip: [TC_PM, 'KHUNG-CHUNG.CHU_CAT: chữ bị cắt «…» phải rê chuột thấy đủ, hoặc xuống dòng'],
-  tieu_de_lech_menu: [TC_PM, 'KHUNG-CHUNG.TIEU_DE_MENU: tiêu đề màn trùng tên mục menu'],
-  van_dang_tai: [TC_PM, 'KHUNG-CHUNG.KHONG_TREO_TAI: không còn phần tử đang tải sau 10 giây'],
-  dinh_dang_ngay_tron: [TC_PM, 'KHUNG-CHUNG.THOI_DIEM: ngày giờ dạng dd/mm/yyyy hh:mm'],
-  gio_khong_chuan: [TC_PM, 'KHUNG-CHUNG.THOI_DIEM: ngày giờ dạng dd/mm/yyyy hh:mm, không có chuỗi ISO thô'],
+  chu_la: v => CHU_LOI_MAY.test(v) ? [SU_VIEC, 'màn hiện giá trị lỗi của máy (NaN, undefined, [object Object]…)'] : /[a-z][A-Z]|\b[A-Z]+_[A-Z]/.test(v) ? tcDuAn('MA_CHUA_DICH', 'không có giá trị dạng mã máy (CHỮ_HOA_GẠCH, camelCase)') : [TU_DAT, 'chữ giống tên biến ({…}): công cụ đoán'],
+  ma_enum_lo: () => tcDuAn('MA_CHUA_DICH', 'không có giá trị dạng mã máy (CHỮ_HOA_GẠCH, camelCase)'),
+  cat_chu_khong_tooltip: () => tcDuAn('CHU_CAT', 'chữ bị cắt «…» phải rê chuột thấy đủ, hoặc xuống dòng'),
+  tieu_de_lech_menu: () => tcDuAn('TIEU_DE_MENU', 'tiêu đề màn trùng tên mục menu'),
+  van_dang_tai: [SU_VIEC, 'màn vẫn còn phần tử «đang tải» sau 10 giây khi mạng đã im (treo)'],
+  dinh_dang_ngay_tron: () => tcDuAn('THOI_DIEM', 'ngày giờ dạng dd/mm/yyyy hh:mm'),
+  gio_khong_chuan: () => tcDuAn('THOI_DIEM', 'ngày giờ dạng dd/mm/yyyy hh:mm, không có chuỗi ISO thô'),
   quy_trinh_loi: [DAC_TA, 'luật khai trong cấu hình dacTa'],
   o_khong_nhan: [CHUAN, 'WCAG 2.2 SC 1.3.1, 4.1.2: ô nhập phải có tên đọc được bằng máy (label, aria-label, title)'],
   wcag_loi: () => [CHUAN, 'WCAG 2.2 mức A/AA, đo bằng axe-core ' + ((window.axe || {}).version || '') + ' (bộ luật wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa)'],
-  tran_ngang: () => innerWidth <= 320 ? [CHUAN, 'WCAG 2.2 SC 1.4.10 (khổ ' + innerWidth + 'px)'] : [1366, 1920].includes(innerWidth) ? [TC_PM, 'KHUNG-CHUNG.TRAN_NGANG: trang không rộng hơn cửa sổ (khổ ' + innerWidth + 'px)'] : [TU_DAT, 'cuộn ngang ở khổ ' + innerWidth + 'px; WCAG 1.4.10 xét ở 320px, TC KHUNG-CHUNG.TRAN_NGANG ở 1366 và 1920px'],
+  tran_ngang: () => innerWidth <= 320 ? [CHUAN, 'WCAG 2.2 SC 1.4.10 (khổ ' + innerWidth + 'px)'] : [1366, 1920].includes(innerWidth) ? tcDuAn('TRAN_NGANG', 'trang không rộng hơn cửa sổ (khổ ' + innerWidth + 'px)') : [TU_DAT, 'cuộn ngang ở khổ ' + innerWidth + 'px; WCAG 1.4.10 xét ở 320px'],
 };
 const canCuKiem = (k, v) => { const x = CAN_CU_KIEM[k]; return (typeof x === 'function' ? x(v) : x) || [TU_DAT, 'ngưỡng hoặc luật do công cụ đặt, chưa có tài liệu dự án']; };
 // [tầng] chữ kết luận theo căn cứ — T1 sự việc / T2 chuẩn / T3 đặc tả dự án → «Sai»; T4 chuẩn chung (≥3 hệ thiết kế) → «Lệch chuẩn»;
 // T5 số đông trong app → «Không thống nhất»; tự đặt hoặc ITA không chắc (cần xác nhận) → «Cần xem». Bộ lọc «Cần xem» chỉ HẠ, không nâng.
 const CHUNG = 'chuẩn chung', TRONG_APP = 'trong app';
-const KL_CC = { [SU_VIEC]: 'Sai', [CHUAN]: 'Sai', [DAC_TA]: 'Sai', [CHUNG]: 'Lệch chuẩn', [TC_PM]: 'Lệch chuẩn', [TRONG_APP]: 'Không thống nhất', [TU_DAT]: 'Cần xem' };
+const KL_CC = { [SU_VIEC]: 'Sai', [CHUAN]: 'Sai', [DAC_TA]: 'Sai', [CHUNG]: 'Lệch chuẩn', [TRONG_APP]: 'Không thống nhất', [TU_DAT]: 'Cần xem' };
+// [gom chữ] chữ HIỆN của mọi bảng kết quả: bốn chữ kết luận + «Đạt» / «Chưa thử được». Mã nội bộ cũ giữ nguyên (sắp xếp, đếm), chỉ đổi chữ hiện.
+const CHU_HIEN = { 'SAI': 'Sai', 'LỆCH': 'Sai', 'KHÁC KHAI BÁO': 'Sai', 'CẢNH BÁO': 'Cần xem', 'GHI NHẬN': 'Cần xem', 'CẦN XEM': 'Cần xem', 'ĐẠT': 'Đạt', 'CHƯA KIỂM': 'Chưa thử được', 'CHƯA THỬ': 'Chưa thử được', 'LỚP 4': 'Chưa thử được' };
+const chuHien = k => CHU_HIEN[k] || k;
+const THU_HIEN = ['Sai', 'Lệch chuẩn', 'Không thống nhất', 'Cần xem', 'Chưa thử được', 'Đạt'];
+const demHien = a => { const n = {}; for (const x of a) { const c = chuHien(x.kq); n[c] = (n[c] || 0) + 1; } return THU_HIEN.filter(c => n[c]).map(c => c + ' ' + n[c]).join(' · '); };
 const HANG_KL = { 'Sai': 3, 'Lệch chuẩn': 2, 'Không thống nhất': 1, 'Cần xem': 0 };
 const ketLuanCC = (k, v, khongChac) => khongChac ? 'Cần xem' : KL_CC[canCuKiem(k, v)[0]] || 'Cần xem';
 const coCanCu = (k, v) => ['Sai', 'Lệch chuẩn'].includes(KL_CC[canCuKiem(k, v)[0]]);   // chỉ «Sai» / «Lệch chuẩn» được tính mức

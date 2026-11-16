@@ -73,7 +73,7 @@ function tomTatDuLieu() {
   return [
     { muc: 'Hồ sơ dự án', co: !!hs, chi_tiet: hs ? hs.ten + (hs.giao_dien_thuan ? ' (hồ sơ tạm, giao diện thuần)' : '') : '', nguon: nguon('ho-so') || (hs ? 'đóng gói sẵn / tạm' : ''), dung_cho: 'khoá tên miền, lệnh POST được đi, tài khoản' },
     { muc: 'Sổ lỗi đã biết', co: !!(qt && (qt.loi_sap || []).length), chi_tiet: qt ? (qt.loi_sap || []).length + ' màn' : '', nguon: nguon('loi-da-biet') || (qt ? 'đóng gói sẵn' : ''), dung_cho: 'bỏ qua màn đã biết là sập; thiếu thì công cụ mở màn đó, app sập có thể làm dừng lần chạy' },
-    { muc: 'Quy cách giao diện', co: !!QUY_CACH, chi_tiet: QUY_CACH ? (QUY_CACH.nguon || 'quy-cach.json') : '', nguon: nguon('quy-cach'), dung_cho: 'lệch quy cách theo dự án (thiếu: chỉ ghi nhận theo ngưỡng công cụ)' },
+    { muc: 'Quy cách giao diện', co: !!QUY_CACH, chi_tiet: QUY_CACH ? (QUY_CACH.nguon || 'quy-cach.json') : '', nguon: nguon('quy-cach'), dung_cho: 'lệch quy cách theo dự án (thiếu: chỉ «Cần xem» theo ngưỡng công cụ)' },
     { muc: 'Hồ sơ mẫu', co: !!(HO_SO_MAU && HO_SO_MAU.length), chi_tiet: HO_SO_MAU ? HO_SO_MAU.length + ' hồ sơ' : '', nguon: nguon('ho-so-mau') || (HO_SO_MAU ? 'đóng gói sẵn' : ''), dung_cho: 'mở thẳng hồ sơ theo chặng' },
     { muc: 'Tài liệu quy trình', co: md > 0, chi_tiet: md ? md + ' tệp' : '', nguon: nguon('quy-trinh-md'), dung_cho: 'căn cứ bước, vai, nút của quy trình' },
     { muc: 'TC', co: !!DM_V7, chi_tiet: DM_V7 ? DM_V7.tc.length + ' TC' : '', nguon: nguon('v7-tc-csv'), dung_cho: 'kết quả theo mã TC (thiếu: không có đối chiếu đặc tả)' },

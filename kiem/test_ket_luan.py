@@ -2,7 +2,10 @@
 #  - «NaN» trên màn (sự việc)                         → Sai, có mức
 #  - tiêu đề màn khác tên menu (ITA không chắc)       → Cần xem, không mức
 #  - một ô chữ cắt «…» chứa mã máy dài không ngắt: trúng 3 phép (chữ cắt, mã lộ, chuỗi dài) trên CÙNG thành phần
-#    → chỉ 1 dòng mẫu lỗi (kết luận mạnh nhất: Lệch chuẩn), 2 phép kia ghi ở «cũng»
+#    → chỉ 1 dòng mẫu lỗi, 2 phép kia ghi ở «cũng»
+#  - dự án KHÔNG nạp danh mục TC → luật chữ cắt / mã lộ là luật công cụ → «Cần xem»
+#  - dự án nạp danh mục TC có KHUNG-CHUNG.CHU_CAT → căn cứ đặc tả dự án → «Sai»
+#  - báo cáo không còn chữ cũ (LỆCH, CHƯA KIỂM, GHI NHẬN, KHÁC KHAI BÁO, TC v7), CSV không còn cột muc_do
 #  - HTML có cột «Kết luận», CSV có cột ket_luan
 # Chạy: python3 -I kiem/test_ket_luan.py   (cần google-chrome)
 import csv, html, io, json, pathlib, re, socket, subprocess, sys, tempfile, time
@@ -18,6 +21,7 @@ TRANG = """<!doctype html><meta charset="utf-8">
     document.addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; e.preventDefault();
       history.pushState(null, '', a.getAttribute('href')); }, true);</script>
   <script>window.__itaHoSo = {"ten": "thử", "ten_mien": "127.0.0.1", "post_cho_qua": []}</script>
+  <script>%s</script>
   <script src="/tool.js"></script>
   <script>
     addEventListener('load', () => setTimeout(async () => {
@@ -27,29 +31,35 @@ TRANG = """<!doctype html><meta charset="utf-8">
         html: kq ? window.__itaThu.html(kq) : '', csv: kq ? window.__itaThu.csv(kq) : '' }));
     }, 300));
   </script>
-</body>""" % MA
+</body>"""
 
-with tempfile.TemporaryDirectory() as t:
-    t = pathlib.Path(t)
-    subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/dong_goi.py'), '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
-    dist = (t / 'dist.js').read_text(encoding='utf-8').rstrip()
-    assert dist.endswith('})();')
-    (t / 'tool.js').write_text(dist[:-len('})();')] + 'window.__itaThu = { html: sangHTML, csv: sangCSVMau };\n})();\n', encoding='utf-8')
-    (t / 'thu.html').write_text(TRANG, encoding='utf-8')
-    so = socket.socket(); so.bind(('127.0.0.1', 0)); cong = so.getsockname()[1]; so.close()
-    mc = subprocess.Popen([sys.executable, '-I', '-m', 'http.server', str(cong), '--bind', '127.0.0.1', '--directory', str(t)],
-                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    try:
-        time.sleep(0.8)
-        r = subprocess.run(['google-chrome', '--headless=new', '--no-sandbox', '--disable-gpu', '--dump-dom',
-                            '--virtual-time-budget=60000', 'http://127.0.0.1:%d/thu.html' % cong], capture_output=True, text=True, timeout=180)
-    finally:
-        mc.terminate()
+MA_JS = MA
+def chay(them=''):
+    with tempfile.TemporaryDirectory() as t:
+        t = pathlib.Path(t)
+        subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/dong_goi.py'), '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
+        dist = (t / 'dist.js').read_text(encoding='utf-8').rstrip()
+        assert dist.endswith('})();')
+        (t / 'tool.js').write_text(dist[:-len('})();')] + 'window.__itaThu = { html: sangHTML, csv: sangCSVMau };\n})();\n', encoding='utf-8')
+        (t / 'thu.html').write_text(TRANG % (MA_JS, them), encoding='utf-8')
+        so = socket.socket(); so.bind(('127.0.0.1', 0)); cong = so.getsockname()[1]; so.close()
+        mc = subprocess.Popen([sys.executable, '-I', '-m', 'http.server', str(cong), '--bind', '127.0.0.1', '--directory', str(t)],
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            time.sleep(0.8)
+            r = subprocess.run(['google-chrome', '--headless=new', '--no-sandbox', '--disable-gpu', '--dump-dom',
+                                '--virtual-time-budget=60000', 'http://127.0.0.1:%d/thu.html' % cong], capture_output=True, text=True, timeout=180)
+        finally:
+            mc.terminate()
 
-m = re.search(r'<body[^>]*\bdata-kq="([^"]*)"', r.stdout)
-assert m, 'Chrome chưa ghi kết quả: ' + r.stdout[-800:]
-k = json.loads(html.unescape(m.group(1)))
-assert not k['error'], k['error']
+    m = re.search(r'<body[^>]*\bdata-kq="([^"]*)"', r.stdout)
+    assert m, 'Chrome chưa ghi kết quả: ' + r.stdout[-800:]
+    k = json.loads(html.unescape(m.group(1)))
+    assert not k['error'], k['error']
+    return k
+
+k = chay()
+k2 = chay("window.__itaDanhMucTC = { tc: [['KHUNG-CHUNG.CHU_CAT']] };")
 mau = k['mau']
 nan = [x for x in mau if x['loai'] == 'chu_la' and 'NaN' in x['chi_tiet']]
 assert nan and all(x['ket_luan'] == 'Sai' and x['muc_do'] != 'ghi nhận' for x in nan), nan
@@ -57,11 +67,14 @@ menu = [x for x in mau if x['loai'] == 'tieu_de_lech_menu']
 assert menu and all(x['ket_luan'] == 'Cần xem' and x['muc_do'] == 'ghi nhận' for x in menu), menu
 tp = [x for x in mau if x['loai'] in ('cat_chu_khong_tooltip', 'ma_enum_lo', 'chuoi_dai_khong_ngat')]
 assert len({x['chi_tiet'] for x in tp}) == len(tp), 'một thành phần ra nhiều dòng: ' + json.dumps(tp, ensure_ascii=False)
-assert any(x['loai'] == 'cat_chu_khong_tooltip' and x['ket_luan'] == 'Lệch chuẩn' and 'chuoi_dai_khong_ngat' in x['cung'] for x in tp), tp
-assert not any(x['loai'] == 'chuoi_dai_khong_ngat' for x in tp), tp
+assert len(tp) == 1 and tp[0]['ket_luan'] == 'Cần xem' and len(tp[0]['cung']) == 2, tp
+tp2 = [x for x in k2['mau'] if x['loai'] in ('cat_chu_khong_tooltip', 'ma_enum_lo', 'chuoi_dai_khong_ngat')]
+assert len(tp2) == 1 and tp2[0]['loai'] == 'cat_chu_khong_tooltip' and tp2[0]['ket_luan'] == 'Sai' and 'KHUNG-CHUNG.CHU_CAT' in tp2[0]['can_cu'], tp2
+for cu in ('LỆCH', 'CHƯA KIỂM', 'GHI NHẬN', 'KHÁC KHAI BÁO', 'TC v7'):
+    assert cu not in k['html'] and cu not in k2['html'], 'báo cáo còn chữ cũ: ' + cu
 assert all(v['ket_luan'] in ('Sai', 'Lệch chuẩn', 'Cần xem') for v in k['van_de']), k['van_de']
+assert 'muc_do' not in k['csv'].split('\n')[0], 'CSV còn cột muc_do'
 assert '<th>Kết luận</th>' in k['html'] and 'Cần xem' in k['html'], 'HTML thiếu cột Kết luận'
 dong = list(csv.DictReader(io.StringIO(k['csv'].lstrip('﻿'))))
 assert dong and 'ket_luan' in dong[0] and {'Sai', 'Cần xem'} <= {d['ket_luan'] for d in dong}, dong[:3]
-print('đạt: NaN → Sai · tiêu đề khác menu → Cần xem · ô chữ cắt chứa mã dài → 1 dòng «Lệch chuẩn», phép khác ghi «cũng»: %s · đếm %s'
-      % (next(x['cung'] for x in tp if x['loai'] == 'cat_chu_khong_tooltip'), k['dem']))
+print('đạt: NaN → Sai · tiêu đề khác menu → Cần xem · ô chữ cắt chứa mã → 1 dòng «Cần xem» (không TC) / «Sai» (có TC dự án), cũng: %s · không còn chữ cũ · đếm %s' % (tp[0]['cung'], k['dem']))
