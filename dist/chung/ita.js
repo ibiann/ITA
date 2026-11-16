@@ -1,5 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T03:45:22+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
-window.__itaHoSo = {"ten":"LANCS PMS","ten_mien":"pms.lab.linksafe.vn","kieu_app":"openslides","chon_tai_khoan":"os-account-button span[title]","post_cho_qua":["/system/auth/login","/system/auth/who-am-i","/system/presenter/handle_request"],"cuoc_hop_mau":87,"tai_khoan":[{"dang_nhap":"ita.thuky","ten_hien":"ITA Thư ký","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Quản trị viên"},{"dang_nhap":"ita.chutoa","ten_hien":"ITA Chủ tọa","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Chủ tọa"},{"dang_nhap":"ita.daibieu","ten_hien":"ITA Đại biểu","vai":"DAI_BIEU","nhom_app":"Đại biểu"},{"dang_nhap":"ita.khongnhom","ten_hien":"ITA Không nhóm","vai":"KHONG_QUYEN","nhom_app":"Mặc định"},{"dang_nhap":"ita.qttochuc","ten_hien":"ITA Quản trị tổ chức","vai":"QUAN_TRI_TO_CHUC","nhom_app":""},{"dang_nhap":"ita.qluyban","ten_hien":"ITA Quản lý ủy ban","vai":"QUAN_LY_UY_BAN","nhom_app":""}],"_nguon":{"ten_mien":"lab của dự án (DOCS/80-setup-3-cuoc-hop-demo-khach-hang-2026-07-12.md)","kieu_app":"OpenSlides 4: dữ liệu đi qua SharedWorker (openslides-client/client/src/app/openslides-main-module/services/shared-worker.service.ts:108); ITA đọc nhóm + quyền qua who-am-i + autoupdate (35-kieu-app.js)","chon_tai_khoan":"openslides-client/client/src/app/site/modules/global-headbar/components/account-button/account-button.component.html: span đầu tiên có title = tên ngắn của tài khoản, span sau = nhóm","post_cho_qua":"đọc mà dùng POST: đăng nhập, who-am-i (auth-service public-controller.ts:41), presenter (openslides-backend/openslides_backend/presenter/: không presenter nào ghi dữ liệu, rà 07/11/2026). Mọi lệnh ghi đi qua /system/action/handle_request, /system/vote, /system/media, dịch vụ LPM (/api/gateway…, bóc băng, Drive) → bị chặn khi chạy. Lưu ý: lab có thể chạy bản backend khác repo (lab tạo 6 nhóm khi tạo cuộc họp, repo tạo 4)","cuoc_hop_mau":"cuộc họp «ITA – cuộc họp mẫu» dựng 07/11/2026 cho ITA: 3 mục chương trình, 2 kiến nghị, 1 bình bầu","tai_khoan":"tài khoản ita.* dựng 07/11/2026 (id 38–43). Vai theo hướng dẫn sử dụng (DOCS/ui-ux/huong-dan-su-dung/HUONG-DAN-SU-DUNG-LANCS-PMS.md mục 2, Phụ lục A): «Chủ tọa / Quản trị cuộc họp» gần như mọi quyền (người dùng chốt 07/11) — gán cho cả ita.thuky (nhóm Quản trị viên) và ita.chutoa (nhóm Chủ tọa, 12 quyền) để thấy chỗ nhóm Chủ tọa của app thiếu so với tài liệu. Không ghi mật khẩu."}};
+// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T08:27:17+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
 if (!window.axe) {
 /*! axe v4.14.0
  * Copyright (c) 2015 - 2026 Deque Systems, Inc.
@@ -226,7 +225,7 @@ const locLuu = o => { const r = {}; for (const k in (o || {})) if (!KHONG_LUU[k]
 /* ============================================================= *
  * 1. CẤU HÌNH MẶC ĐỊNH — sửa bằng ita.dat(...) hoặc trên bảng   *
  * ============================================================= */
-// Hồ sơ dự án: du-an/<dự án>/ho-so.json. Đóng gói sẵn thành window.__itaHoSo (dist/ita-<dự án>.js) hoặc nạp bằng «Nạp thư mục»
+// Hồ sơ dự án: du-an/<dự án>/ho-so.json. Đóng gói sẵn thành window.__itaHoSo (dist/rieng/ita-<dự án>.js) hoặc nạp bằng «Nạp thư mục»
 // (bộ đọc ho-so → apHoSo, bước 13b). Mọi chữ riêng của dự án lấy từ đây. Chưa có hồ sơ: ita.chay không chạy, mọi lệnh ghi bị chặn.
 const DU_AN = Object.assign({}, window.__itaHoSo || {});
 let QUY_CACH = null;   // [13e] quy cách giao diện của dự án (du-an/<tên>/quy-cach.json, bộ đọc quy-cach): ngưỡng + giá trị được phép
@@ -2152,13 +2151,13 @@ async function itaAudit(over, trangThaiTiep) {
   /* ---------- tìm tab con ---------- */
   const TABCLS = /(^|[\s_-])(tabs?|tab-?(bar|list|nav|group|s)|segment(ed)?(-?control)?|chips?|pills?|filter-?(bar|chips|tabs|group)|toggle-?group|btn-group|button-group|sub-?nav|subnav)([\s_-]|$)/i;
   function tabCands() {
-    const m = mainEl(), set = new Set();
+    const m = mainEl(), nav = side(), set = new Set();
     m.querySelectorAll('[role=tab],[aria-pressed],[role=tablist] a,[role=tablist] button').forEach(e => set.add(e));
     m.querySelectorAll('[class]').forEach(c => { if (TABCLS.test(cls(c))) c.querySelectorAll(':scope > a, :scope > button, :scope > [role=button], :scope > li > a, :scope > li > button, :scope > div > a, :scope > div > button').forEach(e => set.add(e)); });
     m.querySelectorAll('a[href]').forEach(a => { let u; try { u = new URL(a.href, location.href); } catch (e) { return; } if (u.origin !== location.origin || a.closest('table,[role=grid],[role=row],[role=rowgroup]') || laTuyenMenu(u)) return; if ((u.pathname === location.pathname && u.search !== location.search) || u.pathname.startsWith(location.pathname.replace(/\/$/, '') + '/')) set.add(a); });
     m.querySelectorAll('button').forEach(b => { if (/\s\d[\d.]*$/.test(txt(b)) && b.parentElement.querySelectorAll(':scope > button').length >= 2) set.add(b); });
     // [1.1] không phải tab: ô chỉ có số (ô lịch, số trang) và phần tử nằm trong lịch / phân trang
-    return [...set].filter(e => vis(e) && !inDialog(e) && !trongMenu(e) && !e.closest('table,thead,[role=grid]') && !/^\s*\d{1,4}\s*$/.test(txt(e))
+    return [...set].filter(e => vis(e) && !(nav && nav.contains(e)) && !inDialog(e) && !trongMenu(e) && !e.closest('table,thead,[role=grid]') && !/^\s*\d{1,4}\s*$/.test(txt(e))
       && !e.closest('[class*=calendar],[class*=Calendar],[class*=datepicker],[class*=date-picker],[class*=pagination],[class*=Pagination],[class*=paginator],[class*=pager]'));
   }
   // [1.1] link trỏ tới đúng đường dẫn của một mục menu (thẻ «điều hướng nhanh» trên trang chủ…) không phải tab: vòng menu sẽ ghé
@@ -2187,6 +2186,7 @@ async function itaAudit(over, trangThaiTiep) {
     const seen = new Set(); let id = menuItems.length;
     for (const e of cand) {
       const t = txt(e).replace(/\s\d+$/, '');
+      if (e.closest('header,[class*=logo],[class*=brand]')) continue;
       if (!t || t.length > 60 || NAV_SKIP.test(t) || e.getAttribute('aria-expanded') !== null) continue;
       if (C.chiMenu && !C.chiMenu.test(t)) continue; if (C.boQuaMenu && C.boQuaMenu.test(t)) continue;
       // tên nhóm cha gần nhất (nếu menu có nhóm)
@@ -2829,7 +2829,6 @@ async function itaAudit(over, trangThaiTiep) {
   capNhatBang();
   return ketQua;
 }
-
 /* ============================================================= *
  * 3b. KIỂU APP (bước 13c, 13d) — phần khác nhau theo CÁCH APP     *
  * CHẠY, hồ sơ dự án chọn bằng một dòng "kieu_app". Ma trận chấm   *
@@ -3783,7 +3782,7 @@ window.ita = {
     if (CO.dangChay) { console.warn('[ita] Đang chạy rồi, không cần bấm lại. Muốn chạy lại thì bấm "■ Dừng" (hoặc gõ ita.dung()) trước.'); return; }
     // [1.1] chưa có hồ sơ: hỏi một lần «kiểm giao diện thuần trên <tên miền>?» → hồ sơ tạm (khoá đúng tên miền này, mọi POST bị chặn)
     if (!window.__itaHoSo && window.confirm('[ITA] Chưa có hồ sơ dự án.\n\nKiểm GIAO DIỆN THUẦN trên «' + location.hostname + '»?\n— Chỉ dùng trên môi trường kiểm thử.\n— Mọi lệnh POST bị chặn; phần quy trình / UC / TC ghi «Chưa kiểm».')) { apHoSo(taoHoSoTam()); nk('hồ sơ tạm', location.hostname); }
-    if (!window.__itaHoSo) { const t = 'Không chạy: chưa có hồ sơ dự án. Bấm «⇪ Nạp thư mục» và chọn du-an/<tên dự án>/ (có ho-so.json), hoặc dán bản đóng gói sẵn dist/ita-<dự án>.js.'; console.warn('[ita] ' + t); CO.tienDo = t; capNhatBang(); return; }   // [13b]
+    if (!window.__itaHoSo) { const t = 'Không chạy: chưa có hồ sơ dự án. Bấm «⇪ Nạp thư mục» và chọn du-an/<tên dự án>/ (có ho-so.json), hoặc dán bản đóng gói sẵn dist/rieng/ita-<dự án>.js.'; console.warn('[ita] ' + t); CO.tienDo = t; capNhatBang(); return; }   // [13b]
     if (CO.bo && !(over && over.__bo)) over = Object.assign({}, over || {}, { __bo: CO.bo });   // [1.2] bộ đã chọn đi theo lần chạy (cả khi chạy tiếp sau tải lại)
     TK = taiKhoan();
     MAT_PHIEN = ''; APP_SAP = '';
@@ -4059,7 +4058,7 @@ async function apDungNap() {
   const goi = await docGoiSan(), loaiNap = new Set(ds.map(t => t.bo_doc));
   for (const t of goi) { const bd = boDocCua(t.ten, t.chu); if (bd && !loaiNap.has(bd.ten)) ds.push(Object.assign({ bo_doc: bd.ten }, t)); }
   NAP_DA_DUNG = []; DM_V7 = null; DO_PHU = null; QUY_CACH = null; HO_SO_MAU = null;
-  // [1.1] hồ sơ mẫu đóng gói sẵn (dist/ita-<dự án>.js); tệp ho-so-mau.json người dùng tự nạp sẽ thay bên dưới
+  // [1.1] hồ sơ mẫu đóng gói sẵn (dist/rieng/ita-<dự án>.js); tệp ho-so-mau.json người dùng tự nạp sẽ thay bên dưới
   { const g = window.__itaHoSoMau; if (g && g.loai === 'ho-so-mau' && Array.isArray(g.ho_so)) HO_SO_MAU = g.ho_so.filter(h => h && h.ma && /^\//.test(String(h.duong_dan || ''))).map(h => Object.assign({ quy_trinh: '', chang: '', nhan_chang: '', vai: '', tai_khoan: '' }, h)); }
   TT_QT_CO = !!window.__itaTrangThaiQT;
   if (!ds.length) return;   // chưa nạp gì: giữ nguyên (đặc tả dán Console, nếu có)
@@ -4200,7 +4199,7 @@ Object.assign(window.ita, {
     },
   });
 }
-/* Bộ đọc (bản 1.3): ba tệp dữ liệu dự án trước đây CHỈ có khi đóng gói (dist/ita-<dự án>.js gán thẳng vào biến) —
+/* Bộ đọc (bản 1.3): ba tệp dữ liệu dự án trước đây CHỈ có khi đóng gói (dist/rieng/ita-<dự án>.js gán thẳng vào biến) —
  * nay «Nạp thư mục» đọc được như nhau, cùng một đường. Nhận ra theo NỘI DUNG, không theo tên tệp.
  *  loi-da-biet.json        { loi_sap: [{ ma, duong_dan, … }], meta }  → window.__itaQuyTac   (bỏ qua màn đã biết là sập)
  *  gioi-han-o.json         { _nguon: { tep, ban }, o: { <name ô>: [khai báo] }, … } → window.__itaGioiHanO (kiểm ô theo khai báo của app)

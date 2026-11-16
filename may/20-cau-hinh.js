@@ -1,7 +1,7 @@
 /* ============================================================= *
  * 1. CẤU HÌNH MẶC ĐỊNH — sửa bằng ita.dat(...) hoặc trên bảng   *
  * ============================================================= */
-// Hồ sơ dự án: du-an/<dự án>/ho-so.json. Đóng gói sẵn thành window.__itaHoSo (dist/ita-<dự án>.js) hoặc nạp bằng «Nạp thư mục»
+// Hồ sơ dự án: du-an/<dự án>/ho-so.json. Đóng gói sẵn thành window.__itaHoSo (dist/rieng/ita-<dự án>.js) hoặc nạp bằng «Nạp thư mục»
 // (bộ đọc ho-so → apHoSo, bước 13b). Mọi chữ riêng của dự án lấy từ đây. Chưa có hồ sơ: ita.chay không chạy, mọi lệnh ghi bị chặn.
 const DU_AN = Object.assign({}, window.__itaHoSo || {});
 let QUY_CACH = null;   // [13e] quy cách giao diện của dự án (du-an/<tên>/quy-cach.json, bộ đọc quy-cach): ngưỡng + giá trị được phép

@@ -1,4 +1,4 @@
-# Ghép may/*.js (+ gói dự án, nếu có) thành một tệp dán Console: dist/ita.js (chỉ máy kiểm) hoặc dist/ita-<dự án>.js (gói sẵn dự án)
+# Ghép may/*.js (+ gói dự án, nếu có) thành một tệp dán Console: dist/chung/ita.js (chỉ máy kiểm) hoặc dist/rieng/ita-<dự án>.js (gói sẵn dự án)
 # Đóng gói sẵn (bước 7d): du-an/<dự án>/quy-trinh/**/*.md và tc/** (*.csv; *.zip → các tệp .csv bên trong, chỉ giữ cột tool đọc),
 # nén gzip + base64 vào window.__itaGoiSan; lúc khởi động tool giải nén và cho qua bộ đọc như tệp đã nạp.
 # Thư mục du-an/<dự án>/ trống thì vẫn ra tệp chạy được.
@@ -50,7 +50,7 @@ def goi_san(du_an):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--du-an', default='', help='không ghi: chỉ máy kiểm, nạp gói dự án bằng nút «Nạp thư mục»')
-    ap.add_argument('--ra', help='tệp ra; mặc định dist/ita.js hoặc dist/ita-<dự án>.js')
+    ap.add_argument('--ra', help='tệp ra; mặc định dist/chung/ita.js hoặc dist/rieng/ita-<dự án>.js')
     a = ap.parse_args()
     may = sorted((GOC / 'may').glob('*.js'))
     if not may:
@@ -80,8 +80,8 @@ def main():
     if gs:
         dau.append('window.__itaGoiSan = %s;\n' % json.dumps(gs, separators=(',', ':')))
         print('kèm sẵn %d tệp quy trình / TC (nén %d byte)' % (len(gs), sum(len(x['gz']) for x in gs)))
-    ra = pathlib.Path(a.ra) if a.ra else GOC / 'dist' / (('ita-%s.js' % a.du_an) if a.du_an else 'ita.js')
-    ra.parent.mkdir(exist_ok=True)
+    ra = pathlib.Path(a.ra) if a.ra else (GOC / 'dist/rieng' / ('ita-%s.js' % a.du_an) if a.du_an else GOC / 'dist/chung/ita.js')
+    ra.parent.mkdir(parents=True, exist_ok=True)
     ra.write_text(''.join(dau) + ma, encoding='utf-8')
     print('Đã ghi %s (%d byte)' % (ra, ra.stat().st_size))
 

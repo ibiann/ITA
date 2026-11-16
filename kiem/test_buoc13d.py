@@ -1,11 +1,11 @@
 # Kiểm bước 13c/13d (kiểu app openslides) và 13e (quy cách giao diện dự án; gói du-an/pms nhận đúng bộ đọc). Chạy: python3 -I kiem/test_buoc13d.py
 # Máy chủ thử 127.0.0.1 giả hai điểm của OpenSlides mà tool đọc: POST /system/auth/who-am-i/ (trả mã phiên, userId 38 trong JWT)
 # và GET /system/autoupdate?single=1&k=… (trả đúng các khoá được hỏi). Dữ liệu là MẪU THỬ, cùng hình với lab 07/11 (cuộc họp 87, nhóm Chủ tọa).
-# Bản thử = dist/ita.js + một dòng xuất sangHTML ra window.__itaThu. Trang kiem/thu_buoc13d.html chạy ở /87/agenda (thời gian thật, kiem/mo_chrome.mjs).
+# Bản thử = dist/chung/ita.js + một dòng xuất sangHTML ra window.__itaThu. Trang kiem/thu_buoc13d.html chạy ở /87/agenda (thời gian thật, kiem/mo_chrome.mjs).
 import base64, http.server, json, pathlib, subprocess, tempfile, threading, urllib.parse
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-dist = (GOC / 'dist/ita.js').read_text(encoding='utf-8')
+dist = (GOC / 'dist/chung/ita.js').read_text(encoding='utf-8')
 assert dist.rstrip().endswith('})();')
 THU = dist.rstrip()[:-len('})();')] + 'window.__itaThu = { html: sangHTML };\n})();\n'
 TRANG = (GOC / 'kiem/thu_buoc13d.html').read_text(encoding='utf-8')

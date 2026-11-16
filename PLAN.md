@@ -42,7 +42,10 @@ dqtv-kiem-tra/
     ket-qua/       báo cáo các lần chạy
   cong-cu/         script tách 3.26, script đóng gói
   kiem/            kiểm tệp sau khi đóng gói
-  dist/            tệp duy nhất để dán vào Console
+  dist/            tệp để dán vào Console, chia 3 thư mục (từ 16/11):
+    goc/           bản gốc DQTV 3.26.6 (dqtv-kiem-tra-3.26.6.js), chỉ để đối chiếu, không dựng lại
+    chung/         ita.js — bản đang phát triển, dùng chung mọi dự án (nạp dự án bằng «Nạp thư mục»)
+    rieng/         ita-<dự án>.js — bản gói sẵn riêng từng dự án (dqtv, pms)
 ```
 
 Hai tệp đã có trong `du-an/dqtv/`, đều đóng gói kèm vào `dist` (thiếu tệp nào thì bỏ qua, tool vẫn chạy):
@@ -303,3 +306,6 @@ Xong khi: `kiem/test_buoc17.sh` đạt 3 tình huống (thanh trên không có `
 - Bước 19 (16/11, bản 1.4, mã chung): đo thời gian theo mục menu / hồ sơ mẫu (`DO_TG`, `tgMuc` trong `30-loi-kiem.js`): tổng, thời gian chờ trang yên (`settle`) + số lần + lâu nhất + số lần hết hạn + chia theo lý do (còn yêu cầu mạng / đang đọc phản hồi / mạng chưa im / biểu tượng đang tải), thời gian axe. Lưu vào điểm dừng (`doTg`), ra `ketQua.thoi_gian_theo_muc` và bảng «Thời gian theo mục» trong báo cáo HTML. Dựng lại 3 bản dist. Chưa chạy trên trang thật. Sao lưu: `~/Downloads/ITA-1.4-backup-2026-11-16-truoc-do-thoi-gian/`.
   - Đã kiểm: dist cũ = dựng từ mã cũ (trừ dòng giờ đóng gói); bản mới chỉ khác 58 dòng, đúng các chỗ gỡ; `node --check` 2 bản; `kiem/test_buoc14.sh` 5/5, `kiem/test_buoc17.sh` 3/3 (jsdom).
   - CHƯA KIỂM: chạy thật trên PMS; test cần Chrome. `dist/ita-dqtv.js` dựng lại cùng ngày (0 chữ Tampermonkey; mã khác bản cũ đúng 58 dòng như trên; 131 tệp tài liệu / TC đóng kèm giống hệt nội dung, chỉ khác giờ tệp). Bản gốc `dist/dqtv-kiem-tra-3.26.6.js` cũng gỡ (người dùng yêu cầu, 16/11): cùng các chỗ trên + 3 câu nhắc riêng của 3.26.6, khác bản cũ 63 dòng, `node --check` đạt; bản chưa gỡ ở `~/Downloads/dqtv-script-backup-2026-11-16-ban-goc/`. `test_dong_goi.py` so số dòng với bản gốc này nên các hằng `SO_B*` sẽ lệch (vốn đã chưa chạy được).
+- Gộp nhánh (16/11, sau merge 7802fc0): sửa lại bản gộp. (1) `dist/ita.js` còn dấu xung đột ở 5 dòng đầu → lỗi cú pháp khi dán; (2) merge lấy `tabCands` của origin/dev (13/11) làm mất bộ lọc [1.1] (ô số, lịch, phân trang, `trongMenu`) → gộp cả hai: giữ bộ lọc [1.1] + loại phần tử trong `side()` + bỏ link logo/thương hiệu khỏi menu. (3) Chia `dist/` thành `goc/`, `chung/`, `rieng/`; `cong-cu/dong_goi.py` ghi mặc định vào `dist/chung/ita.js` / `dist/rieng/ita-<dự án>.js`; sửa đường dẫn trong test, HUONG-DAN, chú thích và câu báo của `60-bao-cao.js`. Dựng lại 3 bản.
+  - Đã kiểm: `node --check` 4 tệp dist; `kiem/test_buoc14.py` (Chrome) đạt; `test_buoc13d.py` đạt.
+  - Hỏng có sẵn (giống hệt trên 565fbe7 trước merge, không do lần này): `test_buoc5.py` (không có kết quả lần chạy), `test_buoc6.py` (danh sách bộ đọc đã thêm 07, 08), `test_buoc13.py` (hết giờ mở Chrome), `test_dong_goi.py` (cần tệp 3.26 gốc ngoài repo). `test_buoc14.sh`, `test_buoc17.sh` cần jsdom — máy này chưa cài.

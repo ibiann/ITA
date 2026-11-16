@@ -1,6 +1,6 @@
 # Làm gói dự án cho ITA
 
-Mỗi dự án là một thư mục `du-an/<tên>/`. Trên trang của dự án: dán `dist/ita.js` vào Console (MỘT tệp cho mọi dự án), bấm «⇪ Nạp thư mục», chọn thư mục này — chỉ lần đầu: dữ liệu lưu trong trình duyệt theo tên miền, lần sau tự đọc lại. Tool nhận từng tệp theo nội dung, tệp nào không nhận ra thì báo «không nhận ra» và bỏ qua. Từ bản 1.3, nạp thư mục cho ĐÚNG dữ liệu như bản đóng gói `dist/ita-<dự án>.js` (đọc cả TC trong `.zip`, sổ lỗi đã biết, giới hạn ô, trạng thái quy trình); bản đóng gói chỉ còn là cách tiện thêm. Gõ `ita.duLieu()` để xem loại dữ liệu nào đang có / thiếu; báo cáo có mục «Dữ liệu dự án».
+Mỗi dự án là một thư mục `du-an/<tên>/`. Trên trang của dự án: dán `dist/chung/ita.js` vào Console (MỘT tệp cho mọi dự án), bấm «⇪ Nạp thư mục», chọn thư mục này — chỉ lần đầu: dữ liệu lưu trong trình duyệt theo tên miền, lần sau tự đọc lại. Tool nhận từng tệp theo nội dung, tệp nào không nhận ra thì báo «không nhận ra» và bỏ qua. Từ bản 1.3, nạp thư mục cho ĐÚNG dữ liệu như bản đóng gói `dist/rieng/ita-<dự án>.js` (đọc cả TC trong `.zip`, sổ lỗi đã biết, giới hạn ô, trạng thái quy trình); bản đóng gói chỉ còn là cách tiện thêm. Gõ `ita.duLieu()` để xem loại dữ liệu nào đang có / thiếu; báo cáo có mục «Dữ liệu dự án».
 
 | Tệp | Bắt buộc | Có thì tool chấm thêm |
 |---|---|---|
@@ -82,4 +82,4 @@ Bắt buộc mỗi mục: `ma`, `duong_dan` (bắt đầu bằng `/`). `nhan_cha
 
 ## Thử gói trước khi dùng thật
 
-Trên môi trường kiểm thử: dán `dist/ita.js`, «⇪ Nạp thư mục», xem Console liệt kê tệp đã nhận và tệp «không nhận ra». Gõ `ita.cauHinh().tenMienDuocChay`: phải ra đúng tên miền trong hồ sơ.
+Trên môi trường kiểm thử: dán `dist/chung/ita.js`, «⇪ Nạp thư mục», xem Console liệt kê tệp đã nhận và tệp «không nhận ra». Gõ `ita.cauHinh().tenMienDuocChay`: phải ra đúng tên miền trong hồ sơ.

@@ -1628,7 +1628,9 @@ async function itaAudit(over, trangThaiTiep) {
     m.querySelectorAll('[class]').forEach(c => { if (TABCLS.test(cls(c))) c.querySelectorAll(':scope > a, :scope > button, :scope > [role=button], :scope > li > a, :scope > li > button, :scope > div > a, :scope > div > button').forEach(e => set.add(e)); });
     m.querySelectorAll('a[href]').forEach(a => { let u; try { u = new URL(a.href, location.href); } catch (e) { return; } if (u.origin !== location.origin || a.closest('table,[role=grid],[role=row],[role=rowgroup]') || laTuyenMenu(u)) return; if ((u.pathname === location.pathname && u.search !== location.search) || u.pathname.startsWith(location.pathname.replace(/\/$/, '') + '/')) set.add(a); });
     m.querySelectorAll('button').forEach(b => { if (/\s\d[\d.]*$/.test(txt(b)) && b.parentElement.querySelectorAll(':scope > button').length >= 2) set.add(b); });
-    return [...set].filter(e => vis(e) && !(nav && nav.contains(e)) && !inDialog(e) && !e.closest('table,thead,[role=grid]'));
+    // [1.1] không phải tab: ô chỉ có số (ô lịch, số trang) và phần tử nằm trong lịch / phân trang
+    return [...set].filter(e => vis(e) && !(nav && nav.contains(e)) && !inDialog(e) && !trongMenu(e) && !e.closest('table,thead,[role=grid]') && !/^\s*\d{1,4}\s*$/.test(txt(e))
+      && !e.closest('[class*=calendar],[class*=Calendar],[class*=datepicker],[class*=date-picker],[class*=pagination],[class*=Pagination],[class*=paginator],[class*=pager]'));
   }
   // [1.1] link trỏ tới đúng đường dẫn của một mục menu (thẻ «điều hướng nhanh» trên trang chủ…) không phải tab: vòng menu sẽ ghé
   // [1.3] so CẢ đường dẫn + tham số: link có bộ lọc (/members?status=…) là màn khác mục menu (/members) — vẫn là tab (DQTV «Xem danh sách»)

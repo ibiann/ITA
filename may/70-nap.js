@@ -142,7 +142,7 @@ async function apDungNap() {
   const goi = await docGoiSan(), loaiNap = new Set(ds.map(t => t.bo_doc));
   for (const t of goi) { const bd = boDocCua(t.ten, t.chu); if (bd && !loaiNap.has(bd.ten)) ds.push(Object.assign({ bo_doc: bd.ten }, t)); }
   NAP_DA_DUNG = []; DM_V7 = null; DO_PHU = null; QUY_CACH = null; HO_SO_MAU = null;
-  // [1.1] hồ sơ mẫu đóng gói sẵn (dist/ita-<dự án>.js); tệp ho-so-mau.json người dùng tự nạp sẽ thay bên dưới
+  // [1.1] hồ sơ mẫu đóng gói sẵn (dist/rieng/ita-<dự án>.js); tệp ho-so-mau.json người dùng tự nạp sẽ thay bên dưới
   { const g = window.__itaHoSoMau; if (g && g.loai === 'ho-so-mau' && Array.isArray(g.ho_so)) HO_SO_MAU = g.ho_so.filter(h => h && h.ma && /^\//.test(String(h.duong_dan || ''))).map(h => Object.assign({ quy_trinh: '', chang: '', nhan_chang: '', vai: '', tai_khoan: '' }, h)); }
   TT_QT_CO = !!window.__itaTrangThaiQT;
   if (!ds.length) return;   // chưa nạp gì: giữ nguyên (đặc tả dán Console, nếu có)

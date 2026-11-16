@@ -132,7 +132,7 @@ window.ita = {
     if (CO.dangChay) { console.warn('[ita] Đang chạy rồi, không cần bấm lại. Muốn chạy lại thì bấm "■ Dừng" (hoặc gõ ita.dung()) trước.'); return; }
     // [1.1] chưa có hồ sơ: hỏi một lần «kiểm giao diện thuần trên <tên miền>?» → hồ sơ tạm (khoá đúng tên miền này, mọi POST bị chặn)
     if (!window.__itaHoSo && window.confirm('[ITA] Chưa có hồ sơ dự án.\n\nKiểm GIAO DIỆN THUẦN trên «' + location.hostname + '»?\n— Chỉ dùng trên môi trường kiểm thử.\n— Mọi lệnh POST bị chặn; phần quy trình / UC / TC ghi «Chưa kiểm».')) { apHoSo(taoHoSoTam()); nk('hồ sơ tạm', location.hostname); }
-    if (!window.__itaHoSo) { const t = 'Không chạy: chưa có hồ sơ dự án. Bấm «⇪ Nạp thư mục» và chọn du-an/<tên dự án>/ (có ho-so.json), hoặc dán bản đóng gói sẵn dist/ita-<dự án>.js.'; console.warn('[ita] ' + t); CO.tienDo = t; capNhatBang(); return; }   // [13b]
+    if (!window.__itaHoSo) { const t = 'Không chạy: chưa có hồ sơ dự án. Bấm «⇪ Nạp thư mục» và chọn du-an/<tên dự án>/ (có ho-so.json), hoặc dán bản đóng gói sẵn dist/rieng/ita-<dự án>.js.'; console.warn('[ita] ' + t); CO.tienDo = t; capNhatBang(); return; }   // [13b]
     if (CO.bo && !(over && over.__bo)) over = Object.assign({}, over || {}, { __bo: CO.bo });   // [1.2] bộ đã chọn đi theo lần chạy (cả khi chạy tiếp sau tải lại)
     TK = taiKhoan();
     MAT_PHIEN = ''; APP_SAP = '';
