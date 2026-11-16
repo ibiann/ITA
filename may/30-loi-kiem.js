@@ -1658,7 +1658,7 @@ async function itaAudit(over, trangThaiTiep) {
     const seen = new Set(); let id = menuItems.length;
     for (const e of cand) {
       const t = txt(e).replace(/\s\d+$/, '');
-      if (e.closest('header,[class*=logo],[class*=brand]')) continue;
+      { const lg = e.closest('header,[class*=logo],[class*=brand]'); if (lg && lg !== goc && goc.contains(lg)) continue; }   // logo / header NẰM TRONG menu; thanh trên (17a) chính là header nên không bị bỏ
       if (!t || t.length > 60 || NAV_SKIP.test(t) || e.getAttribute('aria-expanded') !== null) continue;
       if (C.chiMenu && !C.chiMenu.test(t)) continue; if (C.boQuaMenu && C.boQuaMenu.test(t)) continue;
       // tên nhóm cha gần nhất (nếu menu có nhóm)

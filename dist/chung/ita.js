@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T08:27:17+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T09:16:18+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
 if (!window.axe) {
 /*! axe v4.14.0
  * Copyright (c) 2015 - 2026 Deque Systems, Inc.
@@ -2186,7 +2186,7 @@ async function itaAudit(over, trangThaiTiep) {
     const seen = new Set(); let id = menuItems.length;
     for (const e of cand) {
       const t = txt(e).replace(/\s\d+$/, '');
-      if (e.closest('header,[class*=logo],[class*=brand]')) continue;
+      { const lg = e.closest('header,[class*=logo],[class*=brand]'); if (lg && lg !== goc && goc.contains(lg)) continue; }   // logo / header NẰM TRONG menu; thanh trên (17a) chính là header nên không bị bỏ
       if (!t || t.length > 60 || NAV_SKIP.test(t) || e.getAttribute('aria-expanded') !== null) continue;
       if (C.chiMenu && !C.chiMenu.test(t)) continue; if (C.boQuaMenu && C.boQuaMenu.test(t)) continue;
       // tên nhóm cha gần nhất (nếu menu có nhóm)
