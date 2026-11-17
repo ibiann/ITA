@@ -1,12 +1,12 @@
 /* ============================================================= *
  * ĐẶC TẢ QUY TRÌNH (UC) — nạp vào công cụ, đối chiếu ngay khi chạy
- *   Bảng đặc tả theo mẫu MauDacTa_QuyTrinh_DQTV (YAML → JSON).
+ *   Bảng đặc tả theo mẫu đặc tả quy trình của dự án (YAML → JSON).
  *   ita.napDacTa(...) lưu vào trình duyệt; mỗi lần chạy xong công cụ
  *   tự đối chiếu và thêm mục "Đối chiếu đặc tả quy trình" vào báo cáo.
  * ============================================================= */
 /* <<DACTA-BAT-DAU>> */
 const KEY_DACTA = 'ita.dacta.v1';
-// Màn mọi vai đều thấy (DQTV: «Việc của tôi»), tiền tố tên tài khoản, mã yêu cầu sửa: lấy từ hồ sơ dự án
+// Màn mọi vai đều thấy (vd «Việc của tôi»), tiền tố tên tài khoản, mã yêu cầu sửa: lấy từ hồ sơ dự án
 let VC = {}, TIEN_TO_TK = null;
 function apHoSoDoiChieu() { VC = DU_AN.man_viec_chung || {}; TIEN_TO_TK = DU_AN.tien_to_tai_khoan ? new RegExp(DU_AN.tien_to_tai_khoan) : null; }
 apHoSoDoiChieu();

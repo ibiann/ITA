@@ -213,12 +213,6 @@ window.ita = {
     console.table(ds.map(x => ({ man: x.man, duong_dan: x.duong_dan, loi_da_biet: x.loi_da_biet ? x.loi_da_biet.ma + ' ' + (x.loi_da_biet.yc || '') : 'MỚI — cần báo', vai: x.vai_tren_giao_dien, luc: x.luc })));
     return ds;
   },
-  // [S4] xoá dữ liệu lưu của các bản trước (v3, v3.6, 3.17–3.23) để trả chỗ cho trình duyệt; không đụng dữ liệu v3.24
-  donBoNho() {
-    const bo = []; for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && KHOA_CU.test(k)) { bo.push(k); try { localStorage.removeItem(k); } catch (e) {} } }
-    let dung = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); dung += (k.length + (localStorage.getItem(k) || '').length); }
-    console.info('[ita] Đã xoá ' + bo.length + ' khóa cũ. localStorage còn dùng khoảng ' + Math.round(dung / 1024) + ' nghìn ký tự.'); return bo;
-  },
   vai() {
     const d = cfgHienTai().dacTa; if (!d) { console.warn('[ita] Chưa khai dacTa. Chưa kiểm được vai.'); return ''; }
     let v = ''; if (d.vaiChon) { const e = document.querySelector(d.vaiChon); if (e) v = (e.innerText || '').trim(); }

@@ -83,8 +83,7 @@ const MAC_DINH = {
   /* --- kỹ thuật --- */
   waitMax: 10000, idle: 600, slowMs: 3000,
   // lệnh POST được để đi: lấy từ hồ sơ dự án (post_cho_qua), không cấu hình được ở đây (xem 10-la-chan: postDuocDi)
-  // [S1] chữ của màn báo lỗi do ứng dụng hiện khi một màn sập (app DQTV: "Màn hình này gặp lỗi và đã dừng lại…")
-  // [1.2] lõi chỉ giữ mẫu chung (chữ mặc định của React Router khi app sập); chữ riêng của app khai ở hồ sơ dự án: mau_man_loi (DQTV đã chuyển sang)
+  // chữ của màn báo lỗi khi một màn sập: lõi chỉ giữ mẫu chung (chữ mặc định của React Router); chữ riêng của app khai ở hồ sơ dự án: mau_man_loi
   mauManLoi: /Unexpected Application Error/i,
   thuLaiLoiDaBiet: false,      // [S16] true: vẫn mở màn đã biết là sập (khi Bên B báo đã sửa)
   dungKhiMatPhien: true,        // gặp mã 401 (mất phiên) thì dừng gọn, lưu điểm dừng, ghi lý do
@@ -132,8 +131,6 @@ function cheChuoi(s) {
 
 const PHIEN_BAN = '1.4';
 const KEY_CFG = 'ita.cfg.v1', KEY_CKPT = 'ita.ckpt.v1', KEY_LAST = 'ita.last.v1', KEY_TAY = 'ita.truongtay.v1', KEY_SAP = 'ita.sap.v1';
-// khóa của công cụ cũ «DQTV kiểm tra» (mọi bản v3 … 3.26.6 đều bắt đầu bằng 'dqtv.'): ita.donBoNho() xoá để trả chỗ cho trình duyệt
-const KHOA_CU = /^dqtv\./;
 
 /* --- Nhận ra tài khoản đang đăng nhập, để điểm dừng và kết quả TÁCH RIÊNG theo tài khoản ---
  * Lý do: đổi tài khoản mà dùng chung một điểm dừng thì lần chạy mới bỏ qua các mục "đã xong"
@@ -142,7 +139,7 @@ let TK = '';
 function taiKhoan() {
   try {
     const d = (cfgHienTai().dacTa) || {};
-    const chon = d.vaiChon || DU_AN.chon_tai_khoan;   // [13d] hồ sơ dự án khai chỗ hiện tên tài khoản (PMS: os-account-button)
+    const chon = d.vaiChon || DU_AN.chon_tai_khoan;   // [13d] hồ sơ dự án khai chỗ hiện tên tài khoản
     if (chon) { const e = document.querySelector(chon); if (e && (e.innerText || '').trim()) return e.innerText.trim().replace(/\s+/g, ' ').slice(0, 140); }
     // khối chữ ở góc phải trên cùng (thường là chức vụ + đơn vị người dùng), bỏ ô tìm kiếm và bảng điều khiển
     const W = innerWidth;

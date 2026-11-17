@@ -21,7 +21,7 @@ async function itaAudit(over, trangThaiTiep) {
 
   // Môi trường có được phép ghi không (mức >=2 và origin khớp)
   const host = location.hostname;
-  // bản 3.5: so tên máy chủ CHÍNH XÁC (3.4 dùng "chứa chuỗi": khai 'dqtv' là khớp cả hệ thống thật)
+  // so tên máy chủ CHÍNH XÁC (so «chứa chuỗi» thì khai tên ngắn là khớp cả hệ thống thật)
   // bản 3.26.1: luôn chỉ đọc. Chưa có môi trường kiểm thử riêng; ghi trên site thật là ghi vào dữ liệu thật.
   const choGhiMoiTruong = false;
   const chanGhi = true;
@@ -1642,7 +1642,7 @@ async function itaAudit(over, trangThaiTiep) {
       && !e.closest('[class*=calendar],[class*=Calendar],[class*=datepicker],[class*=date-picker],[class*=pagination],[class*=Pagination],[class*=paginator],[class*=pager]'));
   }
   // [1.1] link trỏ tới đúng đường dẫn của một mục menu (thẻ «điều hướng nhanh» trên trang chủ…) không phải tab: vòng menu sẽ ghé
-  // [1.3] so CẢ đường dẫn + tham số: link có bộ lọc (/members?status=…) là màn khác mục menu (/members) — vẫn là tab (DQTV «Xem danh sách»)
+  // [1.3] so CẢ đường dẫn + tham số: link có bộ lọc (/members?status=…) là màn khác mục menu (/members) — vẫn là tab («Xem danh sách» theo bộ lọc)
   const tuyenGon = x => { try { const u = new URL(x, location.href); return u.pathname.replace(/\/+$/, '') + u.search; } catch (e) { return String(x); } };
   const laTuyenMenu = u => { try { const p = u.pathname.replace(/\/+$/, '') + u.search; return p !== location.pathname.replace(/\/+$/, '') + location.search && menuItems.some(mi => mi.href && tuyenGon(mi.href) === p); } catch (e) { return false; } };
   // [1.1] chữ ký nội dung màn: bấm tab mà ra đúng nội dung một màn đã kiểm (thẻ số liệu và tab lọc cùng một bộ lọc) → không kiểm lại
@@ -1794,7 +1794,7 @@ async function itaAudit(over, trangThaiTiep) {
       if ((e.matches('a[href]') ? SKIP_DAU.test(t) : SKIP.test(t)) && !laTabTT) { skipped.push({ man: label, chu: t, ly_do: 'nút/link hành động' }); continue; }   // [1.1] link: chỉ xét chữ đầu
       const href = e.getAttribute('href'); if (href) { try { const u = new URL(href, location.href); if (VISITED.has(u.pathname + u.search)) continue;
         // [1.4] link cùng chữ, khác đường dẫn (mỗi thẻ / mỗi dòng một «Show logs» → /service/<tên>/logs) là danh sách hồ sơ, không phải tab: chỉ mở link đầu.
-        // Cùng đường dẫn, khác tham số lọc (DQTV «Xem danh sách» ?status=…) vẫn là tab riêng.
+        // Cùng đường dẫn, khác tham số lọc («Xem danh sách» ?status=…) vẫn là tab riêng.
         const p0 = chuLink.get(t); if (p0 !== undefined && p0 !== u.pathname) { skipped.push({ man: label, chu: t, ly_do: 'link lặp theo từng mục (cùng chữ, khác đường dẫn): chỉ mở mục đầu' }); continue; }
         chuLink.set(t, u.pathname); } catch (x) {} }
       if (e.getAttribute('aria-selected') === 'true' || e.getAttribute('aria-pressed') === 'true' || e.getAttribute('aria-current')) continue;

@@ -14,15 +14,14 @@ if (!window.__itaPhimTat) {
 addEventListener('pagehide', () => { window.__itaDangRoi = true; });
 addEventListener('beforeunload', () => { window.__itaDangRoi = true; });
 
-// Tệp đóng gói sẵn đặc tả (dqtv-kiem-tra-dacta.js) đặt window.__itaDacTaNap trước phần công cụ → nạp luôn
-if (window.__itaDacTaNap) { try { napDacTaVao.chiBoNho = true; try { localStorage.removeItem('dqtv.dacta.v1'); localStorage.removeItem(KEY_DACTA); } catch (e) {} const ds = napDacTaVao(window.__itaDacTaNap, true); console.info('[ita] Đã nạp đặc tả đóng gói sẵn: ' + gonMaDT(ds.map(maQT)) + (napDacTaVao.noiLuu === 'bo_nho' ? ' (bộ lớn, chỉ giữ trong trang này: tải lại trang thì dán lại tệp)' : '') + '. Xem đủ: ita.xemDacTa(). Bấm "▶ Chạy": cùng một lần chạy vừa kiểm giao diện vừa đối chiếu đặc tả.'); } catch (e) { console.warn('[ita] Không nạp được đặc tả đóng gói sẵn: ' + e.message); } delete window.__itaDacTaNap; }
+// Bản đóng gói riêng của dự án đặt window.__itaDacTaNap trước phần công cụ → nạp luôn
+if (window.__itaDacTaNap) { try { napDacTaVao.chiBoNho = true; try { localStorage.removeItem(KEY_DACTA); } catch (e) {} const ds = napDacTaVao(window.__itaDacTaNap, true); console.info('[ita] Đã nạp đặc tả đóng gói sẵn: ' + gonMaDT(ds.map(maQT)) + (napDacTaVao.noiLuu === 'bo_nho' ? ' (bộ lớn, chỉ giữ trong trang này: tải lại trang thì dán lại tệp)' : '') + '. Xem đủ: ita.xemDacTa(). Bấm "▶ Chạy": cùng một lần chạy vừa kiểm giao diện vừa đối chiếu đặc tả.'); } catch (e) { console.warn('[ita] Không nạp được đặc tả đóng gói sẵn: ' + e.message); } delete window.__itaDacTaNap; }
 
 // Dán lại lần nữa: gỡ bảng cũ để không bị hai bảng
 // chờ trang có thân rồi mới vẽ bảng / chạy tiếp
 function khoiDong() {
 const cu = document.getElementById('ita-panel-host'); if (cu) cu.remove();
 moBang();
-try { let n = 0, c = 0; for (let j = 0; j < localStorage.length; j++) { const k = localStorage.key(j); if (k && KHOA_CU.test(k)) { n++; c += (localStorage.getItem(k) || '').length; } } if (n) console.warn('[ita] Còn ' + n + ' khóa lưu của bản cũ (~' + Math.round(c / 1024) + ' nghìn ký tự) chiếm chỗ trình duyệt. Xuất báo cáo cũ nếu cần rồi gõ ita.donBoNho() để xoá.'); } catch (e) {}
 console.info('[ita] Đã nạp bản ' + PHIEN_BAN + ' (dán Console; lá chắn ' + (typeof LC !== 'undefined' && LC && LC.som ? 'có từ đầu trang' : 'cài lúc dán') + '). Bảng ở góc phải trên (Alt+Shift+D để ẩn/hiện). Hoặc gõ ita.chay()');
 // Trang tự tải lại giữa lúc đang chạy (ứng dụng chuyển trang cứng, hết phiên…) → chờ trang vẽ xong rồi chạy tiếp
 // Chỉ chạy tiếp khi ĐÚNG tài khoản đã bắt đầu lần chạy; đổi tài khoản thì không tự chạy.
