@@ -202,7 +202,8 @@ function jsLiteral(o, ind = '') {
 // Tải tệp
 function taiTep(ten, noiDung, kieu) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([noiDung], { type: kieu })); a.download = ten;
-  (document.body || document.documentElement).appendChild(a); a.click(); a.remove();
+  // không gắn link vào trang: app nghe click ở document (Grafana) sẽ bắt link «blob:…» và chuyển trang thay vì tải
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
 }
 function sangCSV(kq) {
   const rows = kq.van_de || []; const cols = ['tab', 'url', 'ket_luan', 'can_cu', 'du_lieu_nhay_cam', 'api_loi', 'js_loi', 'quy_trinh_loi', 'quy_trinh_trang_thai', 'rong_nhung_api_loi', 'gia_loi_doc', 'o_khong_nhan', 'tieu_de_bi_cat', 'chu_la', 'phan_tram_vo_ly', 'so_dong_vuot_tong', 'van_dang_tai', 'tran_ngang', 'chan_ghi', 'nghi_ngo_so_lech',
