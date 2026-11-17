@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-16T11:06:09+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-17T04:23:21+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
 if (!window.axe) {
 /*! axe v4.14.0
  * Copyright (c) 2015 - 2026 Deque Systems, Inc.
@@ -2327,7 +2327,7 @@ async function itaAudit(over, trangThaiTiep) {
 
   /* ---------- duyệt tab nhiều tầng ---------- */
   async function explore(mid, path, label, depth, known) {
-    const here = tabCands(); const keys = [];
+    const here = tabCands(); const keys = [], chuLink = new Map();   // chữ link → đường dẫn đầu tiên ở tầng này
     for (const e of here) {
       const k = keyOf(e), t = txt(e);
       if (known.has(k)) continue; known.add(k);
@@ -2337,7 +2337,11 @@ async function itaAudit(over, trangThaiTiep) {
       if (NAV_SKIP.test(t)) { skipped.push({ man: label, chu: t, ly_do: 'đăng xuất' }); continue; }
       if (duongHanhDong(e)) { skipped.push({ man: label, chu: t, ly_do: 'đường dẫn hành động' }); continue; }
       if ((e.matches('a[href]') ? SKIP_DAU.test(t) : SKIP.test(t)) && !laTabTT) { skipped.push({ man: label, chu: t, ly_do: 'nút/link hành động' }); continue; }   // [1.1] link: chỉ xét chữ đầu
-      const href = e.getAttribute('href'); if (href) { try { const u = new URL(href, location.href); if (VISITED.has(u.pathname + u.search)) continue; } catch (x) {} }
+      const href = e.getAttribute('href'); if (href) { try { const u = new URL(href, location.href); if (VISITED.has(u.pathname + u.search)) continue;
+        // [1.4] link cùng chữ, khác đường dẫn (mỗi thẻ / mỗi dòng một «Show logs» → /service/<tên>/logs) là danh sách hồ sơ, không phải tab: chỉ mở link đầu.
+        // Cùng đường dẫn, khác tham số lọc (DQTV «Xem danh sách» ?status=…) vẫn là tab riêng.
+        const p0 = chuLink.get(t); if (p0 !== undefined && p0 !== u.pathname) { skipped.push({ man: label, chu: t, ly_do: 'link lặp theo từng mục (cùng chữ, khác đường dẫn): chỉ mở mục đầu' }); continue; }
+        chuLink.set(t, u.pathname); } catch (x) {} }
       if (e.getAttribute('aria-selected') === 'true' || e.getAttribute('aria-pressed') === 'true' || e.getAttribute('aria-current')) continue;
       keys.push(k);
     }
