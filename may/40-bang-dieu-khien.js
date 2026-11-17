@@ -202,7 +202,7 @@ function jsLiteral(o, ind = '') {
 // Tải tệp
 function taiTep(ten, noiDung, kieu) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([noiDung], { type: kieu })); a.download = ten;
-  // không gắn link vào trang: app nghe click ở document (Grafana) sẽ bắt link «blob:…» và chuyển trang thay vì tải
+  // không gắn link vào trang: app nào nghe click ở document để tự chuyển trang sẽ bắt link «blob:…» và chuyển trang thay vì tải
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
 }
 function sangCSV(kq) {

@@ -1,5 +1,5 @@
-# Nút tải báo cáo không được để app «cướp» cú bấm link (Grafana: nghe click ở document, link có «://» thì
-# window.location.href = href → trang nhảy sang blob:, không tải về). Link tải không gắn vào trang thì cú bấm không tới document.
+# Nút tải báo cáo không được để app «cướp» cú bấm link (kiểu app nghe click ở document, link có «://» thì
+# gán window.location.href = href → trang nhảy sang blob:, không tải về). Link tải không gắn vào trang thì cú bấm không tới document.
 # Chạy: python3 -I kiem/test_tai_tep.py   (cần google-chrome)
 import html, json, pathlib, re, socket, subprocess, sys, tempfile, time
 

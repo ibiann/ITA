@@ -1,5 +1,5 @@
-# Link lặp theo từng mục (thẻ dịch vụ, mỗi thẻ một nút «Show logs» trỏ /…/service/<tên>/logs) là danh sách hồ sơ, không phải tab:
-#  - chỉ mở link đầu, các link cùng chữ khác đường dẫn ghi vào «bỏ qua»   (Grafana: 24/40 màn là «Logs › Show logs»)
+# Link lặp theo từng mục (danh sách dạng thẻ, mỗi thẻ một nút cùng chữ trỏ /…/<mã mục>/…) là danh sách hồ sơ, không phải tab:
+#  - chỉ mở link đầu, các link cùng chữ khác đường dẫn ghi vào «bỏ qua»   (kiểu danh sách xếp thành thẻ, không phải bảng)
 #  - link cùng chữ chỉ khác tham số lọc (?status=…) vẫn là tab riêng     (DQTV «Xem danh sách»)
 # Chạy: python3 -I kiem/test_link_lap.py   (cần google-chrome)
 import html, json, pathlib, re, socket, subprocess, sys, tempfile, time

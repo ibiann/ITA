@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-17T04:37:04+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-17T04:39:39+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
 if (!window.axe) {
 /*! axe v4.14.0
  * Copyright (c) 2015 - 2026 Deque Systems, Inc.
@@ -2332,7 +2332,7 @@ async function itaAudit(over, trangThaiTiep) {
       if (duongHanhDong(e)) { skipped.push({ man: label, chu: t, ly_do: 'đường dẫn hành động' }); continue; }
       if ((e.matches('a[href]') ? SKIP_DAU.test(t) : SKIP.test(t)) && !laTabTT) { skipped.push({ man: label, chu: t, ly_do: 'nút/link hành động' }); continue; }   // [1.1] link: chỉ xét chữ đầu
       const href = e.getAttribute('href'); if (href) { try { const u = new URL(href, location.href); if (VISITED.has(u.pathname + u.search)) continue;
-        // [1.4] link cùng chữ, khác đường dẫn (mỗi thẻ / mỗi dòng một «Show logs» → /service/<tên>/logs) là danh sách hồ sơ, không phải tab: chỉ mở link đầu.
+        // [1.4] link cùng chữ, khác đường dẫn (mỗi thẻ / mỗi dòng một nút cùng chữ → /…/<mã mục>/…) là danh sách hồ sơ, không phải tab: chỉ mở link đầu.
         // Cùng đường dẫn, khác tham số lọc («Xem danh sách» ?status=…) vẫn là tab riêng.
         const p0 = chuLink.get(t); if (p0 !== undefined && p0 !== u.pathname) { skipped.push({ man: label, chu: t, ly_do: 'link lặp theo từng mục (cùng chữ, khác đường dẫn): chỉ mở mục đầu' }); continue; }
         chuLink.set(t, u.pathname); } catch (x) {} }
@@ -3161,7 +3161,7 @@ function jsLiteral(o, ind = '') {
 // Tải tệp
 function taiTep(ten, noiDung, kieu) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([noiDung], { type: kieu })); a.download = ten;
-  // không gắn link vào trang: app nghe click ở document (Grafana) sẽ bắt link «blob:…» và chuyển trang thay vì tải
+  // không gắn link vào trang: app nào nghe click ở document để tự chuyển trang sẽ bắt link «blob:…» và chuyển trang thay vì tải
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
 }
 function sangCSV(kq) {

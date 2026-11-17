@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-17T04:37:07+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-17T04:39:42+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
 window.__itaHoSo = {"ten":"LANCS PMS","ten_mien":"pms.lab.linksafe.vn","kieu_app":"openslides","chon_tai_khoan":"os-account-button span[title]","post_cho_qua":["/system/auth/login","/system/auth/who-am-i","/system/presenter/handle_request"],"cuoc_hop_mau":87,"tai_khoan":[{"dang_nhap":"ita.thuky","ten_hien":"ITA Thư ký","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Quản trị viên"},{"dang_nhap":"ita.chutoa","ten_hien":"ITA Chủ tọa","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Chủ tọa"},{"dang_nhap":"ita.daibieu","ten_hien":"ITA Đại biểu","vai":"DAI_BIEU","nhom_app":"Đại biểu"},{"dang_nhap":"ita.khongnhom","ten_hien":"ITA Không nhóm","vai":"KHONG_QUYEN","nhom_app":"Mặc định"},{"dang_nhap":"ita.qttochuc","ten_hien":"ITA Quản trị tổ chức","vai":"QUAN_TRI_TO_CHUC","nhom_app":""},{"dang_nhap":"ita.qluyban","ten_hien":"ITA Quản lý ủy ban","vai":"QUAN_LY_UY_BAN","nhom_app":""}],"_nguon":{"ten_mien":"lab của dự án (DOCS/80-setup-3-cuoc-hop-demo-khach-hang-2026-07-12.md)","kieu_app":"OpenSlides 4: dữ liệu đi qua SharedWorker (openslides-client/client/src/app/openslides-main-module/services/shared-worker.service.ts:108); ITA đọc nhóm + quyền qua who-am-i + autoupdate (35-kieu-app.js)","chon_tai_khoan":"openslides-client/client/src/app/site/modules/global-headbar/components/account-button/account-button.component.html: span đầu tiên có title = tên ngắn của tài khoản, span sau = nhóm","post_cho_qua":"đọc mà dùng POST: đăng nhập, who-am-i (auth-service public-controller.ts:41), presenter (openslides-backend/openslides_backend/presenter/: không presenter nào ghi dữ liệu, rà 07/11/2026). Mọi lệnh ghi đi qua /system/action/handle_request, /system/vote, /system/media, dịch vụ LPM (/api/gateway…, bóc băng, Drive) → bị chặn khi chạy. Lưu ý: lab có thể chạy bản backend khác repo (lab tạo 6 nhóm khi tạo cuộc họp, repo tạo 4)","cuoc_hop_mau":"cuộc họp «ITA – cuộc họp mẫu» dựng 07/11/2026 cho ITA: 3 mục chương trình, 2 kiến nghị, 1 bình bầu","tai_khoan":"tài khoản ita.* dựng 07/11/2026 (id 38–43). Vai theo hướng dẫn sử dụng (DOCS/ui-ux/huong-dan-su-dung/HUONG-DAN-SU-DUNG-LANCS-PMS.md mục 2, Phụ lục A): «Chủ tọa / Quản trị cuộc họp» gần như mọi quyền (người dùng chốt 07/11) — gán cho cả ita.thuky (nhóm Quản trị viên) và ita.chutoa (nhóm Chủ tọa, 12 quyền) để thấy chỗ nhóm Chủ tọa của app thiếu so với tài liệu. Không ghi mật khẩu."}};
 if (!window.axe) {
 /*! axe v4.14.0
@@ -2333,7 +2333,7 @@ async function itaAudit(over, trangThaiTiep) {
       if (duongHanhDong(e)) { skipped.push({ man: label, chu: t, ly_do: 'đường dẫn hành động' }); continue; }
       if ((e.matches('a[href]') ? SKIP_DAU.test(t) : SKIP.test(t)) && !laTabTT) { skipped.push({ man: label, chu: t, ly_do: 'nút/link hành động' }); continue; }   // [1.1] link: chỉ xét chữ đầu
       const href = e.getAttribute('href'); if (href) { try { const u = new URL(href, location.href); if (VISITED.has(u.pathname + u.search)) continue;
-        // [1.4] link cùng chữ, khác đường dẫn (mỗi thẻ / mỗi dòng một «Show logs» → /service/<tên>/logs) là danh sách hồ sơ, không phải tab: chỉ mở link đầu.
+        // [1.4] link cùng chữ, khác đường dẫn (mỗi thẻ / mỗi dòng một nút cùng chữ → /…/<mã mục>/…) là danh sách hồ sơ, không phải tab: chỉ mở link đầu.
         // Cùng đường dẫn, khác tham số lọc («Xem danh sách» ?status=…) vẫn là tab riêng.
         const p0 = chuLink.get(t); if (p0 !== undefined && p0 !== u.pathname) { skipped.push({ man: label, chu: t, ly_do: 'link lặp theo từng mục (cùng chữ, khác đường dẫn): chỉ mở mục đầu' }); continue; }
         chuLink.set(t, u.pathname); } catch (x) {} }
@@ -3162,7 +3162,7 @@ function jsLiteral(o, ind = '') {
 // Tải tệp
 function taiTep(ten, noiDung, kieu) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([noiDung], { type: kieu })); a.download = ten;
-  // không gắn link vào trang: app nghe click ở document (Grafana) sẽ bắt link «blob:…» và chuyển trang thay vì tải
+  // không gắn link vào trang: app nào nghe click ở document để tự chuyển trang sẽ bắt link «blob:…» và chuyển trang thay vì tải
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
 }
 function sangCSV(kq) {
