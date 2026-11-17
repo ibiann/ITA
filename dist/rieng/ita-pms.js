@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-17T04:39:42+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.4, đóng gói 2026-11-17T04:53:43+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
 window.__itaHoSo = {"ten":"LANCS PMS","ten_mien":"pms.lab.linksafe.vn","kieu_app":"openslides","chon_tai_khoan":"os-account-button span[title]","post_cho_qua":["/system/auth/login","/system/auth/who-am-i","/system/presenter/handle_request"],"cuoc_hop_mau":87,"tai_khoan":[{"dang_nhap":"ita.thuky","ten_hien":"ITA Thư ký","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Quản trị viên"},{"dang_nhap":"ita.chutoa","ten_hien":"ITA Chủ tọa","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Chủ tọa"},{"dang_nhap":"ita.daibieu","ten_hien":"ITA Đại biểu","vai":"DAI_BIEU","nhom_app":"Đại biểu"},{"dang_nhap":"ita.khongnhom","ten_hien":"ITA Không nhóm","vai":"KHONG_QUYEN","nhom_app":"Mặc định"},{"dang_nhap":"ita.qttochuc","ten_hien":"ITA Quản trị tổ chức","vai":"QUAN_TRI_TO_CHUC","nhom_app":""},{"dang_nhap":"ita.qluyban","ten_hien":"ITA Quản lý ủy ban","vai":"QUAN_LY_UY_BAN","nhom_app":""}],"_nguon":{"ten_mien":"lab của dự án (DOCS/80-setup-3-cuoc-hop-demo-khach-hang-2026-07-12.md)","kieu_app":"OpenSlides 4: dữ liệu đi qua SharedWorker (openslides-client/client/src/app/openslides-main-module/services/shared-worker.service.ts:108); ITA đọc nhóm + quyền qua who-am-i + autoupdate (35-kieu-app.js)","chon_tai_khoan":"openslides-client/client/src/app/site/modules/global-headbar/components/account-button/account-button.component.html: span đầu tiên có title = tên ngắn của tài khoản, span sau = nhóm","post_cho_qua":"đọc mà dùng POST: đăng nhập, who-am-i (auth-service public-controller.ts:41), presenter (openslides-backend/openslides_backend/presenter/: không presenter nào ghi dữ liệu, rà 07/11/2026). Mọi lệnh ghi đi qua /system/action/handle_request, /system/vote, /system/media, dịch vụ LPM (/api/gateway…, bóc băng, Drive) → bị chặn khi chạy. Lưu ý: lab có thể chạy bản backend khác repo (lab tạo 6 nhóm khi tạo cuộc họp, repo tạo 4)","cuoc_hop_mau":"cuộc họp «ITA – cuộc họp mẫu» dựng 07/11/2026 cho ITA: 3 mục chương trình, 2 kiến nghị, 1 bình bầu","tai_khoan":"tài khoản ita.* dựng 07/11/2026 (id 38–43). Vai theo hướng dẫn sử dụng (DOCS/ui-ux/huong-dan-su-dung/HUONG-DAN-SU-DUNG-LANCS-PMS.md mục 2, Phụ lục A): «Chủ tọa / Quản trị cuộc họp» gần như mọi quyền (người dùng chốt 07/11) — gán cho cả ita.thuky (nhóm Quản trị viên) và ita.chutoa (nhóm Chủ tọa, 12 quyền) để thấy chỗ nhóm Chủ tọa của app thiếu so với tài liệu. Không ghi mật khẩu."}};
 if (!window.axe) {
 /*! axe v4.14.0
@@ -2321,8 +2321,19 @@ async function itaAudit(over, trangThaiTiep) {
   async function restore(mid, path) { if (!(await openMenu(mid))) return false; await settle(); for (const k of path) { const e = findCand(k); if (!e) return false; e.click(); await settle(); } return true; }
 
   /* ---------- duyệt tab nhiều tầng ---------- */
+  // [1.4] danh sách không xếp thành bảng (thẻ, hàng div): nhiều link CÙNG CHỮ trỏ ≥ 2 đường dẫn khác nhau = link mở từng mục.
+  // Trả Map chữ → [link theo thứ tự trên màn]. Cùng đường dẫn, chỉ khác tham số lọc («Xem danh sách» ?status=…) không tính: đó là tab lọc.
+  const nhomLinkMuc = ds => { const m = new Map();
+    for (const a of ds) { if (!a.matches('a[href]')) continue; const t = txt(a); if (!t || t.length > 50) continue;
+      let p; try { const u = new URL(a.getAttribute('href'), location.href); if (u.origin !== location.origin) continue; p = u.pathname.replace(/\/+$/, ''); } catch (e) { continue; }
+      const g = m.get(t) || []; g.push({ a, p }); m.set(t, g); }
+    for (const [t, g] of m) if (new Set(g.map(x => x.p)).size < 2) m.delete(t); else m.set(t, g.map(x => x.a));
+    return m; };
+  // link mở mục đầu của danh sách dạng thẻ: nhóm đông nhất, bỏ link hành động / trong bảng / menu / hộp thoại
+  const linkMucDau = () => { const ds = [...mainEl().querySelectorAll('a[href]')].filter(a => vis(a) && !inDialog(a) && !trongMenu(a) && !a.closest('table,[role=grid]') && !SKIP.test(txt(a)) && !duongHanhDong(a));
+    const g = [...nhomLinkMuc(ds).values()].sort((x, y) => y.length - x.length)[0]; return g ? g[0] : null; };
   async function explore(mid, path, label, depth, known) {
-    const here = tabCands(); const keys = [], chuLink = new Map();   // chữ link → đường dẫn đầu tiên ở tầng này
+    const here = tabCands(); const keys = [], lap = nhomLinkMuc(here), daGhiLap = new Set();
     for (const e of here) {
       const k = keyOf(e), t = txt(e);
       if (known.has(k)) continue; known.add(k);
@@ -2332,11 +2343,9 @@ async function itaAudit(over, trangThaiTiep) {
       if (NAV_SKIP.test(t)) { skipped.push({ man: label, chu: t, ly_do: 'đăng xuất' }); continue; }
       if (duongHanhDong(e)) { skipped.push({ man: label, chu: t, ly_do: 'đường dẫn hành động' }); continue; }
       if ((e.matches('a[href]') ? SKIP_DAU.test(t) : SKIP.test(t)) && !laTabTT) { skipped.push({ man: label, chu: t, ly_do: 'nút/link hành động' }); continue; }   // [1.1] link: chỉ xét chữ đầu
-      const href = e.getAttribute('href'); if (href) { try { const u = new URL(href, location.href); if (VISITED.has(u.pathname + u.search)) continue;
-        // [1.4] link cùng chữ, khác đường dẫn (mỗi thẻ / mỗi dòng một nút cùng chữ → /…/<mã mục>/…) là danh sách hồ sơ, không phải tab: chỉ mở link đầu.
-        // Cùng đường dẫn, khác tham số lọc («Xem danh sách» ?status=…) vẫn là tab riêng.
-        const p0 = chuLink.get(t); if (p0 !== undefined && p0 !== u.pathname) { skipped.push({ man: label, chu: t, ly_do: 'link lặp theo từng mục (cùng chữ, khác đường dẫn): chỉ mở mục đầu' }); continue; }
-        chuLink.set(t, u.pathname); } catch (x) {} }
+      // [1.4] link mở từng mục của danh sách dạng thẻ (mỗi thẻ một nút cùng chữ → /…/<mã mục>/…): không phải tab; mục đầu mở ở openFirstRow như hồ sơ đầu
+      if (lap.has(t)) { if (!daGhiLap.has(t)) { daGhiLap.add(t); skipped.push({ man: label, chu: t, ly_do: 'link mở từng mục của danh sách (' + lap.get(t).length + ' link cùng chữ, khác đường dẫn): không coi là tab, mục đầu mở như hồ sơ đầu' }); } continue; }
+      const href = e.getAttribute('href'); if (href) { try { const u = new URL(href, location.href); if (VISITED.has(u.pathname + u.search)) continue; } catch (x) {} }
       if (e.getAttribute('aria-selected') === 'true' || e.getAttribute('aria-pressed') === 'true' || e.getAttribute('aria-current')) continue;
       keys.push(k);
     }
@@ -2373,6 +2382,21 @@ async function itaAudit(over, trangThaiTiep) {
   const cotTT = t => { if (!t) return -1; const th = [...t.querySelectorAll('thead th, thead td')]; return th.findIndex(x => COT_TT.test(txt(x).trim())); };
   // chỉ lấy dòng đầu của ô (ô trạng thái hay có thêm dòng loại hồ sơ bên dưới: "Đã nộp đơn / Ốm đau")
   const ttDong = (r, i) => { if (i < 0 || !r.cells[i]) return ''; const c = r.cells[i]; const t = String(c.innerText || c.textContent || '').split(/\n/).map(x => x.trim()).filter(Boolean)[0] || ''; return t.replace(/\s+/g, ' ').slice(0, 60); };
+  // mở một hồ sơ (dòng bảng / thẻ), kiểm, mở form trên trang hồ sơ, rồi về lại danh sách. false: không mở được
+  async function moHoSoDau(target, mid, path, label) {
+    if (SAP_TEN.has(label + ' › [hồ sơ đầu]')) { skipped.push({ man: label, chu: '[hồ sơ đầu]', ly_do: 'lần trước hồ sơ này làm ứng dụng báo lỗi / tải lại — bỏ qua' }); return false; }
+    HIENTAI = label + ' › [hồ sơ đầu]';
+    const before = location.href; resetLog(); nk('mở hồ sơ', label + ' — ' + txt(target).slice(0, 60)); target.click(); const ms = await settle();
+    if (location.href === before && !topDialog()) return false;
+    await audit(label + ' › [hồ sơ đầu]', ms, true); CO.tienDo = label + ' › [hồ sơ đầu]';   // true: quét cả các tab trong hồ sơ
+    // nút trên trang hồ sơ (Sửa thông tin…, Ghi nhận…, Phê duyệt, Trả lại…) — mở form từng bước rồi đóng
+    if (location.href !== before && !topDialog()) { try { await moCacForm(null, [], label + ' › [hồ sơ đầu]'); } catch (e) { if (e === DUNG || e === SAP_MAN) throw e; } }
+    await closeDialog();
+    // về lại danh sách: lùi một bước (giữ bộ lọc đang chọn); không được thì mở lại bằng menu + tab
+    if (location.href !== before) { try { history.back(); } catch (x) {} await settle(); }
+    if (location.href !== before) await restore(mid, path);
+    return true;
+  }
   async function openFirstRow(mid, label, path = [], chiTT = null) {
     const layDong = () => {
       const t = bangChinh();
@@ -2381,7 +2405,7 @@ async function itaAudit(over, trangThaiTiep) {
       const i = cotTT(t); return ds.find(r => ttDong(r, i) === chiTT);
     };
     let row = layDong();
-    if (!row) return;
+    if (!row) { const a = chiTT == null && linkMucDau(); if (a) await moHoSoDau(a, mid, path, label); return; }
     // ghi trạng thái của hồ sơ vào tên màn («…»), để đối chiếu đặc tả biết hồ sơ đang ở chặng nào
     const iTT = cotTT(bangChinh()), ttRow = ttDong(row, iTT);
     const labelGoc = label;
@@ -2397,18 +2421,7 @@ async function itaAudit(over, trangThaiTiep) {
     }
     const link = [...row.querySelectorAll('a[href]')].find(a => !SKIP.test(txt(a)) && !duongHanhDong(a));
     const target = link || (pointer(row.cells[0]) || pointer(row) ? (row.cells[1] || row.cells[0]) : null);
-    if (!target) return;
-    if (SAP_TEN.has(label + ' › [hồ sơ đầu]')) { skipped.push({ man: label, chu: '[hồ sơ đầu]', ly_do: 'lần trước hồ sơ này làm ứng dụng báo lỗi / tải lại — bỏ qua' }); return; }
-    HIENTAI = label + ' › [hồ sơ đầu]';
-    const before = location.href; resetLog(); nk('mở hồ sơ', label + ' — ' + txt(target).slice(0, 60)); target.click(); const ms = await settle();
-    if (location.href === before && !topDialog()) return;
-    await audit(label + ' › [hồ sơ đầu]', ms, true); CO.tienDo = label + ' › [hồ sơ đầu]';   // true: quét cả các tab trong hồ sơ
-    // nút trên trang hồ sơ (Sửa thông tin…, Ghi nhận…, Phê duyệt, Trả lại…) — mở form từng bước rồi đóng
-    if (location.href !== before && !topDialog()) { try { await moCacForm(null, [], label + ' › [hồ sơ đầu]'); } catch (e) { if (e === DUNG || e === SAP_MAN) throw e; } }
-    await closeDialog();
-    // về lại danh sách: lùi một bước (giữ bộ lọc đang chọn); không được thì mở lại bằng menu + tab
-    if (location.href !== before) { try { history.back(); } catch (x) {} await settle(); }
-    if (location.href !== before) await restore(mid, path);
+    if (!target || !(await moHoSoDau(target, mid, path, label))) return;
     // danh sách có cột trạng thái mà không có nút lọc trạng thái: mở thêm một hồ sơ cho mỗi trạng thái khác (tối đa maxTrangThai)
     // màn có nút lọc trạng thái thì moHoSoTheoTrangThai đã mở theo từng trạng thái: không mở lặp
     const coLocTT = [...mainEl().querySelectorAll('button,[role=button]')].some(e => vis(e) && !inDialog(e) && !trongMenu(e) && LOC_TT.test(tenNut(e)));
