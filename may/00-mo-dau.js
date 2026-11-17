@@ -1,7 +1,5 @@
 /*
- * ITA — máy kiểm giao diện dùng cho nhiều dự án (bước 13, 07/11/2026: tách từ «DQTV kiểm tra» 3.26.6; dữ liệu riêng mỗi dự án nằm ở du-an/<tên>/).
- * Lịch sử trước bước 13 (bản DQTV): bản 3.25 = nhánh đặc tả 3.23 (dqtv-kiem-tra-dacta) GỘP nhánh 3.6 (chốt chặn + phép kiểm giao diện)
- *   Gộp ba chiều trên bản gốc chung (dqtv-kiem-tra-v3 ~3.4). Ghi chú 3.6 và 3.17–3.23 bên dưới vẫn đúng.
+ * ITA — máy kiểm giao diện dùng cho nhiều dự án; dữ liệu riêng mỗi dự án nằm ở du-an/<tên>/. Lịch sử: git log, PLAN.md.
  * ------------------------------------------------------------------
  * Bản 3.6 THÊM (chỉ đọc màn hình — không bấm thêm gì, không gửi lệnh mạng; trường cũ giữ nguyên, chỉ thêm trường mới):
  *   • Trên mỗi màn: du_lieu_nhay_cam (mức cao) · cat_chu_khong_tooltip · chuoi_dai_khong_ngat · ma_enum_lo ·
@@ -58,7 +56,7 @@
  *   ita.bang()            bật/tắt bảng điều khiển
  *
  * Đặc tả quy trình (UC), từ bản 3.17:
- *   Dán tệp dqtv-kiem-tra-dacta.js (công cụ + đặc tả đóng gói sẵn), hoặc gõ ita.napDacTa(<JSON>).
+ *   Dán bản đóng gói riêng của dự án (công cụ + đặc tả), «Nạp thư mục», hoặc gõ ita.napDacTa(<JSON>).
  *   Bấm "▶ Chạy" như thường: cùng một lần chạy vừa kiểm giao diện vừa đối chiếu đặc tả.
  *   Nút có trong đặc tả luôn được mở để đọc form (không tính vào maxFormMoiMan).
  *   ita.xemDacTa() / ita.xoaDacTa(ma) / ita.vaiDacTa()   xem, xoá, xem vai của tài khoản theo đặc tả
@@ -95,7 +93,6 @@
  *        màn sập không được nhớ → chạy lại từ đầu và sập lại). Danh sách màn sập lưu ở khóa nhỏ riêng.
  *   [S3] Chốt an toàn lấy từ v3.6: chặn form.submit() gọi thẳng; choPhepPost chỉ miễn cho POST; so tên máy chủ
  *        chính xác; chanGhi/mucQuyTrinh/moiTruongKiemThu không lưu, chỉ truyền khi chạy.
- *   [S4] Khóa lưu riêng 'dqtv.*.v324' (không đụng v3/v3.6). ita.donBoNho() xoá dữ liệu cũ của bản trước.
  *   [S5] Mức tin cậy nguồn lấy từ sổ quy tắc (nguon_da_duyet, mặc định ['UC']): giữ đúng quy ước PM —
  *        khác tài liệu Bên B chưa duyệt = CẢNH BÁO; khác điểm đã duyệt = LỆCH.
  *   [S6] Ca đã đóng trong sổ yêu cầu (vd TR-046…049) ghi ĐẠT kèm lý do đóng; form «Sửa…» không báo "đang điền sẵn".

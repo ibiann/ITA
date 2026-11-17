@@ -1,4 +1,4 @@
-// [bước 17 / bản 1.4] Test không cần Chrome: chạy bản dựng CHUNG (dist/ita.js, kiểm giao diện thuần) trên app giả lập (jsdom).
+// [bước 17 / bản 1.4] Test không cần Chrome: chạy bản dựng CHUNG (dist/chung/ita.js, kiểm giao diện thuần) trên app giả lập (jsdom).
 // App giả lập: KHÔNG có menu trái. Chế độ:
 //   tren      — thanh điều hướng trên, không có <main>; màn «Danh sách» (sắp xếp, phân trang, tìm, form có ô khai giới hạn, ô chọn tuỳ biến tốt)
 //               và «Danh sách lỗi» (sắp xếp không tác dụng, trang trùng dòng, tổng sai, xoá từ khoá không về danh sách cũ, ô chọn tuỳ biến thiếu vai trò / phím)

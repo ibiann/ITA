@@ -21,9 +21,9 @@ async function moTrang(tep) {
 const tomTat = ds => Object.fromEntries(ds.map(x => [x.muc, (x.co ? 'có' : 'KHÔNG') + (x.chi_tiet ? ' · ' + x.chi_tiet : '')]));
 const tatCaTep = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? tatCaTep(path.join(d, e.name)) : [path.join(d, e.name)]);
 
-const wA = await moTrang(path.join(GOC, 'dist', 'ita-' + duAn + '.js'));
+const wA = await moTrang(path.join(GOC, 'dist', 'rieng', 'ita-' + duAn + '.js'));
 const A = tomTat(wA.ita.duLieu());
-const wB = await moTrang(path.join(GOC, 'dist', 'ita.js'));
+const wB = await moTrang(path.join(GOC, 'dist', 'chung', 'ita.js'));
 const thuMuc = path.join(GOC, 'du-an', duAn);
 const files = tatCaTep(thuMuc).map(p => { const f = new File([fs.readFileSync(p)], path.basename(p)); Object.defineProperty(f, 'webkitRelativePath', { value: duAn + '/' + path.relative(thuMuc, p).split(path.sep).join('/') }); return f; });
 const kq = await wB.ita.napTep(files);

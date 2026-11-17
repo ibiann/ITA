@@ -4,7 +4,7 @@
 import html, json, pathlib, re, socket, subprocess, sys, tempfile, time
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-dist = sorted((GOC / 'dist').glob('ita-dqtv.js'))[-1].read_text(encoding='utf-8')
+dist = sorted((GOC / 'dist/rieng').glob('ita-dqtv.js'))[-1].read_text(encoding='utf-8')
 assert dist.rstrip().endswith('})();'), 'dist không kết thúc bằng })();'
 thu = dist.rstrip()[:-len('})();')] + 'window.__itaThu = { doiChieuDacTa, sangHTML, canCuKiem };\n})();\n'
 

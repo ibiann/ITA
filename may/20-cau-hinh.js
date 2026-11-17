@@ -1,7 +1,7 @@
 /* ============================================================= *
  * 1. CẤU HÌNH MẶC ĐỊNH — sửa bằng ita.dat(...) hoặc trên bảng   *
  * ============================================================= */
-// Hồ sơ dự án: du-an/<dự án>/ho-so.json. Đóng gói sẵn thành window.__itaHoSo (dist/ita-<dự án>.js) hoặc nạp bằng «Nạp thư mục»
+// Hồ sơ dự án: du-an/<dự án>/ho-so.json. Đóng gói sẵn thành window.__itaHoSo (dist/rieng/ita-<dự án>.js) hoặc nạp bằng «Nạp thư mục»
 // (bộ đọc ho-so → apHoSo, bước 13b). Mọi chữ riêng của dự án lấy từ đây. Chưa có hồ sơ: ita.chay không chạy, mọi lệnh ghi bị chặn.
 const DU_AN = Object.assign({}, window.__itaHoSo || {});
 let QUY_CACH = null;   // [13e] quy cách giao diện của dự án (du-an/<tên>/quy-cach.json, bộ đọc quy-cach): ngưỡng + giá trị được phép
@@ -20,6 +20,7 @@ const MAC_DINH = {
 
   /* --- thử ô nhập (đầu vào) và kiểm đầu ra --- */
   thuOTim: true,
+  thuLoiDoc: true,   // [bước 2] giả lỗi đọc dữ liệu (như mất mạng) rồi mở lại màn: màn có báo lỗi không, hay hiện «trống» / treo / trắng
   giaTriTim: [
     { giaTri: 'Nguyễn', ten: 'có dấu' },
     { giaTri: 'nguyen', ten: 'không dấu', phaiRaNhuCoDau: 'Nguyễn' },
@@ -42,7 +43,7 @@ const MAC_DINH = {
   moNutNghiepVu: true,
   // Nút không bao giờ bấm khi mở form (tải tệp, mở tệp, điều hướng, xoá/huỷ hồ sơ…)
   // "xuất" chỉ bỏ khi là xuất tệp (không bỏ "Nhận công văn báo xuất ngũ")
-  boQuaNut: /(?<![\p{L}\d])(đăng xuất|thoát|xuất(?=\s*$)|xuất (excel|pdf|word|tệp|file|dữ liệu|danh sách|báo cáo)|tải|in|download|export|import|nhập danh sách|nhập từ|xoá|xóa|huỷ|hủy|đóng hồ sơ|khoá|mở khoá|mở bản|mở tờ|đã ký|xem|ẩn|hiện|trạng thái|diện|về danh sách|mở danh sách|kỳ trước|kỳ sau|tuần trước|tuần này|tuần sau|tháng trước|tháng sau|thu gọn|mở rộng|cột|bỏ lọc|lọc|nâng cao|báo cáo tổng hợp|bảng kê|tra cứu|làm mới|tải lại)(?![\p{L}\d])/iu,
+  boQuaNut: /(?<![\p{L}\d])(đăng xuất|thoát|xuất(?=\s*$)|xuất (excel|pdf|word|tệp|file|dữ liệu|danh sách|báo cáo)|tải|in|download|export|import|nhập danh sách|nhập từ|xoá|xóa|huỷ|hủy|đóng hồ sơ|khoá|mở khoá|mở bản|mở tờ|đã ký|xem|ẩn|hiện|trạng thái|diện|về danh sách|mở danh sách|kỳ trước|kỳ sau|tuần trước|tuần này|tuần sau|tháng trước|tháng sau|thu gọn|mở rộng|cột|bỏ lọc|lọc|nâng cao|báo cáo tổng hợp|bảng kê|tra cứu|làm mới|tải lại|đặt lại|khôi phục|reset)(?![\p{L}\d])/iu,   // đặt lại / khôi phục / reset: thường tác động ngay, không qua hộp thoại — không bao giờ bấm
   moDropdownTuyBien: true,      // mở ô chọn kiểu Ant/Element/MUI… để đọc danh sách lựa chọn
   maxMoChon: 25,                // mỗi vùng mở tối đa N ô chọn tuỳ biến
   maxLuaChon: 60,               // lưu tối đa N lựa chọn mỗi ô
@@ -82,8 +83,7 @@ const MAC_DINH = {
   /* --- kỹ thuật --- */
   waitMax: 10000, idle: 600, slowMs: 3000,
   // lệnh POST được để đi: lấy từ hồ sơ dự án (post_cho_qua), không cấu hình được ở đây (xem 10-la-chan: postDuocDi)
-  // [S1] chữ của màn báo lỗi do ứng dụng hiện khi một màn sập (app DQTV: "Màn hình này gặp lỗi và đã dừng lại…")
-  // [1.2] lõi chỉ giữ mẫu chung (chữ mặc định của React Router khi app sập); chữ riêng của app khai ở hồ sơ dự án: mau_man_loi (DQTV đã chuyển sang)
+  // chữ của màn báo lỗi khi một màn sập: lõi chỉ giữ mẫu chung (chữ mặc định của React Router); chữ riêng của app khai ở hồ sơ dự án: mau_man_loi
   mauManLoi: /Unexpected Application Error/i,
   thuLaiLoiDaBiet: false,      // [S16] true: vẫn mở màn đã biết là sập (khi Bên B báo đã sửa)
   dungKhiMatPhien: true,        // gặp mã 401 (mất phiên) thì dừng gọn, lưu điểm dừng, ghi lý do
@@ -131,8 +131,6 @@ function cheChuoi(s) {
 
 const PHIEN_BAN = '1.4';
 const KEY_CFG = 'ita.cfg.v1', KEY_CKPT = 'ita.ckpt.v1', KEY_LAST = 'ita.last.v1', KEY_TAY = 'ita.truongtay.v1', KEY_SAP = 'ita.sap.v1';
-// khóa của công cụ cũ «DQTV kiểm tra» (mọi bản v3 … 3.26.6 đều bắt đầu bằng 'dqtv.'): ita.donBoNho() xoá để trả chỗ cho trình duyệt
-const KHOA_CU = /^dqtv\./;
 
 /* --- Nhận ra tài khoản đang đăng nhập, để điểm dừng và kết quả TÁCH RIÊNG theo tài khoản ---
  * Lý do: đổi tài khoản mà dùng chung một điểm dừng thì lần chạy mới bỏ qua các mục "đã xong"
@@ -141,7 +139,7 @@ let TK = '';
 function taiKhoan() {
   try {
     const d = (cfgHienTai().dacTa) || {};
-    const chon = d.vaiChon || DU_AN.chon_tai_khoan;   // [13d] hồ sơ dự án khai chỗ hiện tên tài khoản (PMS: os-account-button)
+    const chon = d.vaiChon || DU_AN.chon_tai_khoan;   // [13d] hồ sơ dự án khai chỗ hiện tên tài khoản
     if (chon) { const e = document.querySelector(chon); if (e && (e.innerText || '').trim()) return e.innerText.trim().replace(/\s+/g, ' ').slice(0, 140); }
     // khối chữ ở góc phải trên cùng (thường là chức vụ + đơn vị người dùng), bỏ ô tìm kiếm và bảng điều khiển
     const W = innerWidth;
@@ -210,7 +208,7 @@ function luuCfg(o) { try { localStorage.setItem(KEY_CFG, hoaChuoi(o)); } catch (
 const KIEU = {
   tenMienDuocChay: 'RegExp?', cheNhayCam: 'boolean',
   chiMenu: 'RegExp?', boQuaMenu: 'RegExp?', doSauTab: 'number', maxTabMoiMan: 'number',
-  moHoSoDau: 'boolean', thuOTim: 'boolean', giaTriTim: 'object', thuOChon: 'number',
+  moHoSoDau: 'boolean', thuOTim: 'boolean', thuLoiDoc: 'boolean', giaTriTim: 'object', thuOChon: 'number',
   thuBaoMat: 'boolean',
   dacTa: 'object?', kichBan: 'object', chiChayKichBan: 'boolean',
   waitMax: 'number', idle: 'number', slowMs: 'number',
@@ -247,16 +245,16 @@ function kiemKieu(k, v) {
 
 // [1.2] BỘ CẤU HÌNH: mỗi bộ đặt ĐỦ cùng một danh sách khoá (không cộng dồn bộ trước), chỉ áp cho lần chạy (không lưu), báo cáo ghi tên bộ.
 // Thứ tự: mặc định ← đã lưu (ita.dat) ← bộ đang chọn ← ITA_MAC_DINH ← ITA_CONFIG ← tham số ita.chay({...}).
-const BO_KHOA = ['moHoSoDau', 'thuOTim', 'thuOChon', 'doSauTab', 'maxTabMoiMan', 'kiemKeTruong', 'moFormDeKiemKe', 'maxFormMoiMan', 'moNutNghiepVu', 'moDropdownTuyBien', 'moRongMuc', 'moHoSoMoiTrangThai', 'maxTrangThai', 'kiemTroNang', 'kiemThietKe', 'kiemNgonTu', 'thuBaoMat'];
+const BO_KHOA = ['moHoSoDau', 'thuOTim', 'thuLoiDoc', 'thuOChon', 'doSauTab', 'maxTabMoiMan', 'kiemKeTruong', 'moFormDeKiemKe', 'maxFormMoiMan', 'moNutNghiepVu', 'moDropdownTuyBien', 'moRongMuc', 'moHoSoMoiTrangThai', 'maxTrangThai', 'kiemTroNang', 'kiemThietKe', 'kiemNgonTu', 'thuBaoMat'];
 const BO_CHUAN = Object.fromEntries(BO_KHOA.map(k => [k, MAC_DINH[k]]));   // «chuẩn» = đúng mặc định
 const BO_CAU_HINH = {
   // bề mặt mọi màn: không mở form, hồ sơ, ô chọn, mục ẩn; tab một tầng — quét định kỳ cho nhanh
-  'nhanh': Object.assign({}, BO_CHUAN, { moHoSoDau: false, thuOTim: false, thuOChon: 0, doSauTab: 1, maxTabMoiMan: 10, moFormDeKiemKe: false, maxFormMoiMan: 0, moNutNghiepVu: false, moDropdownTuyBien: false, moRongMuc: false, moHoSoMoiTrangThai: false, maxTrangThai: 0 }),
+  'nhanh': Object.assign({}, BO_CHUAN, { moHoSoDau: false, thuOTim: false, thuLoiDoc: false, thuOChon: 0, doSauTab: 1, maxTabMoiMan: 10, moFormDeKiemKe: false, maxFormMoiMan: 0, moNutNghiepVu: false, moDropdownTuyBien: false, moRongMuc: false, moHoSoMoiTrangThai: false, maxTrangThai: 0 }),
   'chuan': Object.assign({}, BO_CHUAN),
   // thêm tầng tab, nhiều form, nhiều trạng thái, nhiều lựa chọn lọc — trước khi bàn giao
   'sau': Object.assign({}, BO_CHUAN, { doSauTab: 3, maxTabMoiMan: 50, maxFormMoiMan: 50, thuOChon: 12, maxTrangThai: 20 }),
   // chỉ kiểm kê trường: bỏ thử ô tìm / ô lọc, thiết kế, ngôn từ, trợ năng
-  'kiem-ke-truong': Object.assign({}, BO_CHUAN, { thuOTim: false, thuOChon: 0, kiemTroNang: false, kiemThietKe: false, kiemNgonTu: false }),
+  'kiem-ke-truong': Object.assign({}, BO_CHUAN, { thuOTim: false, thuLoiDoc: false, thuOChon: 0, kiemTroNang: false, kiemThietKe: false, kiemNgonTu: false }),
   'bao-mat': Object.assign({}, BO_CHUAN, { thuBaoMat: true }),
 };
 const BO_TEN = { 'nhanh': 'nhanh', 'chuan': 'chuan', 'day-du': 'chuan', 'sau': 'sau', 'kiem-ke-truong': 'kiem-ke-truong', 'bao-mat': 'bao-mat' };   // day-du: tên cũ

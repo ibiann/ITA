@@ -1,11 +1,11 @@
 # Kiểm bước 13b (hồ sơ dự án nạp được, chưa có hồ sơ thì không chạy). Chạy: python3 -I kiem/test_buoc13.py
-# Bản thử = dist/ita.js (chỉ máy kiểm, không gói dự án) + một dòng xuất CO ra window.__itaThu (chỉ trong bản thử).
+# Bản thử = dist/chung/ita.js (chỉ máy kiểm, không gói dự án) + một dòng xuất CO ra window.__itaThu (chỉ trong bản thử).
 # Nạp kiem/thu_buoc13.html (thời gian thật, kiem/mo_chrome.mjs) hai lần trên cùng hồ sơ Chrome, máy chủ thử 127.0.0.1.
 import json, pathlib, socket, subprocess, sys, tempfile, time
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-dist = (GOC / 'dist/ita.js').read_text(encoding='utf-8')
-assert not any(x.startswith(('window.__itaHoSo =', 'window.__itaGoiSan =')) for x in dist.split('\n')), 'dist/ita.js không được gói dữ liệu dự án'
+dist = (GOC / 'dist/chung/ita.js').read_text(encoding='utf-8')
+assert not any(x.startswith(('window.__itaHoSo =', 'window.__itaGoiSan =')) for x in dist.split('\n')), 'dist/chung/ita.js không được gói dữ liệu dự án'
 assert dist.rstrip().endswith('})();')
 thu = dist.rstrip()[:-len('})();')] + 'window.__itaThu = { co: () => CO };\n})();\n'
 

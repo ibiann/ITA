@@ -2,9 +2,9 @@
  * 3b. KIỂU APP (bước 13c, 13d) — phần khác nhau theo CÁCH APP     *
  * CHẠY, hồ sơ dự án chọn bằng một dòng "kieu_app". Ma trận chấm   *
  * (căn cứ × quan sát, mắt xích) không đổi theo kiểu app.          *
- *  - rest-buoc (DQTV): máy chủ trả danh sách bước {action, label,  *
+ *  - rest-buoc:        máy chủ trả danh sách bước {action, label,  *
  *    allowed} trong phản hồi GET → BUOC_MAY (ghiBuocMay, lõi kiểm). *
- *  - openslides (PMS): dữ liệu đi qua luồng nền (SharedWorker),     *
+ *  - openslides:       dữ liệu đi qua luồng nền (SharedWorker),     *
  *    tool không nghe được; đầu lần chạy tự đọc nhóm + quyền của    *
  *    tài khoản trong cuộc họp đang mở: who-am-i (POST, phải có     *
  *    trong post_cho_qua của hồ sơ) + autoupdate (GET, chỉ đọc).    *

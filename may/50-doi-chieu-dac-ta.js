@@ -1,12 +1,12 @@
 /* ============================================================= *
  * ĐẶC TẢ QUY TRÌNH (UC) — nạp vào công cụ, đối chiếu ngay khi chạy
- *   Bảng đặc tả theo mẫu MauDacTa_QuyTrinh_DQTV (YAML → JSON).
+ *   Bảng đặc tả theo mẫu đặc tả quy trình của dự án (YAML → JSON).
  *   ita.napDacTa(...) lưu vào trình duyệt; mỗi lần chạy xong công cụ
  *   tự đối chiếu và thêm mục "Đối chiếu đặc tả quy trình" vào báo cáo.
  * ============================================================= */
 /* <<DACTA-BAT-DAU>> */
 const KEY_DACTA = 'ita.dacta.v1';
-// Màn mọi vai đều thấy (DQTV: «Việc của tôi»), tiền tố tên tài khoản, mã yêu cầu sửa: lấy từ hồ sơ dự án
+// Màn mọi vai đều thấy (vd «Việc của tôi»), tiền tố tên tài khoản, mã yêu cầu sửa: lấy từ hồ sơ dự án
 let VC = {}, TIEN_TO_TK = null;
 function apHoSoDoiChieu() { VC = DU_AN.man_viec_chung || {}; TIEN_TO_TK = DU_AN.tien_to_tai_khoan ? new RegExp(DU_AN.tien_to_tai_khoan) : null; }
 apHoSoDoiChieu();
@@ -377,7 +377,7 @@ const THU_TU_KQ = ['LỆCH', 'CẢNH BÁO', 'CHƯA KIỂM', 'ĐẠT', 'GHI NHẬ
  *       THIẾU (dữ liệu, tài khoản → Bên B nạp) · CÔNG CỤ (công cụ chưa đọc được → kiểm tay / khai đồng nghĩa) · THỦ CÔNG */
 /* [10d] mắt xích: lần ngược từ màn hình về TC, dòng chưa đạt ghi mắt xích đầu tiên bị lệch.
  * 0 điều kiện chạy (tài khoản, hồ sơ mẫu) · 1 công cụ · 2 màn hình ↔ máy chủ · 2/3 màn hình khác tài liệu (chưa biết app hay tài liệu sai) · 3 app ↔ tài liệu · 4 tài liệu ↔ TC v7 · 5 chờ PM */
-const TEN_MX = { 0: 'điều kiện chạy', 1: 'công cụ', 2: 'màn hình ↔ máy chủ', '2/3': 'màn hình khác tài liệu', 3: 'app ↔ tài liệu', 4: 'tài liệu ↔ TC v7', 5: 'chờ PM', 'chuẩn': 'màn hình sai chuẩn (WCAG)', 'khung': 'màn hình sai TC khung chung' };
+const TEN_MX = { 0: 'điều kiện chạy', 1: 'công cụ', 2: 'màn hình ↔ máy chủ', '2/3': 'màn hình khác tài liệu', 3: 'app ↔ tài liệu', 4: 'tài liệu ↔ TC dự án', 5: 'chờ PM', 'chuẩn': 'màn hình sai chuẩn (WCAG)', 'khung': 'màn hình sai TC khung chung' };
 const PL_MX = {
   gan: { nhom: 'CÔNG CỤ', mat_xich: 1, nguyen_nhan: 'có nút gần chữ, chưa đối chiếu được mã bước', viec_tiep: 'kiểm tay nút gần chữ trên màn; hoặc mở hồ sơ có danh sách bước của máy chủ' },
   khongThay: { nhom: 'CÔNG CỤ', mat_xich: 1, nguyen_nhan: 'không thấy nút, chưa có xác nhận của máy chủ', viec_tiep: 'kiểm tay trên màn bằng tài khoản đúng vai' },
@@ -516,43 +516,43 @@ function phuDanhMucTC(kq, d) {
 // bảng khung sinh từ chính giao diện đã quan sát: chỉ là mốc để phát hiện thay đổi, không phải bằng chứng đúng nghiệp vụ
 const LOAI_BANG = ['đặc tả', 'chuỗi', 'khung'];
 const GHI_CHU_BANG = { 'đặc tả': 'bảng đặc tả đã soạn', 'chuỗi': 'chuỗi khép kín', 'khung': 'bảng khung (mốc, sinh từ chính giao diện)' };
-const demBang = d => LOAI_BANG.filter(l => (d.dem_theo_bang || {})[l]).map(l => GHI_CHU_BANG[l] + ': ' + THU_TU_KQ.map(k => k + ' ' + (d.dem_theo_bang[l][k] || 0)).join(' · '));
+const demBang = d => LOAI_BANG.filter(l => (d.dem_theo_bang || {})[l]).map(l => GHI_CHU_BANG[l] + ': ' + demHien(d.ket_qua.filter(k => k.loai_bang === l)));
 const gonMaDT = ds => ds.length <= 6 ? ds.join(', ') : ds.length + ' bảng (' + ds.slice(0, 4).join(', ') + ', … ' + ds[ds.length - 1] + ')';
 function htmlDacTa(kq) {
   const d = kq.doi_chieu_dac_ta; if (!d) return '';
   const lop = { 'LỆCH': 'cao', 'CẢNH BÁO': 'tb' };
   const ds = d.ket_qua.slice().sort((a, b) => (LOAI_BANG.indexOf(a.loai_bang) - LOAI_BANG.indexOf(b.loai_bang)) || (THU_TU_KQ.indexOf(a.kq) - THU_TU_KQ.indexOf(b.kq)));
   const coVai = (d.vai_tai_khoan || []).filter(x => x.vai), khongVai = (d.vai_tai_khoan || []).length - coVai.length;
-  const dong = rr => rr.map(k => `<tr class="${k.loai_bang === 'khung' ? '' : (lop[k.kq] || '')}"><td>${esc(k.loai_bang || '')}</td><td>${esc(k.kq)}</td><td>${esc(k.ma)}</td><td>${esc(k.muc)}</td><td>${esc(k.vai)}</td><td>${esc(k.can_cu || '')}</td><td>${esc(k.dg)}</td><td>${k.mat_xich != null ? '<span style="color:#6a1b9a">mắt xích ' + esc(k.mat_xich) + ' · ' + esc(TEN_MX[k.mat_xich] || '') + '</span><br>' : ''}<b>${esc(k.nhom || '')}</b>${k.nguyen_nhan ? ': ' + esc(k.nguyen_nhan) : ''}${k.viec_tiep ? '<br><span style="color:#666">→ ' + esc(k.viec_tiep) + '</span>' : ''}</td><td>${esc(k.co_tc_pm || '')}</td><td>${esc(k.nguon)}</td></tr>`).join('');
+  const dong = rr => rr.map(k => `<tr class="${k.loai_bang === 'khung' ? '' : (lop[k.kq] || '')}"><td>${esc(k.loai_bang || '')}</td><td>${esc(chuHien(k.kq))}</td><td>${esc(k.ma)}</td><td>${esc(k.muc)}</td><td>${esc(k.vai)}</td><td>${esc(k.can_cu || '')}</td><td>${esc(k.dg)}</td><td>${k.mat_xich != null ? '<span style="color:#6a1b9a">mắt xích ' + esc(k.mat_xich) + ' · ' + esc(TEN_MX[k.mat_xich] || '') + '</span><br>' : ''}<b>${esc(k.nhom || '')}</b>${k.nguyen_nhan ? ': ' + esc(k.nguyen_nhan) : ''}${k.viec_tiep ? '<br><span style="color:#666">→ ' + esc(k.viec_tiep) + '</span>' : ''}</td><td>${esc(k.co_tc_pm || '')}</td><td>${esc(k.nguon)}</td></tr>`).join('');
   const dau = '<table><thead><tr><th>Loại bảng</th><th>Kết quả</th><th>Mã ca</th><th>Bước</th><th>Vai</th><th>Căn cứ</th><th>Quan sát / diễn giải</th><th>Nguyên nhân → việc tiếp</th><th>Có TC PM</th><th>Nguồn đặc tả</th></tr></thead><tbody>';
   const demNhom = {}; for (const k of d.ket_qua) if (k.nhom && k.loai_bang !== 'khung') { const g = (k.mat_xich != null ? 'mắt xích ' + k.mat_xich + ' (' + TEN_MX[k.mat_xich] + ') · ' : '') + k.nhom; const x = demNhom[g] = demNhom[g] || {}; x[k.nguyen_nhan] = (x[k.nguyen_nhan] || 0) + 1; }
   const bangNhom = Object.keys(demNhom).length ? '<table><thead><tr><th>Nhóm nguyên nhân</th><th>Nguyên nhân</th><th>Số ca</th></tr></thead><tbody>' + Object.entries(demNhom).flatMap(([n, o]) => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([nn, c]) => '<tr><td><b>' + esc(n) + '</b></td><td>' + esc(nn) + '</td><td>' + c + '</td></tr>')).join('') + '</tbody></table>' : '';
   const P = kq.phu_danh_muc_tc;
-  const phu = !P ? '' : '<h3 style="font-size:14px">Phủ danh mục TC của PM (' + esc((P.danh_muc || {}).tep || '') + ')</h3><p class=m>TC áp cho vai này: <b>' + P.ap_dung + '</b> · có kết quả: <b>' + P.co_ket_qua + '</b> · chưa có kết quả: <b>' + P.chua_co_ket_qua + '</b> (không tính ĐẠT) · ca công cụ kiểm nhưng không có trong danh mục PM (thiếu TC): <b>' + P.ca_ngoai_danh_muc + '</b>. Ca nhập ô và ca thủ công tính riêng.</p>'
+  const phu = !P ? '' : '<h3 style="font-size:14px">Phủ danh mục TC của PM (' + esc((P.danh_muc || {}).tep || '') + ')</h3><p class=m>TC áp cho vai này: <b>' + P.ap_dung + '</b> · có kết quả: <b>' + P.co_ket_qua + '</b> · chưa có kết quả: <b>' + P.chua_co_ket_qua + '</b> (không tính Đạt) · ca công cụ kiểm nhưng không có trong danh mục PM (thiếu TC): <b>' + P.ca_ngoai_danh_muc + '</b>. Ca nhập ô và ca thủ công tính riêng.</p>'
     + (Object.keys(P.theo_nguyen_nhan).length ? '<table><thead><tr><th>Vì sao chưa có kết quả</th><th>Số TC</th></tr></thead><tbody>' + Object.entries(P.theo_nguyen_nhan).sort((a, b) => b[1] - a[1]).map(([k, c]) => '<tr><td>' + esc(k) + '</td><td>' + c + '</td></tr>').join('') + '</tbody></table>' : '')
-    + ((P.theo_ma_khac || []).length ? '<details><summary>TC v7 của bước đã dời tài liệu, kết quả theo TC đề xuất (' + P.theo_ma_khac.length + ')</summary><table><thead><tr><th>Mã TC v7</th><th>Theo mã</th><th>Kết quả</th><th>Quan sát</th></tr></thead><tbody>' + P.theo_ma_khac.map(t => '<tr><td>' + esc(t.ma) + '</td><td>' + esc(t.theo) + '</td><td>' + esc(t.kq) + '</td><td>' + esc(t.dg) + '</td></tr>').join('') + '</tbody></table></details>' : '')
+    + ((P.theo_ma_khac || []).length ? '<details><summary>TC v7 của bước đã dời tài liệu, kết quả theo TC đề xuất (' + P.theo_ma_khac.length + ')</summary><table><thead><tr><th>Mã TC</th><th>Theo mã</th><th>Kết quả</th><th>Quan sát</th></tr></thead><tbody>' + P.theo_ma_khac.map(t => '<tr><td>' + esc(t.ma) + '</td><td>' + esc(t.theo) + '</td><td>' + esc(chuHien(t.kq)) + '</td><td>' + esc(t.dg) + '</td></tr>').join('') + '</tbody></table></details>' : '')
     + (P.ds_chua_co.length ? '<details><summary>TC chưa có kết quả (' + P.ds_chua_co.length + (P.chua_co_ket_qua > P.ds_chua_co.length ? '/' + P.chua_co_ket_qua : '') + ')</summary><table><thead><tr><th>Mã TC</th><th>Loại</th><th>Nhóm</th><th>Nguyên nhân</th></tr></thead><tbody>' + P.ds_chua_co.map(t => '<tr><td>' + esc(t.ma) + '</td><td>' + esc(t.loai) + '</td><td>' + (t.mat_xich != null ? 'mắt xích ' + esc(t.mat_xich) + ' · ' : '') + esc(t.nhom) + '</td><td>' + esc(t.nguyen_nhan) + '</td></tr>').join('') + '</tbody></table></details>' : '')
-    + (P.ds_ngoai_danh_muc.length ? '<details><summary>Ca ngoài danh mục TC (' + P.ca_ngoai_danh_muc + ') — PM bổ sung TC hoặc xác nhận bỏ</summary><table><thead><tr><th>Mã ca</th><th>Kết quả</th><th>Bước</th></tr></thead><tbody>' + P.ds_ngoai_danh_muc.map(t => '<tr><td>' + esc(t.ma) + '</td><td>' + esc(t.kq) + '</td><td>' + esc(t.muc) + '</td></tr>').join('') + '</tbody></table></details>' : '');
+    + (P.ds_ngoai_danh_muc.length ? '<details><summary>Ca ngoài danh mục TC (' + P.ca_ngoai_danh_muc + ') — PM bổ sung TC hoặc xác nhận bỏ</summary><table><thead><tr><th>Mã ca</th><th>Kết quả</th><th>Bước</th></tr></thead><tbody>' + P.ds_ngoai_danh_muc.map(t => '<tr><td>' + esc(t.ma) + '</td><td>' + esc(chuHien(t.kq)) + '</td><td>' + esc(t.muc) + '</td></tr>').join('') + '</tbody></table></details>' : '');
   // ĐẠT và LỚP 4 rất nhiều khi nạp cả bộ: để trong mục thu gọn, CSV vẫn có đủ
   const chinh = ds.filter(k => !['ĐẠT', 'LỚP 4', 'GHI NHẬN'].includes(k.kq)), dat = ds.filter(k => k.kq === 'ĐẠT'), l4 = ds.filter(k => k.kq === 'LỚP 4'), gn = ds.filter(k => k.kq === 'GHI NHẬN');
   return `<h2 style="font-size:16px;margin-top:28px">Đối chiếu đặc tả quy trình (${d.ket_qua.length})</h2>
 <p class=m>Bảng đặc tả: ${esc(gonMaDT(d.quy_trinh.map(q => q.ma)))}.<br>
 ${coVai.length ? 'Tài khoản này giữ vai trong ' + coVai.length + ' bảng: ' + coVai.map(x => esc(x.ma + ' (' + x.vai + ')')).join(', ') + '.' : 'Tài khoản này không giữ vai nào trong các bảng.'}${khongVai ? ' Ở ' + khongVai + ' bảng còn lại, chỉ kiểm vai này không thấy màn và nút của quy trình.' : ''}<br>
-${d.dem_theo_bang ? demBang(d).map(esc).join('<br>') : THU_TU_KQ.map(k => esc(k) + ': <b>' + (d.dem[k] || 0) + '</b>').join(' · ')}<br>
+${d.dem_theo_bang ? demBang(d).map(esc).join('<br>') : esc(demHien(d.ket_qua))}<br>
 Kết quả theo bảng khung chỉ cho biết giao diện có khác lần quan sát trước hay không; không dùng làm kết luận đúng hay sai nghiệp vụ.<br>
-Mỗi kết luận có căn cứ là một mục trong bảng đã nạp (cột Căn cứ). LỆCH: khác mục có nguồn được dữ liệu nạp khai là đã duyệt (nguon_da_duyet; chưa khai thì không có LỆCH). CẢNH BÁO: khác mục đặc tả chưa duyệt hoặc không ghi nguồn. GHI NHẬN: công cụ thấy nhưng đặc tả không nói gì, không phải lỗi. CHƯA KIỂM: thiếu dữ kiện (chưa mở được hồ sơ ở trạng thái cần, đặc tả chưa có nhãn, nút khoá). LỚP 4: chỉ kiểm được khi chạy quy trình thật trên môi trường kiểm thử riêng.</p>
+Mỗi kết luận có căn cứ là một mục trong bảng đã nạp (cột Căn cứ). Sai: khác mục đặc tả có nguồn đã duyệt (nguon_da_duyet; chưa khai thì không có Sai). Cần xem: khác mục đặc tả chưa duyệt / không ghi nguồn, hoặc công cụ thấy mà đặc tả không nói gì. Chưa thử được: thiếu dữ kiện (chưa mở được hồ sơ ở trạng thái cần, đặc tả chưa có nhãn, nút khoá), hoặc phải bấm Lưu / chạy trọn quy trình trên môi trường kiểm thử riêng (cột Quan sát ghi rõ).</p>
 ${bangNhom}
 ${phu}
 ${dau}${dong(chinh)}</tbody></table>
-<details><summary>ĐẠT (${dat.length})</summary>${dau}${dong(dat)}</tbody></table></details>
-<details><summary>GHI NHẬN — không có căn cứ để kết luận (${gn.length})</summary>${dau}${dong(gn)}</tbody></table></details>
-<details><summary>LỚP 4 (${l4.length})</summary>${dau}${dong(l4)}</tbody></table></details>`;
+<details><summary>Đạt (${dat.length})</summary>${dau}${dong(dat)}</tbody></table></details>
+<details><summary>Cần xem — đặc tả không nói gì, không có căn cứ để kết luận (${gn.length})</summary>${dau}${dong(gn)}</tbody></table></details>
+<details><summary>Chưa thử được — phải bấm Lưu / chạy trọn quy trình trên môi trường kiểm thử riêng (${l4.length})</summary>${dau}${dong(l4)}</tbody></table></details>`;
 }
 function sangCSVDacTa(kq) {
   const d = kq.doi_chieu_dac_ta; if (!d) return '';
   const q = v => '"' + cheChuoi(v == null ? '' : v).replace(/"/g, '""') + '"';
   return '\ufeff' + ['Loại bảng', 'Quy trình', 'Mã ca', 'Bước', 'Vai', 'Kết quả', 'Căn cứ', 'Quan sát / diễn giải', 'Nhóm nguyên nhân', 'Nguyên nhân', 'Việc tiếp', 'Có TC PM', 'Nguồn đặc tả', 'Tài khoản', 'Lúc chạy', 'Mắt xích'].map(q).join(',') + '\n'
-    + d.ket_qua.map(k => [k.loai_bang, k.quy_trinh, k.ma, k.muc, k.vai, k.kq, k.can_cu, k.dg, k.nhom, k.nguyen_nhan, k.viec_tiep, k.co_tc_pm, k.nguon, kq.tai_khoan, kq.luc, k.mat_xich != null ? k.mat_xich + ' ' + (TEN_MX[k.mat_xich] || '') : ''].map(q).join(',')).join('\n');
+    + d.ket_qua.map(k => [k.loai_bang, k.quy_trinh, k.ma, k.muc, k.vai, chuHien(k.kq), k.can_cu, k.dg, k.nhom, k.nguyen_nhan, k.viec_tiep, k.co_tc_pm, k.nguon, kq.tai_khoan, kq.luc, k.mat_xich != null ? k.mat_xich + ' ' + (TEN_MX[k.mat_xich] || '') : ''].map(q).join(',')).join('\n');
 }
 
 /* <<DACTA-HET>> */

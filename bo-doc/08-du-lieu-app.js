@@ -1,4 +1,4 @@
-/* Bộ đọc (bản 1.3): ba tệp dữ liệu dự án trước đây CHỈ có khi đóng gói (dist/ita-<dự án>.js gán thẳng vào biến) —
+/* Bộ đọc (bản 1.3): ba tệp dữ liệu dự án trước đây CHỈ có khi đóng gói (dist/rieng/ita-<dự án>.js gán thẳng vào biến) —
  * nay «Nạp thư mục» đọc được như nhau, cùng một đường. Nhận ra theo NỘI DUNG, không theo tên tệp.
  *  loi-da-biet.json        { loi_sap: [{ ma, duong_dan, … }], meta }  → window.__itaQuyTac   (bỏ qua màn đã biết là sập)
  *  gioi-han-o.json         { _nguon: { tep, ban }, o: { <name ô>: [khai báo] }, … } → window.__itaGioiHanO (kiểm ô theo khai báo của app)

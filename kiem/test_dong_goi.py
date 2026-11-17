@@ -6,7 +6,7 @@ import difflib, html, json, pathlib, re, runpy, shutil, socket, subprocess, sys,
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
 NEN = pathlib.Path.home() / 'Downloads/dqtv-kiem-tra-dacta-3.26.js'
-dist = sorted((GOC / 'dist').glob('ita-dqtv.js'))
+dist = sorted((GOC / 'dist/rieng').glob('ita-dqtv.js'))
 assert dist, 'dist/ trống: chạy cong-cu/dong_goi.py'
 d = dist[-1].read_text(encoding='utf-8')
 dong = d.split('\n')

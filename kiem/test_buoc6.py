@@ -4,7 +4,7 @@
 import json, pathlib, socket, subprocess, sys, tempfile, time
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-dist = sorted((GOC / 'dist').glob('ita-dqtv.js'))[-1].read_text(encoding='utf-8')
+dist = sorted((GOC / 'dist/rieng').glob('ita-dqtv.js'))[-1].read_text(encoding='utf-8')
 # từ bước 7d dist kèm sẵn quy trình / TC (window.__itaGoiSan, __itaTrangThaiQT): gỡ ra để kiểm riêng cơ chế Nạp của bước 6
 dist = '\n'.join(x for x in dist.split('\n') if not x.startswith(('window.__itaGoiSan = ', 'window.__itaTrangThaiQT = ')))
 assert dist.rstrip().endswith('})();')
