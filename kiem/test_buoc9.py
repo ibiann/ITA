@@ -2,6 +2,7 @@
 # Dựng bản thử bằng cong-cu/dong_goi.py (--ra, không ghi đè dist/) + một dòng xuất biến nội bộ ra window.__itaThu; chạy kiem/thu_goi_san.html
 # trong Chrome thời gian thật (kiem/mo_chrome.mjs: IndexedDB treo ở chế độ thời gian ảo).
 import json, pathlib, socket, subprocess, sys, tempfile, time
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent)); from ban_thu import doi_ten_mien   # [GĐ 8] khoá tên miền theo hồ sơ (bản 1.2)
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
 subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/sinh_trang_thai_qt.py')], check=True)
@@ -11,7 +12,7 @@ print('đạt: tệp trạng thái sinh từ', tt['_nguon']['app'])
 with tempfile.TemporaryDirectory() as t:
     t = pathlib.Path(t)
     subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/dong_goi.py'), '--du-an', 'dqtv', '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
-    dist = (t / 'dist.js').read_text(encoding='utf-8')
+    dist = doi_ten_mien((t / 'dist.js').read_text(encoding='utf-8'))
     assert 'window.__itaGoiSan = ' in dist and 'window.__itaTrangThaiQT = ' in dist
     print('bản đóng gói: %.2f MB' % (len(dist.encode('utf-8')) / 1e6))
     (t / 'tool.js').write_text(dist.rstrip()[:-len('})();')] + 'window.__itaThu = { sangHTML, docDacTa, NAP: () => NAP_DA_DUNG, DM: () => DM_V7, DP: () => DO_PHU };\n})();\n', encoding='utf-8')

@@ -3,9 +3,13 @@
 # may/ chỉ khác phần mã 3.26 ở số dòng đã định; mã không còn chữ riêng DQTV; nạp được trong Chrome có và không có hồ sơ dự án;
 # chặn ghi: chỉ POST tới đường dẫn trong hồ sơ được đi, không công tắc nào mở được ghi.
 import difflib, html, json, pathlib, re, runpy, shutil, socket, subprocess, sys, tempfile, time
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent)); from ban_thu import doi_ten_mien   # [GĐ 8] khoá tên miền theo hồ sơ (bản 1.2)
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-NEN = pathlib.Path.home() / 'Downloads/dqtv-kiem-tra-dacta-3.26.js'
+# [GĐ 8] bản 3.26 gốc: ưu tiên tệp trong repo (dist/goc/), chạy được trên máy sạch; vẫn nhận bản ở ~/Downloads như trước
+NEN = next((p for p in (GOC / 'dist/goc/dqtv-kiem-tra-dacta-3.26.js', pathlib.Path.home() / 'Downloads/dqtv-kiem-tra-dacta-3.26.js') if p.exists()), None)
+if NEN is None:
+    sys.exit('THIẾU bản nền 3.26 gốc: đặt dqtv-kiem-tra-dacta-3.26.js vào dist/goc/ (không phải 3.26.6). Test này so may/ với đúng tệp đó.')
 dist = sorted((GOC / 'dist/rieng').glob('ita-dqtv.js'))
 assert dist, 'dist/ trống: chạy cong-cu/dong_goi.py'
 d = dist[-1].read_text(encoding='utf-8')
@@ -112,8 +116,8 @@ def nap_http(noi_dung, trang):
         assert m, 'Chrome không trả kết quả'
         return json.loads(html.unescape(m.group(1)))
 if shutil.which('google-chrome'):
-    # hồ sơ có ten_mien dqtv.linksafe.vn; trang thử chạy trên 127.0.0.1 nên lần chạy kiểm truyền tenMienDuocChay: null
-    k = nap_http(d, 'thu_chan_ghi.html')
+    # hồ sơ có ten_mien dqtv.linksafe.vn; trang thử chạy trên 127.0.0.1 → [GĐ 8] bản thử đổi ten_mien (tenMienDuocChay: null bị bỏ qua từ 1.2)
+    k = nap_http(doi_ten_mien(d), 'thu_chan_ghi.html')
     print('  quyết định:', k['quyet_dinh']); print('  gửi thật:', k['gui_that']); print('  khi chạy:', k['khi_chay']); print('  lỗi JS:', k['loi_js'])
     di = {'POST /api/session', 'POST /api/search?q=a', 'GET /api/duty-registrations/1'}
     for ca, kq in k['quyet_dinh'].items():

@@ -17,8 +17,11 @@ addEventListener('load', () => setTimeout(async () => {
     if (buoc === '1') {
       kq.truoc = { ho_so: typeof window.__itaHoSo, ten_mien: String(ita.cauHinh().tenMienDuocChay),
                    session: LC().ghiChat('POST', '/api/session'), khac: LC().ghiChat('POST', '/api/units/1/approve') };
-      await ita.chay({ tenMienDuocChay: null, tuTaiBaoCao: false });
-      kq.chay_khong_ho_so = window.__itaThu.co().tienDo;
+      // [GĐ 8] từ 1.1 chưa có hồ sơ thì ita.chay hỏi «kiểm GIAO DIỆN THUẦN?» (window.confirm); Chrome chạy ngầm không trả lời hộp thoại nên trang treo → giả người dùng chọn «Không»
+      const hoi = [], confirm0 = window.confirm; window.confirm = m => { hoi.push(String(m)); return false; };
+      await ita.chay({ tuTaiBaoCao: false });
+      window.confirm = confirm0;
+      kq.chay_khong_ho_so = window.__itaThu.co().tienDo; kq.hoi_thuan = hoi.some(m => /GIAO DIỆN THUẦN/.test(m));
       kq.dang = 'nạp hồ sơ tên miền khác';
       const r1 = await ita.napTep([new File([hoSo('khong-khop.vidu')], 'du-an/mau/ho-so.json')]);
       kq.nap1 = r1.dung;

@@ -2,9 +2,10 @@
 # Dựng bản thử = dist + một dòng xuất hàm nội bộ ra window.__itaThu (chỉ trong bản thử, không có trong dist),
 # nạp kiem/thu_can_cu.html trên máy chủ thử 127.0.0.1 trong Chrome chạy ngầm.
 import html, json, pathlib, re, socket, subprocess, sys, tempfile, time
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent)); from ban_thu import doi_ten_mien   # [GĐ 8] khoá tên miền theo hồ sơ (bản 1.2)
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-dist = sorted((GOC / 'dist/rieng').glob('ita-dqtv.js'))[-1].read_text(encoding='utf-8')
+dist = doi_ten_mien(sorted((GOC / 'dist/rieng').glob('ita-dqtv.js'))[-1].read_text(encoding='utf-8'))
 assert dist.rstrip().endswith('})();'), 'dist không kết thúc bằng })();'
 thu = dist.rstrip()[:-len('})();')] + 'window.__itaThu = { doiChieuDacTa, sangHTML, canCuKiem };\n})();\n'
 
@@ -26,7 +27,7 @@ k = json.loads(html.unescape(m.group(1)))
 
 print('căn cứ phép kiểm chung:', k['can_cu_kiem'])
 assert k['can_cu_kiem'] == {'api_loi=500 /api/x': 'sự việc', 'o_khong_nhan=1 ô': 'chuẩn', 'phan_tram_vo_ly=150%': 'tự đặt', 'chu_la=NaN': 'sự việc',
-                            'chu_la=firstName': 'TC v7', 'tran_ngang=40px': 'tự đặt', 'nut_chinh_nhieu=3': 'tự đặt'}
+                            'chu_la=firstName': 'tự đặt', 'tran_ngang=40px': 'tự đặt', 'nut_chinh_nhieu=3': 'tự đặt'}   # [GĐ 8] từ 83bae52 (GĐ 7): mã camelCase chỉ có căn cứ khi danh mục TC dự án có KHUNG-CHUNG.MA_CHUA_DICH; trang thử không nạp TC → «tự đặt» (Cần xem)
 print('đạt: phép kiểm chung có căn cứ rõ; ngưỡng tự đặt không tính là lỗi')
 
 for d in k['dong']: print('  ', d['kq'].ljust(10), d['ma'].ljust(26), '| căn cứ:', d['can_cu'] or '—')

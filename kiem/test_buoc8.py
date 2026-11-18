@@ -3,6 +3,7 @@
 # 2. Đóng gói, dựng bản thử (= dist + xuất sangHTML ra window.__itaThu), chạy thật trên kiem/thu_kiem_o.html
 #    (thời gian thật qua kiem/mo_chrome.mjs), đọc kết quả lần chạy.
 import json, pathlib, re, shutil, socket, subprocess, sys, tempfile, time
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent)); from ban_thu import doi_ten_mien   # [GĐ 8] khoá tên miền theo hồ sơ (bản 1.2)
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
 subprocess.run(['node', str(GOC / 'cong-cu/sinh_gioi_han_o.mjs')], check=True)
@@ -23,7 +24,7 @@ with tempfile.TemporaryDirectory() as t:
         if 'GHEP' in p.read_text(encoding='utf-8') and not re.search(r'\b(const|let|var)\s+GHEP\b', ma_may):
             print('bỏ khỏi bản thử (chưa nối vào tool):', p.name); p.unlink()
     subprocess.run([sys.executable, '-I', str(t / 'goc/cong-cu/dong_goi.py'), '--du-an', 'dqtv', '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
-    dist = (t / 'dist.js').read_text(encoding='utf-8')
+    dist = doi_ten_mien((t / 'dist.js').read_text(encoding='utf-8'))
     assert 'window.__itaGioiHanO = ' in dist, 'bản đóng gói chưa kèm gioi-han-o.json'
     thu = dist.rstrip()[:-len('})();')] + 'window.__itaThu = { sangHTML };\n})();\n'
     (t / 'tool.js').write_text(thu, encoding='utf-8')

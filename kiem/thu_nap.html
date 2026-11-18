@@ -29,7 +29,7 @@ addEventListener('load', () => setTimeout(async () => {
     kq.dang = 'đã nạp';
     kq.nap = { dung: r.dung, khong_nhan: r.khong_nhan.map(x => x.tep + ': ' + x.ly_do) };
     kq.sau = ita.vaiDacTa();
-    await ita.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false });
+    await ita.chay({ kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false });
     const khoa = Object.keys(localStorage).find(k => k.startsWith('ita.last.v1|'));
     const c = khoa ? JSON.parse(localStorage.getItem(khoa)) : {};
     kq.chay = { du_lieu_nap: c.du_lieu_nap, dong: ((c.doi_chieu_dac_ta || {}).ket_qua || []).map(k => k.kq + ' ' + k.ma + ' | ' + k.can_cu) };

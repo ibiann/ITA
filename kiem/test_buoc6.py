@@ -2,9 +2,10 @@
 # Bản thử = dist + một dòng xuất root của bảng điều khiển và BO_DOC ra window.__itaThu (chỉ trong bản thử).
 # Nạp kiem/thu_nap.html (thời gian thật, kiem/mo_chrome.mjs) hai lần trên cùng hồ sơ Chrome, cùng máy chủ thử 127.0.0.1: lần 1 nạp + chạy, lần 2 xem còn không + xoá.
 import json, pathlib, socket, subprocess, sys, tempfile, time
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent)); from ban_thu import doi_ten_mien   # [GĐ 8] khoá tên miền theo hồ sơ (bản 1.2)
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-dist = sorted((GOC / 'dist/rieng').glob('ita-dqtv.js'))[-1].read_text(encoding='utf-8')
+dist = doi_ten_mien(sorted((GOC / 'dist/rieng').glob('ita-dqtv.js'))[-1].read_text(encoding='utf-8'))
 # từ bước 7d dist kèm sẵn quy trình / TC (window.__itaGoiSan, __itaTrangThaiQT): gỡ ra để kiểm riêng cơ chế Nạp của bước 6
 dist = '\n'.join(x for x in dist.split('\n') if not x.startswith(('window.__itaGoiSan = ', 'window.__itaTrangThaiQT = ')))
 assert dist.rstrip().endswith('})();')
@@ -34,12 +35,12 @@ assert k1['loi_js'] == 'không' and k2['loi_js'] == 'không'
 assert 'loi_trang_thu' not in k1 and 'loi_trang_thu' not in k2, (k1.get('loi_trang_thu'), k2.get('loi_trang_thu'))
 assert k1['truoc'] == [], 'chưa nạp mà đã có bảng đặc tả'
 assert k1['nut'] == [True, True], 'bảng điều khiển thiếu nút Nạp tệp / Nạp thư mục'
-assert k1['bo_doc'] == ['ho-so', 'quy-cach', 'dac-ta-json-2.1', 'quy-trinh-md', 'v7-tc-csv'], k1['bo_doc']   # bước 7 thêm hai bộ đọc: tài liệu quy trình, TC v7 (CSV); 13b hồ sơ dự án; 13e quy cách giao diện
+assert k1['bo_doc'] == ['ho-so', 'quy-cach', 'ho-so-mau', 'loi-da-biet', 'gioi-han-o', 'trang-thai-quy-trinh', 'dac-ta-json-2.1', 'quy-trinh-md', 'v7-tc-csv'], k1['bo_doc']   # bước 7 thêm hai bộ đọc: tài liệu quy trình, TC v7 (CSV); 13b hồ sơ dự án; 13e quy cách giao diện; [GĐ 8] bước 14–16 thêm hồ sơ mẫu, sổ lỗi đã biết, giới hạn ô, trạng thái quy trình
 print('đạt: chưa nạp gì thì không có bảng đặc tả; bảng điều khiển có nút «Nạp tệp», «Nạp thư mục»')
 assert k1['nap']['dung'] == [{'tep': 'mau-thu.json', 'bo_doc': 'dac-ta-json-2.1', 'so_bang': 1}], k1['nap']['dung']
 kn = dict(x.split(': ', 1) for x in k1['nap']['khong_nhan'])
 assert set(kn) == {'MaTran_UC_TC_v7.zip', 'tc.csv', 'khong-phai-dac-ta.json', 'hong.json', 'mot-bang-sai.json'}, kn
-assert kn['MaTran_UC_TC_v7.zip'].startswith('tệp nén'), kn
+assert kn['MaTran_UC_TC_v7.zip'].startswith('không giải nén được'), kn   # [GĐ 8] từ bước 16 zip được giải nén để đọc TC; zip hỏng (6 byte) thì ghi «không giải nén được»
 print('đạt: nhận đúng 1 tệp đặc tả; 5 tệp lạ (zip, csv, JSON khác khuôn, JSON hỏng, tệp có 1 bảng sai khuôn) báo «không nhận ra», không dùng')
 assert k1['sau'] == ['MAU: TQ'], k1['sau']
 dn = k1['chay']['du_lieu_nap']

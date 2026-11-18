@@ -7,6 +7,8 @@
 // Chạy: bash kiem/test_buoc17.sh   (cần jsdom: NODE_PATH=<thư mục>/node_modules). Tham số: node kiem/test_buoc17.mjs <bản dựng> <chế độ> [doi-chung]
 // «doi-chung»: chạy bản cũ, chỉ in kết quả (không kết luận) — dùng để chứng minh bản trước 1.4 trượt.
 import { createRequire } from 'module'; const { JSDOM } = createRequire(process.cwd() + '/')('jsdom');
+// [GĐ 8] trình duyệt chỉ ghi cảnh báo khi một lời hứa bị từ chối mà không ai bắt; Node thì dừng cả tiến trình. Lệnh ITA cố ý làm hỏng (giả lỗi đọc, chặn ghi — lỗi mang cờ __ita) mà app giả lập không bắt thì bỏ qua; lỗi khác vẫn làm test trượt.
+process.on('unhandledRejection', e => { if (e && e.__ita) return; console.error(e); process.exit(1); });
 import fs from 'fs';
 const [, , tep, cheDo = 'tren', doiChung] = process.argv;
 const NAV = cheDo === 'tren' ? `<header class="topbar"><a href="/app" class="logo">ITA Thử</a><nav class="navbar"><a href="/app">Tổng quan</a><a href="/app/ds">Danh sách</a><a href="/app/loi">Danh sách lỗi</a><a href="/app/thoat">Đăng xuất</a></nav></header>` : '';
@@ -131,7 +133,8 @@ dat(!NHAT.some(x => /^(POST|PUT|PATCH|DELETE) /.test(x) && !/who-am-i/.test(x)) 
 if (cheDo === 'tren') {
   dat(kq.nguon_menu === 'thanh điều hướng trên', 'nguồn menu = thanh điều hướng trên (có: ' + kq.nguon_menu + ')');
   dat(['Danh sách', 'Danh sách lỗi'].every(t => man.includes(t)) && (man.includes('ITA Thử') || man.includes('Tổng quan')), 'kiểm đủ 3 màn của thanh trên (có: ' + man.join(', ') + ')');
-  dat((kq.bo_qua_khong_bam || []).some(x => /mục menu cùng đường dẫn/.test(x.ly_do)), 'logo và «Tổng quan» cùng đường dẫn: chỉ kiểm một lần');
+  // [GĐ 8] từ 4389a52 (GĐ 7): logo nằm trong khối menu bị lọc hẳn, không còn là mục menu → không cần bước «cùng đường dẫn» nữa; điều cần giữ là /app chỉ kiểm một lần
+  dat(!man.includes('ITA Thử') && man.filter(t => t === 'Tổng quan').length === 1, 'logo và «Tổng quan» cùng đường dẫn: chỉ kiểm một lần, logo không thành màn');
   dat(!man.some(t => / › (Tổng quan|Danh sách|Danh sách lỗi|ITA Thử|Đăng xuất)$/.test(t)), 'link của thanh trên không bị coi là tab');
   dat(!man.some(t => /Đăng xuất/.test(t)), 'không bấm «Đăng xuất»');
   // 17c — màn tốt

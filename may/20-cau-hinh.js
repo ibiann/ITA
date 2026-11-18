@@ -129,7 +129,7 @@ function cheChuoi(s) {
   return t;
 }
 
-const PHIEN_BAN = '1.4';
+const PHIEN_BAN = '1.7';
 const KEY_CFG = 'ita.cfg.v1', KEY_CKPT = 'ita.ckpt.v1', KEY_LAST = 'ita.last.v1', KEY_TAY = 'ita.truongtay.v1', KEY_SAP = 'ita.sap.v1';
 
 /* --- Nhận ra tài khoản đang đăng nhập, để điểm dừng và kết quả TÁCH RIÊNG theo tài khoản ---

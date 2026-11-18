@@ -3,6 +3,7 @@
 # Dựng bản thử bằng cong-cu/dong_goi.py (--ra, không ghi đè dist/) + một dòng xuất hàm nội bộ ra window.__itaThu; chạy kiem/thu_buoc10.html
 # trong Chrome thời gian thật (kiem/mo_chrome.mjs). Trang mẫu giả trình duyệt hết chỗ cho điểm dừng đầy đủ, rồi tải lại trang giữa lúc chạy.
 import json, pathlib, socket, subprocess, sys, tempfile, time
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent)); from ban_thu import doi_ten_mien   # [GĐ 8] khoá tên miền theo hồ sơ (bản 1.2)
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
 
@@ -10,6 +11,7 @@ with tempfile.TemporaryDirectory() as t:
     t = pathlib.Path(t)
     subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/dong_goi.py'), '--du-an', 'dqtv', '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
     dist = (t / 'dist.js').read_text(encoding='utf-8')
+    dist = doi_ten_mien(dist)
     (t / 'tool.js').write_text(dist.rstrip()[:-len('})();')] + 'window.__itaThu = { doiChieuDacTa, phuDanhMucTC, sangHTML };\n})();\n', encoding='utf-8')
     (t / 'thu.html').write_text((GOC / 'kiem/thu_buoc10.html').read_text(encoding='utf-8'), encoding='utf-8')
     so = socket.socket(); so.bind(('127.0.0.1', 0)); cong = so.getsockname()[1]; so.close()

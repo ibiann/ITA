@@ -1,0 +1,12 @@
+{
+  "name": "ita-kiem-giao-dien",
+  "private": true,
+  "description": "Chỉ để chạy test Node (jsdom) trong kiem/. Bản dán Console (dist/) không cần gói nào. Cài: npm install",
+  "scripts": {
+    "test:jsdom": "bash kiem/test_buoc14.sh && bash kiem/test_buoc17.sh"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "6.2.8",
+    "jsdom": "24.1.3"
+  }
+}

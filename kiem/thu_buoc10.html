@@ -16,7 +16,7 @@ Storage.prototype.setItem = function (k, v) { if (String(k).startsWith('ita.ckpt
 </script>
 <script src="tool.js"></script>
 <script>
-const KHO = 'ita-ckpt', CHAY = { tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false };
+const KHO = 'ita-ckpt', CHAY = { kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false };
 const ngu = ms => new Promise(r => setTimeout(r, ms));
 const docKho = () => new Promise(ok => { const r = indexedDB.open(KHO, 1); r.onupgradeneeded = () => r.result.createObjectStore('tep', { keyPath: 'ten' }); r.onsuccess = () => { const tx = r.result.transaction('tep', 'readonly'), g = tx.objectStore('tep').getAll(); tx.oncomplete = () => { r.result.close(); ok(g.result || []); }; }; r.onerror = () => ok([]); });
 const xoaKho = () => new Promise(ok => { const r = indexedDB.open(KHO, 1); r.onupgradeneeded = () => r.result.createObjectStore('tep', { keyPath: 'ten' }); r.onsuccess = () => { const tx = r.result.transaction('tep', 'readwrite'); tx.objectStore('tep').clear(); tx.oncomplete = () => { r.result.close(); ok(); }; }; });

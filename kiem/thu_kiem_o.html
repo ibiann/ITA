@@ -42,7 +42,7 @@ addEventListener('load', () => setTimeout(async () => {
     buoc: [{ ma: 'B1', nut: 'Thêm mới', ten: 'Thêm mới', vai: ['TQ'] }], truong: [],
     tc_nhap: [{ ma: 'MAU.B1.NHAP.note.HOP_LE', buoc: 'B1', nut: 'Thêm mới', nhan: 'ghi chú', gia_tri: 'Kiểm thử tự động', mong_doi: 'hop_le', nguon: 'v7' },
       { ma: 'MAU.B1.NHAP.o_sau.HOP_LE', buoc: 'B1', nut: 'Thêm mới', nhan: 'ô sau', gia_tri: 'abc', mong_doi: 'hop_le', nguon: 'v7' }] }];
-  try { await ita.chay({ tenMienDuocChay: null, kiemKeTruong: true, moFormDeKiemKe: true, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
+  try { await ita.chay({ kiemKeTruong: true, moFormDeKiemKe: true, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
   const khoa = Object.keys(localStorage).find(k => k.startsWith('ita.last.'));
   const kqChay = khoa ? JSON.parse(localStorage.getItem(khoa)) : null;
   kq.loi_chay = loiChay;

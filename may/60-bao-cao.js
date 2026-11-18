@@ -250,6 +250,18 @@ window.ita = {
   },
   xoaTruongTay() { try { localStorage.removeItem(KEY_TAY); } catch (e) {} console.log('[ita] Đã xoá các lần quét tay.'); },
 
+  /* --- thăm dò: xem ITA nhận ra menu, vùng chính, bảng, ô tìm, tài khoản của màn đang mở thế nào; không bấm gì, không chạy phép kiểm ---
+   * [GĐ 8] lệnh này mất từ bản 3.26 (nút «🔍 Thăm dò» và lõi itaAudit({ __thamDo }) vẫn còn, chỉ thiếu ita.thamDo) → bấm nút báo lỗi. */
+  async thamDo() {
+    if (CO.dangChay) { console.warn('[ita] Đang chạy tự động, dừng trước đã.'); return; }
+    let rows;
+    try { rows = await itaAudit({ __thamDo: true }); }
+    catch (e) { console.warn('[ita] Thăm dò không chạy được: ' + (e && e.message || e)); return; }
+    if (!Array.isArray(rows)) return;
+    console.table(rows.map(r => ({ '': r[''], mục: r.muc, 'công cụ nhận ra': r.ket_qua, 'gợi ý': r.goi_y })));
+    return rows;
+  },
+
   /* --- ghi kịch bản bằng thao tác tay --- */
   ghi() {
     if (CO.ghiKichBan) { console.warn('[ita] Đang ghi.'); return; }
