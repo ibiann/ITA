@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.7, đóng gói 2026-11-18T09:28:03+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.7, đóng gói 2026-11-19T03:45:10+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
 if (!window.axe) {
 /*! axe v4.14.0
  * Copyright (c) 2015 - 2026 Deque Systems, Inc.
@@ -865,7 +865,7 @@ async function itaAudit(over, trangThaiTiep) {
   const nvOk = () => !!(C.moNutNghiepVu && !DU_AN.giao_dien_thuan && !BYPASS.length && !DUNG_BAM && !NGUNG_BAM_TRUOC && ((LC && LC.som) || C.moNutKhiDanConsole !== false));
   if (C.moNutNghiepVu && !(LC && LC.som)) console.warn('[ita] Dán Console: lá chắn cài muộn. Vẫn mở nút nghiệp vụ để đọc form (lệnh ghi bị chặn); thấy lệnh mạng đi vòng thì tự ngừng bấm. Muốn tắt hẳn: ita.chay({ moNutKhiDanConsole: false }).');
   const resetLog = () => { LOG.length = 0; ERR.length = 0; };
-  const apiErrs = () => LOG.filter(l => l.s === 'NETERR' || l.s >= 400).map(l => l.s + ' ' + l.u.replace(location.origin, '').split('?')[0].slice(0, 60));
+  const apiErrs = () => LOG.filter(l => l.s === 'NETERR' || l.s >= 400).map(l => l.s + ' ' + l.u.replace(location.origin, '').split('?')[0].slice(0, 200));   // [1.7.1] trước cắt ở 60 ký tự: mất đuôi mã UUID, người đọc tưởng «ID lạ»
 
   /* ---------- tiện ích DOM ---------- */
   const PANEL = 'ita-panel-host';
@@ -2855,7 +2855,7 @@ async function itaAudit(over, trangThaiTiep) {
   } }
   for (const i of inputIssues) for (const p of String(i.loi).split(' | ')) {
     const xn = /^\[cần xác nhận\]/.test(p) ? 'kiểm bằng mắt' : '';
-    const ct = p.replace(/^\[cần xác nhận\] /, '').replace(/\d+/g, 'N').replace(/"[^"]*"/g, '"…"');
+    const ct = p.replace(/^\[cần xác nhận\] /, '').replace(/\b(?!0\b)\d+/g, 'N').replace(/"[^"]*"/g, '"…"');
     // [3.26.1] lỗi máy chủ / trang khi tìm và số dòng vượt tổng là sự việc; còn lại là kỳ vọng tìm kiếm do công cụ đặt (vd gõ không dấu phải ra như có dấu)
     const muc = /⚠|^API lỗi|^JS lỗi/.test(p) ? 'cao' : /lớn hơn tổng/.test(ct) ? 'trung bình' : 'ghi nhận';
     ccHien = muc === 'ghi nhận' ? TU_DAT + ' — kỳ vọng tìm kiếm / lọc do công cụ đặt' : SU_VIEC + ' — ' + (muc === 'cao' ? 'máy chủ hoặc trang báo lỗi khi tìm' : 'số dòng lớn hơn tổng do chính màn ghi');
@@ -2957,7 +2957,7 @@ async function itaAudit(over, trangThaiTiep) {
   // [3.25] dừng vì app kẹt màn lỗi / mất phiên: vẫn tải báo cáo phần đã chạy TRƯỚC khi trang tải lại, để lỗi không bị mất
   if (C.tuTaiBaoCao && (!dungGiuaChung || APP_SAP || MAT_PHIEN)) { try { taiTep('ita-' + slugTK() + '-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + (dungGiuaChung ? '-DANG-DO' : '') + '.html', sangHTML(ketQua), 'text/html'); } catch (e) {} }
 
-  console.log('%c[ita] Xong: ' + res.length + ' màn · ' + issues.length + ' có vấn đề (cao: ' + ketQua.man_cao + ', TB: ' + ketQua.man_trung_binh + ') · ' + inputs.length + ' lần thử ô (' + inputIssues.length + ' lỗi)', 'color:#070;font-weight:bold');
+  console.log('%c[ita] Xong: ' + res.length + ' màn · ' + issues.length + ' có vấn đề (' + demHien(mau_loi) + ') · ' + inputs.length + ' lần thử ô (' + inputIssues.length + ' lỗi)', 'color:#070;font-weight:bold');
   console.table(issues.map(r => ({ màn: r.tab, mức: r.muc_do, api_lỗi: r.api_loi || '', js: r.js_loi || '', quy_trình: r.quy_trinh_loi || '' })));
   console.log('%c[ita] Kiểm kê: ' + TRUONG.length + ' trường · ' + ketQua.truong_co_loi + ' trường có lỗi · ' + ketQua.so_form_da_mo + ' form đã đọc được' + ((DUNG_BAM || NGUNG_BAM_TRUOC) ? ' (CÓ PHẦN CHẠY Ở CHẾ ĐỘ NGỪNG BẤM NÚT NGHIỆP VỤ vì có yêu cầu mạng đi vòng — form chưa đọc đủ)' : '') + (thieuTruong.length ? ' · THIẾU ' + thieuTruong.length + ' trường so với danh mục mong đợi' : '') + '. Xuất: ita.xuat("truong")', 'color:#0b3d66;font-weight:bold');
   if (ketQua.doi_chieu_dac_ta) {
@@ -3142,7 +3142,7 @@ function veThe(t) {
     kq = (window.__ITA_AUDIT && window.__ITA_AUDIT.ketQua) || kq;
     if (!kq) { body.appendChild(el('<div class="muted">Chưa có kết quả.</div>')); return; }
     const head = el(`<div>
-      <div class="r muted">${esc(kq.luc)} · ${kq.so_man_da_kiem} màn · cao ${kq.man_cao}, TB ${kq.man_trung_binh} · ô lỗi ${kq.o_nhap_co_loi}</div>
+      <div class="r muted">${esc(kq.luc)} · ${kq.so_man_da_kiem} màn · ${kq.man_co_van_de} có vấn đề · ô lỗi ${kq.o_nhap_co_loi}</div>
       <div class="r muted">Kiểm kê: ${kq.so_truong || 0} trường · ${kq.truong_co_loi || 0} trường có lỗi · ${kq.so_form_da_mo || 0} form đã mở${(kq.thieu_truong_so_voi_mong_doi || []).length ? ' · <b style="color:#c62828">thiếu ' + kq.thieu_truong_so_voi_mong_doi.length + ' trường</b>' : ''}</div>
       <div class="r">
         <label>Lọc: <select id="f-muc"><option value="">tất cả</option><option>Sai</option><option>Lệch chuẩn</option><option>Không thống nhất</option><option>Cần xem</option><option value="__truong">trường có lỗi</option><option value="__thieu">thiếu trường</option><option value="__mau">theo mẫu lỗi</option><option value="__ds">thiết kế &amp; ngôn từ</option></select></label>
@@ -3872,7 +3872,7 @@ ${kq.giao_dien_thuan ? '<p style="color:#8a4b00"><b>Chế độ kiểm giao di�
 <p><b>Tài khoản:</b> ${esc(kq.tai_khoan || '')}${kq.quyen_may_chu ? ' · <b>Máy chủ:</b> <span title="' + esc(((kq.quyen_may_chu.nhom || []).flatMap(n => n.quyen)).join(', ')) + '">' + esc(moTaQuyen(kq.quyen_may_chu)) + '</span>' : ''}${kq.dung_giua_chung ? ' · <b style="color:#c62828">LẦN CHẠY BỊ DỪNG GIỮA CHỪNG — kết quả chưa đủ</b>' : ''}</p>${(kq.muc_mat_ket_qua || []).length ? '<p style="color:#c62828"><b>MẤT KẾT QUẢ KHI TRANG TẢI LẠI — ' + kq.muc_mat_ket_qua.length + ' mục menu đã chạy nhưng không đọc lại được kết quả, màn và TC của các mục này không có trong báo cáo:</b> ' + kq.muc_mat_ket_qua.map(esc).join(' · ') + '</p>' : ''}${kq.dung_giua_chung ? `<p style="color:#c62828"><b>Lý do dừng:</b> ${esc(kq.ly_do_dung || '')}${(kq.menu_chua_chay || []).length ? '<br><b>Mục menu chưa chạy (' + kq.menu_chua_chay.length + '):</b> ' + kq.menu_chua_chay.map(esc).join(' · ') : ''}</p>` : ''}
 ${kq.cau_hinh ? '<p class=m><b>Cấu hình:</b> bộ «' + esc(kq.cau_hinh.bo) + '»' + (kq.cau_hinh.khac_mac_dinh.length ? '; khác mặc định: ' + kq.cau_hinh.khac_mac_dinh.map(x => esc(x.khoa) + ' = ' + esc(x.gia_tri) + ' (' + esc(x.nguon) + ')').join('; ') : '; còn lại theo mặc định') + (kq.cau_hinh.da_luu.length ? '. <b>Có cấu hình đã lưu từ trước</b> (ita.dat): ' + kq.cau_hinh.da_luu.map(esc).join(', ') + ' — xoá bằng ita.datLai()' : '') + '</p>' : ''}
 <p class=m>Công cụ bản ${esc(kq.phien_ban || '≤3.10')} · nạp bằng ${esc(kq.cach_nap || '?')} · cửa sổ ${esc(kq.cua_so || '?')}${kq.ngung_bam_do_di_vong ? ' · <b style="color:#c62828">có phần chạy ở chế độ ngừng bấm nút nghiệp vụ (bản dán Console gặp yêu cầu mạng đi vòng bộ chặn) — form chưa kiểm đủ (xem mục «Yêu cầu mạng không đi qua bộ chặn» bên dưới)</b>' : ''}</p>
-<p class=m>${esc(kq.url)} · ${esc(kq.luc)} · ${kq.so_man_da_kiem} màn đã kiểm · cao ${kq.man_cao}, trung bình ${kq.man_trung_binh}, cần xem ${kq.man_ghi_nhan || 0}${kq.dem_ket_luan ? ' · mẫu lỗi: ' + Object.entries(kq.dem_ket_luan).map(([k, n]) => esc(k) + ' ' + n).join(', ') : ''} · ${kq.o_nhap_co_loi} lỗi ô nhập · ${kq.doi_chieu_dac_ta ? 'đối chiếu đặc tả: ' + esc(gonMaDT(kq.doi_chieu_dac_ta.quy_trinh.map(q => q.ma))) : 'mức quy trình ' + kq.muc_quy_trinh + (kq.co_dac_ta ? ' (có đặc tả)' : ' (chưa nạp đặc tả)')}</p>
+<p class=m>${esc(kq.url)} · ${esc(kq.luc)} · ${kq.so_man_da_kiem} màn đã kiểm · ${kq.man_co_van_de} màn có vấn đề${kq.dem_ket_luan ? ' · mẫu lỗi: ' + Object.entries(kq.dem_ket_luan).map(([k, n]) => esc(k) + ' ' + n).join(', ') : ''} · ${kq.o_nhap_co_loi} lỗi ô nhập · ${kq.doi_chieu_dac_ta ? 'đối chiếu đặc tả: ' + esc(gonMaDT(kq.doi_chieu_dac_ta.quy_trinh.map(q => q.ma))) : 'mức quy trình ' + kq.muc_quy_trinh + (kq.co_dac_ta ? ' (có đặc tả)' : ' (chưa nạp đặc tả)')}</p>
 <p class=m><b>Dữ liệu đã nạp:</b> ${(kq.du_lieu_nap || []).length ? Object.values(kq.du_lieu_nap.reduce((g, x) => { const k = x.bo_doc + (x.goi_san ? '|g' : ''); (g[k] = g[k] || []).push(x); return g; }, {})).map(n => n.length > 3 ? esc(n.length + ' tệp ' + n[0].bo_doc + (n[0].goi_san ? ' (đóng gói sẵn trong tệp dán)' : ' (đã nạp)') + ': ' + n.slice(0, 3).map(x => x.tep).join(', ') + '…') : n.map(x => esc(x.tep) + ' (bộ đọc ' + esc(x.bo_doc) + ', ' + (x.so_bang ? x.so_bang + ' bảng, ' : '') + (x.so_muc ? x.so_muc + ' mục, ' : '') + 'mã băm ' + esc(x.bam) + ', ' + (x.goi_san ? 'đóng gói sẵn ' : 'nạp ') + esc(x.luc) + ')').join('; ')).join('; ') : 'không có. Chỉ kiểm giao diện chung, không đối chiếu quy trình / UC / TC.'}</p>
 ${(kq.du_lieu_du_an || []).length ? '<h2 style="font-size:16px;margin-top:28px">Dữ liệu dự án — ' + kq.du_lieu_du_an.filter(x => x.co).length + '/' + kq.du_lieu_du_an.length + ' loại có</h2><table><thead><tr><th>Loại</th><th>Có</th><th>Chi tiết</th><th>Nguồn</th><th>Dùng cho</th></tr></thead><tbody>' + kq.du_lieu_du_an.map(x => '<tr class="' + (x.co ? '' : 'tb') + '"><td>' + esc(x.muc) + '</td><td>' + (x.co ? 'có' : 'KHÔNG') + '</td><td>' + esc(x.chi_tiet) + '</td><td>' + esc(x.nguon) + '</td><td>' + esc(x.dung_cho) + '</td></tr>').join('') + '</tbody></table>' + ((kq.tep_khong_nap_duoc || []).length ? '<p class=m><b>Tệp không nạp được ở lần nạp gần nhất (' + kq.tep_khong_nap_duoc.length + '):</b> ' + kq.tep_khong_nap_duoc.map(x => esc(x.tep) + ' — ' + esc(x.ly_do)).join('; ') + '</p>' : '') : ''}
 ${htmlDacTa(kq)}

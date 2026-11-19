@@ -127,7 +127,7 @@ function veThe(t) {
     kq = (window.__ITA_AUDIT && window.__ITA_AUDIT.ketQua) || kq;
     if (!kq) { body.appendChild(el('<div class="muted">Chưa có kết quả.</div>')); return; }
     const head = el(`<div>
-      <div class="r muted">${esc(kq.luc)} · ${kq.so_man_da_kiem} màn · cao ${kq.man_cao}, TB ${kq.man_trung_binh} · ô lỗi ${kq.o_nhap_co_loi}</div>
+      <div class="r muted">${esc(kq.luc)} · ${kq.so_man_da_kiem} màn · ${kq.man_co_van_de} có vấn đề · ô lỗi ${kq.o_nhap_co_loi}</div>
       <div class="r muted">Kiểm kê: ${kq.so_truong || 0} trường · ${kq.truong_co_loi || 0} trường có lỗi · ${kq.so_form_da_mo || 0} form đã mở${(kq.thieu_truong_so_voi_mong_doi || []).length ? ' · <b style="color:#c62828">thiếu ' + kq.thieu_truong_so_voi_mong_doi.length + ' trường</b>' : ''}</div>
       <div class="r">
         <label>Lọc: <select id="f-muc"><option value="">tất cả</option><option>Sai</option><option>Lệch chuẩn</option><option>Không thống nhất</option><option>Cần xem</option><option value="__truong">trường có lỗi</option><option value="__thieu">thiếu trường</option><option value="__mau">theo mẫu lỗi</option><option value="__ds">thiết kế &amp; ngôn từ</option></select></label>

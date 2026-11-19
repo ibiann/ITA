@@ -326,7 +326,7 @@ async function itaAudit(over, trangThaiTiep) {
   const nvOk = () => !!(C.moNutNghiepVu && !DU_AN.giao_dien_thuan && !BYPASS.length && !DUNG_BAM && !NGUNG_BAM_TRUOC && ((LC && LC.som) || C.moNutKhiDanConsole !== false));
   if (C.moNutNghiepVu && !(LC && LC.som)) console.warn('[ita] Dán Console: lá chắn cài muộn. Vẫn mở nút nghiệp vụ để đọc form (lệnh ghi bị chặn); thấy lệnh mạng đi vòng thì tự ngừng bấm. Muốn tắt hẳn: ita.chay({ moNutKhiDanConsole: false }).');
   const resetLog = () => { LOG.length = 0; ERR.length = 0; };
-  const apiErrs = () => LOG.filter(l => l.s === 'NETERR' || l.s >= 400).map(l => l.s + ' ' + l.u.replace(location.origin, '').split('?')[0].slice(0, 60));
+  const apiErrs = () => LOG.filter(l => l.s === 'NETERR' || l.s >= 400).map(l => l.s + ' ' + l.u.replace(location.origin, '').split('?')[0].slice(0, 200));   // [1.7.1] trước cắt ở 60 ký tự: mất đuôi mã UUID, người đọc tưởng «ID lạ»
 
   /* ---------- tiện ích DOM ---------- */
   const PANEL = 'ita-panel-host';
@@ -2316,7 +2316,7 @@ async function itaAudit(over, trangThaiTiep) {
   } }
   for (const i of inputIssues) for (const p of String(i.loi).split(' | ')) {
     const xn = /^\[cần xác nhận\]/.test(p) ? 'kiểm bằng mắt' : '';
-    const ct = p.replace(/^\[cần xác nhận\] /, '').replace(/\d+/g, 'N').replace(/"[^"]*"/g, '"…"');
+    const ct = p.replace(/^\[cần xác nhận\] /, '').replace(/\b(?!0\b)\d+/g, 'N').replace(/"[^"]*"/g, '"…"');
     // [3.26.1] lỗi máy chủ / trang khi tìm và số dòng vượt tổng là sự việc; còn lại là kỳ vọng tìm kiếm do công cụ đặt (vd gõ không dấu phải ra như có dấu)
     const muc = /⚠|^API lỗi|^JS lỗi/.test(p) ? 'cao' : /lớn hơn tổng/.test(ct) ? 'trung bình' : 'ghi nhận';
     ccHien = muc === 'ghi nhận' ? TU_DAT + ' — kỳ vọng tìm kiếm / lọc do công cụ đặt' : SU_VIEC + ' — ' + (muc === 'cao' ? 'máy chủ hoặc trang báo lỗi khi tìm' : 'số dòng lớn hơn tổng do chính màn ghi');
@@ -2418,7 +2418,7 @@ async function itaAudit(over, trangThaiTiep) {
   // [3.25] dừng vì app kẹt màn lỗi / mất phiên: vẫn tải báo cáo phần đã chạy TRƯỚC khi trang tải lại, để lỗi không bị mất
   if (C.tuTaiBaoCao && (!dungGiuaChung || APP_SAP || MAT_PHIEN)) { try { taiTep('ita-' + slugTK() + '-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + (dungGiuaChung ? '-DANG-DO' : '') + '.html', sangHTML(ketQua), 'text/html'); } catch (e) {} }
 
-  console.log('%c[ita] Xong: ' + res.length + ' màn · ' + issues.length + ' có vấn đề (cao: ' + ketQua.man_cao + ', TB: ' + ketQua.man_trung_binh + ') · ' + inputs.length + ' lần thử ô (' + inputIssues.length + ' lỗi)', 'color:#070;font-weight:bold');
+  console.log('%c[ita] Xong: ' + res.length + ' màn · ' + issues.length + ' có vấn đề (' + demHien(mau_loi) + ') · ' + inputs.length + ' lần thử ô (' + inputIssues.length + ' lỗi)', 'color:#070;font-weight:bold');
   console.table(issues.map(r => ({ màn: r.tab, mức: r.muc_do, api_lỗi: r.api_loi || '', js: r.js_loi || '', quy_trình: r.quy_trinh_loi || '' })));
   console.log('%c[ita] Kiểm kê: ' + TRUONG.length + ' trường · ' + ketQua.truong_co_loi + ' trường có lỗi · ' + ketQua.so_form_da_mo + ' form đã đọc được' + ((DUNG_BAM || NGUNG_BAM_TRUOC) ? ' (CÓ PHẦN CHẠY Ở CHẾ ĐỘ NGỪNG BẤM NÚT NGHIỆP VỤ vì có yêu cầu mạng đi vòng — form chưa đọc đủ)' : '') + (thieuTruong.length ? ' · THIẾU ' + thieuTruong.length + ' trường so với danh mục mong đợi' : '') + '. Xuất: ita.xuat("truong")', 'color:#0b3d66;font-weight:bold');
   if (ketQua.doi_chieu_dac_ta) {
