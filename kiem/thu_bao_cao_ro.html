@@ -55,7 +55,7 @@
       document.body.setAttribute('data-kq', JSON.stringify({ error, nap,
         mau: kq ? kq.mau_loi : [], o_nhap: kq ? kq.loi_o_nhap : [], thu_o: kq ? (kq.thu_o_nhap || []).map(x => x.man + ' · ' + x.o) : [], bo_qua: kq ? kq.bo_qua_khong_bam : [], du_lieu_nap: kq ? (kq.du_lieu_nap || []) : [],
         html: kq ? T.html(kq) : '', csv: kq ? T.csv(kq) : '',
-        don_vi: { ngoai: T.ngoaiQuyCach ? T.ngoaiQuyCach({ '0px 0px 12px 12px': 1, '50%': 1, '0px': 1, '999px': 1, '10px': 1 }, [8, 10, 9999]) : null,
+        don_vi: { ngoai: T.ngoaiQuyCach ? T.ngoaiQuyCach({ '0px 0px 10px 10px': 1, '0px 0px 12px 12px': 1, '50%': 1, '0px': 1, '999px': 1, '10px': 1 }, [8, 10, 9999]) : null,
                   chuyen_trang: T.laNutChuyenTrang ? ['← Trước', 'Tiếp theo →', 'Next', 'Tiếp theo: Trình ký', 'Trước hạn'].map(T.laNutChuyenTrang) : null } }));
     }, 300));
   </script>

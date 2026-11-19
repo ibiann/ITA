@@ -238,11 +238,12 @@ async function itaAudit(over, trangThaiTiep) {
   // [1.1] lỗi xảy ra trong 3 giây sau một lệnh ghi bị lá chắn chặn: do công cụ gây ra, ghi nhật ký, không tính lỗi app
   let LAST_CHAN = 0; BLOCK.push = function (...a) { LAST_CHAN = Date.now(); return Array.prototype.push.apply(this, a); };
   const sauChan = m => Date.now() - LAST_CHAN < 3000 && (nk('lỗi sau khi chặn ghi (do công cụ)', String(m).slice(0, 160)), true);
-  console.error = function () { const m = [...arguments].map(a => (a && a.stack) ? (a.name || 'Error') + ': ' + (a.message || '') : String(a)).join(' '); if (sauChan(m)) return oe.apply(this, arguments); ERR.push(m.slice(0, 160)); try { ghiSap(m); } catch (e) {} return oe.apply(this, arguments); };
+  console.error = function () { const m = [...arguments].map(a => (a && a.stack) ? (a.name || 'Error') + ': ' + (a.message || '') : String(a)).join(' '); if (sauChan(m)) return oe.apply(this, arguments); if (LOI_TRINH_DUYET_VO_HAI.test(m.trim())) { nk('bỏ qua cảnh báo trình duyệt', m.slice(0, 120)); return oe.apply(this, arguments); } ERR.push(m.slice(0, 160)); try { ghiSap(m); } catch (e) {} return oe.apply(this, arguments); };
   // SỬA LỖI 2: lỗi do công cụ tự gây ra (chặn ghi) KHÔNG tính là lỗi ứng dụng
   const onErr = e => {
     const msg = (e.message || (e.reason && (e.reason.message || e.reason)) || '') + '';
     if ((e.reason && e.reason.__ita) || msg.includes('itaAudit') || sauChan(msg)) return;
+    if (LOI_TRINH_DUYET_VO_HAI.test(msg.trim())) { nk('bỏ qua cảnh báo trình duyệt', msg.slice(0, 120)); return; }   // [1.7.1] không phải lỗi app
     ERR.push('JS: ' + msg); try { ghiSap('Uncaught ' + msg); } catch (x) {}
   };
   window.addEventListener('error', onErr); window.addEventListener('unhandledrejection', onErr);
@@ -1002,6 +1003,7 @@ async function itaAudit(over, trangThaiTiep) {
     const chan0 = BLOCK.length;
     // nút đang bị khoá: ghi lại lý do (title/tooltip) — đây là thông tin quy trình (điều kiện để được làm bước này)
     if (e.disabled || e.getAttribute('aria-disabled') === 'true' || /(^|\s)(disabled|is-disabled)(\s|$)/.test(cls(e))) {
+      if (laNutChuyenTrang(tenNut(e))) { skipped.push({ man, chu: tenNut(e), ly_do: 'nút chuyển trang đang khoá (đang ở trang đầu / cuối) — bình thường' }); return; }   // [1.7.1]
       const lyDo = e.getAttribute('title') || e.getAttribute('data-tooltip') || e.getAttribute('aria-description') || (e.parentElement && e.parentElement.getAttribute('title')) || '';
       ghiTruong(mkTruong(man, 'nút «' + tenNut(e) + '»', { nhan: tenNut(e), loai: 'nút đang khoá', ghi_chu: lyDo ? 'lý do hiện trên nút: ' + lyDo : 'không ghi lý do vì sao bị khoá' }), new Set());
       skipped.push({ man, chu: tenNut(e), ly_do: 'nút đang khoá' + (lyDo ? ' — ' + lyDo : ' — không ghi lý do') });
@@ -2344,8 +2346,7 @@ async function itaAudit(over, trangThaiTiep) {
     if (dsKq.nut_cung_nhan_khac_kieu.length) vuot.push(dsKq.nut_cung_nhan_khac_kieu.length + ' nhãn nút có nhiều kiểu');
     dsKq.vuot_chuan = vuot;
     if (QUY_CACH) {   // [13e] giá trị ngoài danh sách được phép của quy cách dự án (số px; viền bo nhiều giá trị thì xét từng giá trị)
-      const ngoaiQC = (bang, cho) => Object.keys(bang).filter(v => !v.split(/\s+/).every(p => cho.includes(p.endsWith('%') ? p : parseFloat(p))));
-      for (const [k, ten, bang] of [['co_chu_px', 'cỡ chữ', DS.coChu], ['bo_goc_px', 'bo góc', DS.boGoc]]) if (Array.isArray(QUY_CACH[k])) { const n = ngoaiQC(bang, QUY_CACH[k]); if (n.length) vuot.push(n.length + ' giá trị ' + ten + ' ngoài quy cách (' + QUY_CACH[k].join(', ') + '): ' + n.slice(0, 8).join(' · ')); }
+      for (const [k, ten, bang] of [['co_chu_px', 'cỡ chữ', DS.coChu], ['bo_goc_px', 'bo góc', DS.boGoc]]) if (Array.isArray(QUY_CACH[k])) { const n = ngoaiQuyCach(bang, QUY_CACH[k]); if (n.length) vuot.push(n.length + ' giá trị ' + ten + ' ngoài quy cách (' + QUY_CACH[k].join(', ') + '): ' + n.slice(0, 8).join(' · ')); }
       dsKq.can_cu = 'quy cách dự án — ' + (QUY_CACH.nguon || 'quy-cach.json');
     } else dsKq.can_cu = TU_DAT + ' — ngưỡng chuanDS của công cụ; chưa có quy cách thiết kế của dự án nên chỉ ghi nhận';
   }

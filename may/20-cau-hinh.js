@@ -129,6 +129,16 @@ function cheChuoi(s) {
   return t;
 }
 
+// [1.7.1] ba luật nhỏ dùng chung, để ở mức tệp cho test gọi thẳng được
+// cảnh báo của chính trình duyệt, không phải lỗi app (so CẢ câu: lỗi thật có chữ ResizeObserver ở giữa vẫn là lỗi)
+const LOI_TRINH_DUYET_VO_HAI = /^(JS: )?ResizeObserver loop (completed with undelivered notifications|limit exceeded)\.?$/i;
+// giá trị (cỡ chữ, bo góc) ngoài danh sách px được phép của quy cách: xét từng phần («0px 0px 10px 10px» = bốn góc); phần 0 (góc không bo)
+// không trái quy cách nào nên bỏ qua — trước 1.7.1 góc 0 làm cả giá trị bị tính «ngoài quy cách». Giá trị % giữ nguyên (quy cách chỉ khai px).
+const ngoaiQuyCach = (bang, cho) => Object.keys(bang).filter(v => v.split(/\s+/).filter(p => p && p !== '/' && parseFloat(p) !== 0)
+  .some(p => !cho.includes(p.endsWith('%') ? p : parseFloat(p))));
+// nút chuyển trang trơn («← Trước», «Tiếp theo →», «Next»): khoá ở trang đầu / cuối là bình thường. Nhãn có thêm chữ khác («Tiếp theo: Trình ký») thì không phải
+const laNutChuyenTrang = ten => /^\s*[←‹«<]?\s*(trang\s+)?(trước|sau|tiếp|tiếp theo|previous|prev|next)\s*[→›»>]?\s*$/i.test(String(ten || ''));
+
 const PHIEN_BAN = '1.7';
 const KEY_CFG = 'ita.cfg.v1', KEY_CKPT = 'ita.ckpt.v1', KEY_LAST = 'ita.last.v1', KEY_TAY = 'ita.truongtay.v1', KEY_SAP = 'ita.sap.v1';
 

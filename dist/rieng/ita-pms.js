@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.7, đóng gói 2026-11-19T03:45:13+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.7, đóng gói 2026-11-19T03:46:43+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
 window.__itaHoSo = {"ten":"LANCS PMS","ten_mien":"pms.lab.linksafe.vn","kieu_app":"openslides","chon_tai_khoan":"os-account-button span[title]","post_cho_qua":["/system/auth/login","/system/auth/who-am-i","/system/presenter/handle_request"],"cuoc_hop_mau":87,"tai_khoan":[{"dang_nhap":"ita.thuky","ten_hien":"ITA Thư ký","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Quản trị viên"},{"dang_nhap":"ita.chutoa","ten_hien":"ITA Chủ tọa","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Chủ tọa"},{"dang_nhap":"ita.daibieu","ten_hien":"ITA Đại biểu","vai":"DAI_BIEU","nhom_app":"Đại biểu"},{"dang_nhap":"ita.khongnhom","ten_hien":"ITA Không nhóm","vai":"KHONG_QUYEN","nhom_app":"Mặc định"},{"dang_nhap":"ita.qttochuc","ten_hien":"ITA Quản trị tổ chức","vai":"QUAN_TRI_TO_CHUC","nhom_app":""},{"dang_nhap":"ita.qluyban","ten_hien":"ITA Quản lý ủy ban","vai":"QUAN_LY_UY_BAN","nhom_app":""}],"_nguon":{"ten_mien":"lab của dự án (DOCS/80-setup-3-cuoc-hop-demo-khach-hang-2026-07-12.md)","kieu_app":"OpenSlides 4: dữ liệu đi qua SharedWorker (openslides-client/client/src/app/openslides-main-module/services/shared-worker.service.ts:108); ITA đọc nhóm + quyền qua who-am-i + autoupdate (35-kieu-app.js)","chon_tai_khoan":"openslides-client/client/src/app/site/modules/global-headbar/components/account-button/account-button.component.html: span đầu tiên có title = tên ngắn của tài khoản, span sau = nhóm","post_cho_qua":"đọc mà dùng POST: đăng nhập, who-am-i (auth-service public-controller.ts:41), presenter (openslides-backend/openslides_backend/presenter/: không presenter nào ghi dữ liệu, rà 07/11/2026). Mọi lệnh ghi đi qua /system/action/handle_request, /system/vote, /system/media, dịch vụ LPM (/api/gateway…, bóc băng, Drive) → bị chặn khi chạy. Lưu ý: lab có thể chạy bản backend khác repo (lab tạo 6 nhóm khi tạo cuộc họp, repo tạo 4)","cuoc_hop_mau":"cuộc họp «ITA – cuộc họp mẫu» dựng 07/11/2026 cho ITA: 3 mục chương trình, 2 kiến nghị, 1 bình bầu","tai_khoan":"tài khoản ita.* dựng 07/11/2026 (id 38–43). Vai theo hướng dẫn sử dụng (DOCS/ui-ux/huong-dan-su-dung/HUONG-DAN-SU-DUNG-LANCS-PMS.md mục 2, Phụ lục A): «Chủ tọa / Quản trị cuộc họp» gần như mọi quyền (người dùng chốt 07/11) — gán cho cả ita.thuky (nhóm Quản trị viên) và ita.chutoa (nhóm Chủ tọa, 12 quyền) để thấy chỗ nhóm Chủ tọa của app thiếu so với tài liệu. Không ghi mật khẩu."}};
 if (!window.axe) {
 /*! axe v4.14.0
@@ -366,6 +366,16 @@ function cheChuoi(s) {
   }
   return t;
 }
+
+// [1.7.1] ba luật nhỏ dùng chung, để ở mức tệp cho test gọi thẳng được
+// cảnh báo của chính trình duyệt, không phải lỗi app (so CẢ câu: lỗi thật có chữ ResizeObserver ở giữa vẫn là lỗi)
+const LOI_TRINH_DUYET_VO_HAI = /^(JS: )?ResizeObserver loop (completed with undelivered notifications|limit exceeded)\.?$/i;
+// giá trị (cỡ chữ, bo góc) ngoài danh sách px được phép của quy cách: xét từng phần («0px 0px 10px 10px» = bốn góc); phần 0 (góc không bo)
+// không trái quy cách nào nên bỏ qua — trước 1.7.1 góc 0 làm cả giá trị bị tính «ngoài quy cách». Giá trị % giữ nguyên (quy cách chỉ khai px).
+const ngoaiQuyCach = (bang, cho) => Object.keys(bang).filter(v => v.split(/\s+/).filter(p => p && p !== '/' && parseFloat(p) !== 0)
+  .some(p => !cho.includes(p.endsWith('%') ? p : parseFloat(p))));
+// nút chuyển trang trơn («← Trước», «Tiếp theo →», «Next»): khoá ở trang đầu / cuối là bình thường. Nhãn có thêm chữ khác («Tiếp theo: Trình ký») thì không phải
+const laNutChuyenTrang = ten => /^\s*[←‹«<]?\s*(trang\s+)?(trước|sau|tiếp|tiếp theo|previous|prev|next)\s*[→›»>]?\s*$/i.test(String(ten || ''));
 
 const PHIEN_BAN = '1.7';
 const KEY_CFG = 'ita.cfg.v1', KEY_CKPT = 'ita.ckpt.v1', KEY_LAST = 'ita.last.v1', KEY_TAY = 'ita.truongtay.v1', KEY_SAP = 'ita.sap.v1';
@@ -778,11 +788,12 @@ async function itaAudit(over, trangThaiTiep) {
   // [1.1] lỗi xảy ra trong 3 giây sau một lệnh ghi bị lá chắn chặn: do công cụ gây ra, ghi nhật ký, không tính lỗi app
   let LAST_CHAN = 0; BLOCK.push = function (...a) { LAST_CHAN = Date.now(); return Array.prototype.push.apply(this, a); };
   const sauChan = m => Date.now() - LAST_CHAN < 3000 && (nk('lỗi sau khi chặn ghi (do công cụ)', String(m).slice(0, 160)), true);
-  console.error = function () { const m = [...arguments].map(a => (a && a.stack) ? (a.name || 'Error') + ': ' + (a.message || '') : String(a)).join(' '); if (sauChan(m)) return oe.apply(this, arguments); ERR.push(m.slice(0, 160)); try { ghiSap(m); } catch (e) {} return oe.apply(this, arguments); };
+  console.error = function () { const m = [...arguments].map(a => (a && a.stack) ? (a.name || 'Error') + ': ' + (a.message || '') : String(a)).join(' '); if (sauChan(m)) return oe.apply(this, arguments); if (LOI_TRINH_DUYET_VO_HAI.test(m.trim())) { nk('bỏ qua cảnh báo trình duyệt', m.slice(0, 120)); return oe.apply(this, arguments); } ERR.push(m.slice(0, 160)); try { ghiSap(m); } catch (e) {} return oe.apply(this, arguments); };
   // SỬA LỖI 2: lỗi do công cụ tự gây ra (chặn ghi) KHÔNG tính là lỗi ứng dụng
   const onErr = e => {
     const msg = (e.message || (e.reason && (e.reason.message || e.reason)) || '') + '';
     if ((e.reason && e.reason.__ita) || msg.includes('itaAudit') || sauChan(msg)) return;
+    if (LOI_TRINH_DUYET_VO_HAI.test(msg.trim())) { nk('bỏ qua cảnh báo trình duyệt', msg.slice(0, 120)); return; }   // [1.7.1] không phải lỗi app
     ERR.push('JS: ' + msg); try { ghiSap('Uncaught ' + msg); } catch (x) {}
   };
   window.addEventListener('error', onErr); window.addEventListener('unhandledrejection', onErr);
@@ -1542,6 +1553,7 @@ async function itaAudit(over, trangThaiTiep) {
     const chan0 = BLOCK.length;
     // nút đang bị khoá: ghi lại lý do (title/tooltip) — đây là thông tin quy trình (điều kiện để được làm bước này)
     if (e.disabled || e.getAttribute('aria-disabled') === 'true' || /(^|\s)(disabled|is-disabled)(\s|$)/.test(cls(e))) {
+      if (laNutChuyenTrang(tenNut(e))) { skipped.push({ man, chu: tenNut(e), ly_do: 'nút chuyển trang đang khoá (đang ở trang đầu / cuối) — bình thường' }); return; }   // [1.7.1]
       const lyDo = e.getAttribute('title') || e.getAttribute('data-tooltip') || e.getAttribute('aria-description') || (e.parentElement && e.parentElement.getAttribute('title')) || '';
       ghiTruong(mkTruong(man, 'nút «' + tenNut(e) + '»', { nhan: tenNut(e), loai: 'nút đang khoá', ghi_chu: lyDo ? 'lý do hiện trên nút: ' + lyDo : 'không ghi lý do vì sao bị khoá' }), new Set());
       skipped.push({ man, chu: tenNut(e), ly_do: 'nút đang khoá' + (lyDo ? ' — ' + lyDo : ' — không ghi lý do') });
@@ -2884,8 +2896,7 @@ async function itaAudit(over, trangThaiTiep) {
     if (dsKq.nut_cung_nhan_khac_kieu.length) vuot.push(dsKq.nut_cung_nhan_khac_kieu.length + ' nhãn nút có nhiều kiểu');
     dsKq.vuot_chuan = vuot;
     if (QUY_CACH) {   // [13e] giá trị ngoài danh sách được phép của quy cách dự án (số px; viền bo nhiều giá trị thì xét từng giá trị)
-      const ngoaiQC = (bang, cho) => Object.keys(bang).filter(v => !v.split(/\s+/).every(p => cho.includes(p.endsWith('%') ? p : parseFloat(p))));
-      for (const [k, ten, bang] of [['co_chu_px', 'cỡ chữ', DS.coChu], ['bo_goc_px', 'bo góc', DS.boGoc]]) if (Array.isArray(QUY_CACH[k])) { const n = ngoaiQC(bang, QUY_CACH[k]); if (n.length) vuot.push(n.length + ' giá trị ' + ten + ' ngoài quy cách (' + QUY_CACH[k].join(', ') + '): ' + n.slice(0, 8).join(' · ')); }
+      for (const [k, ten, bang] of [['co_chu_px', 'cỡ chữ', DS.coChu], ['bo_goc_px', 'bo góc', DS.boGoc]]) if (Array.isArray(QUY_CACH[k])) { const n = ngoaiQuyCach(bang, QUY_CACH[k]); if (n.length) vuot.push(n.length + ' giá trị ' + ten + ' ngoài quy cách (' + QUY_CACH[k].join(', ') + '): ' + n.slice(0, 8).join(' · ')); }
       dsKq.can_cu = 'quy cách dự án — ' + (QUY_CACH.nguon || 'quy-cach.json');
     } else dsKq.can_cu = TU_DAT + ' — ngưỡng chuanDS của công cụ; chưa có quy cách thiết kế của dự án nên chỉ ghi nhận';
   }

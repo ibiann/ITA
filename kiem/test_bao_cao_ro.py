@@ -4,7 +4,7 @@
 #  3 «ResizeObserver loop…» (cảnh báo trình duyệt) không là lỗi JS; lỗi thật có chữ ResizeObserver vẫn «Sai»
 #  4 gom mẫu lỗi ô tìm giữ «0 dòng», không thành «N dòng»; «vẫn ra 7 dòng» là mẫu khác
 #  5 lệnh ghi do công cụ bấm nút gửi ngay không mang nguyên tắc «Màn chỉ xem…»
-#  6 bo góc: 0px không tính, 50% = tròn hẳn khi quy cách có 9999, chỉ 999px ngoài quy cách; ngưỡng đếm của công cụ là «Cần xem», không «Sai»
+#  6 bo góc: góc 0px không làm cả giá trị «ngoài quy cách» («0px 0px 10px 10px» đạt khi quy cách có 10); ngưỡng đếm của công cụ là «Cần xem», không «Sai»
 #  7 nút chuyển trang khoá là bình thường; nút bước quy trình khoá vẫn «không ghi lý do»
 #  8 hai tệp hồ sơ cùng nội dung chỉ liệt kê một lần
 # Chạy: python3 -I kiem/test_bao_cao_ro.py   (cần google-chrome)
@@ -60,7 +60,7 @@ assert any('0 dòng nhưng không có thông báo trống' in x for x in on), on
 assert not any('N dòng nhưng' in x for x in on), on
 assert len(set(on)) == len(on) and any('vẫn ra' in x for x in on), on
 # 6
-assert k['don_vi']['ngoai'] == ['999px'], k['don_vi']
+assert sorted(k['don_vi']['ngoai']) == ['0px 0px 12px 12px', '50%', '999px'], k['don_vi']   # góc 0 không tính; 12px, 50%, 999px ngoài [8, 10, 9999] là lệch thật
 # 7
 assert k['don_vi']['chuyen_trang'] == [True, True, True, False, False], k['don_vi']
 bq = {}
@@ -74,4 +74,4 @@ assert 'Sai — lệch quy cách dự án' in k['html'] and 'Cần xem — vư�
 # 8 (Task 5)
 hs = [x for x in k['du_lieu_nap'] if x['bo_doc'] == 'ho-so']
 assert len(hs) == 1, hs
-print('đạt: đường dẫn đủ (:id) · không mức cũ · bỏ ResizeObserver, giữ lỗi thật · «0 dòng» · bo góc chỉ 999px · nút chuyển trang bình thường · nhãn lệnh ghi do công cụ bấm · tách quy cách / ngưỡng · hồ sơ một lần')
+print('đạt: đường dẫn đủ (:id) · không mức cũ · bỏ ResizeObserver, giữ lỗi thật · «0 dòng» · bo góc bỏ góc 0 · nút chuyển trang bình thường · nhãn lệnh ghi do công cụ bấm · tách quy cách / ngưỡng · hồ sơ một lần')
