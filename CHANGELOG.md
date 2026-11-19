@@ -5,9 +5,9 @@ số chính chỉ tăng khi qua cổng (2.0 = an toàn trên app lạ, 3.0 = dù
 Số bản trong mã (`PHIEN_BAN`, `may/20-cau-hinh.js`), số trong CHANGELOG và số trên gói phát hành phải là **một**.
 Chi tiết từng bước: `PLAN.md`. Lịch sử trước ITA (bản 3 của PM → 3.26.6): roadmap, GĐ 1–5.
 
-## [1.7] — 18/11/2026 · GĐ 8 «Dọn nền» (nhánh `gd8-don-nen`)
+## [1.7] — 18/11/2026 · GĐ 8 «Dọn nền» · commit `0743b07` trên `dev`
 
-Không thêm phép kiểm mới (roadmap quy tắc 4: chưa qua cổng thì không thêm tính năng). Chỉ sửa lỗi và dọn test. Chưa commit.
+Không thêm phép kiểm mới (roadmap quy tắc 4: chưa qua cổng thì không thêm tính năng). Chỉ sửa lỗi và dọn test.
 
 **Số bản**
 - Thống nhất số bản: mã, gói và CHANGELOG cùng ghi **1.7**. Trước đó gói GĐ 7 tên «1.6» nhưng mã vẫn ghi `1.4`.

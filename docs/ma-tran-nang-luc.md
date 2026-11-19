@@ -11,7 +11,7 @@ Nguồn từng cột (đều lấy từ lịch sử git của repo, chạy lại
 | ITA 5.0 | `dist/ita-dqtv-5.0.js` | `5b0db8f` |
 | ITA 1.0 | `dist/ita.js` | `c7185fc` |
 | ITA 1.6 | `dist/chung/ita.js` (mã ghi `1.4`) | `634c86e` |
-| ITA 1.7 | dựng từ `may/` nhánh `gd8-don-nen` | — |
+| ITA 1.7 | `dist/chung/ita.js` | `0743b07` |
 
 | Nhóm | Năng lực | 3.26.6 | 3.31 | ITA 5.0 | ITA 1.0 | ITA 1.6 | ITA 1.7 |
 |---|---|---|---|---|---|---|---|

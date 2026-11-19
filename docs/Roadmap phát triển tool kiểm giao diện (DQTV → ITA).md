@@ -2,7 +2,7 @@
 
 Nov 18, 2026 · @Trung Pham
 
-ITA đang ở **cuối GĐ 7**, chuẩn bị sang GĐ 8; theo vòng đời phần mềm là chặng **alpha**. Phần A là những gì đã làm theo từng tệp, phần B là việc sắp tới, mỗi giai đoạn có cổng qua đo được.
+ITA đang ở **GĐ 8 «Dọn nền»** (bản 1.7, nhánh `dev`, commit `0743b07`); theo vòng đời phần mềm vẫn là chặng **alpha**. Mọi thay đổi theo bản ghi ở `CHANGELOG.md`. Phần A là những gì đã làm theo từng tệp, phần B là việc sắp tới, mỗi giai đoạn có cổng qua đo được.
 
 ## Tóm tắt
 
@@ -31,8 +31,8 @@ ITA đang ở **cuối GĐ 7**, chuẩn bị sang GĐ 8; theo vòng đời phầ
 4. GĐ 4: Gộp thành trục chính (3.25 → 3.26)
 5. GĐ 5: Theo ma trận TC v7 của PM (3.30, 3.31; nhánh đã dừng)
 6. GĐ 6: Dựng ITA dùng cho nhiều dự án (ITA 1.0 → 1.4)
-7. GĐ 7: Cải thiện sau lần chạy trên PMS (gói ITA-1.6) ← **đã xong, đang ở đây**
-8. GĐ 8: Dọn nền
+7. GĐ 7: Cải thiện sau lần chạy trên PMS (gói ITA-1.6)
+8. GĐ 8: Dọn nền (ITA 1.7) ← **đang ở đây**
 9. GĐ 9: Kiểm chứng ITA trên app thật
 10. GĐ 10: An toàn trên app lạ → ITA 2.0
 11. GĐ 11: Một tool cho mọi dự án → ITA 3.0
@@ -170,8 +170,42 @@ Gói `ITA-1_6.zip`, commit cuối `634c86e` ngày 17/11. Tên gói 1.6 theo đ�
 **Để lại**
 
 - Rào cản 1 (bấm nút lạ, POST trên app lạ) mới gỡ một phần; WebSocket chỉ bị chặn khi đang mở form.
-- Nút Thăm dò vẫn hỏng; số bản lệch giữa mã và gói.
+- Nút Thăm dò vẫn hỏng; số bản lệch giữa mã và gói. *(Đã sửa ở GĐ 8, bản 1.7.)*
 - Ba thứ của v4 chưa bao giờ sang trục chính: gói chữ vi/en, `tenMienCam`, ghi lại POST đã cho qua.
+
+## GĐ 8 — Dọn nền: ITA 1.7 (18/11, đang làm)
+
+Đã gộp vào `dev` (commit `0743b07`, 18/11). Không thêm phép kiểm mới (quy tắc 4) — chỉ sửa lỗi và dọn test. Chi tiết: `CHANGELOG.md` mục [1.7].
+
+**Làm được**
+
+- **Số bản:** mã, gói và CHANGELOG cùng ghi **1.7**. Bỏ qua 1.5 và 1.6 trong mã vì hai số này đã dùng cho gói «dqtv-script (only)» ngày 12/11. Một CHANGELOG duy nhất ở gốc repo.
+- **Ma trận năng lực** (`docs/ma-tran-nang-luc.md`, sinh bằng `cong-cu/ma_tran_nang_luc.py`): 21 năng lực × 6 bản dựng có tệp (3.26.6, 3.31, ITA 5.0, ITA 1.0, ITA 1.6, ITA 1.7). Mỗi ô là một mẫu tìm trong mã, ai cũng chạy lại được.
+- **Thăm dò:** `ita.thamDo()` và nút «🔍 Thăm dò» chạy lại được (mất từ 3.26). Không có tệp 3.6 nên không chép nguyên văn; lệnh gọi đúng chế độ thăm dò sẵn có trong lõi. Có test riêng `kiem/test_tham_do.py`.
+- **Sửa lỗi lõi: app định tuyến bằng `#`** (`#/a`). Từ bản 1.1 ITA bỏ phần `#` ở hai chỗ: (1) khoá so trùng mục menu → chỉ kiểm mục đầu; (2) tuyến của màn → một màn sập kéo theo các mục sau bị bỏ, báo cáo ghi tuyến sai. Đã sửa cả hai; test bước 11 kiểm đủ 3/3 màn, test mới `test_dinh_tuyen_hash.py`.
+- **Sửa lỗi lõi: chạy chậm trên app có luồng phản hồi** (SSE, autoupdate, long-poll). ITA chờ đọc xong thân mọi phản hồi, luồng không bao giờ xong nên mọi lần chờ trang yên kéo tới `waitMax` 10 giây. Nay không chờ luồng, đọc thân có hạn; test mới `test_luong_khong_dung.py`: từ hết hạn 3/3 lần xuống ~1,3 giây mỗi màn. Đây là sửa lỗi; việc đo và xếp mức rào cản Tốc độ vẫn ở GĐ 9.
+- **Sửa lỗi lõi: thân phản hồi đã bị app đọc trước** (thấy trên PMS 18/11, lỗi đỏ `clone … Response body is already used`). ITA cộng bộ đếm chờ rồi mới gặp lỗi nên không bao giờ trừ → mọi lần chờ kéo tới 10 giây. Nay bỏ qua phản hồi đó, không lộ lỗi ra Console.
+- **Cài jsdom:** `package.json` (chỉ cho test) + `npm install`; kịch bản test 14, 17 ưu tiên `node_modules` của repo.
+- **Trả nợ test:** 12 tệp test viết trước GĐ 7 được cập nhật theo các thay đổi cố ý của GĐ 6–7 (khoá tên miền theo hồ sơ, bốn chữ kết luận, «TC của dự án», logo trong menu, giao diện thuần). Mỗi chỗ ghi `[GĐ 8]` trỏ về commit gây đổi. Hàm chung `kiem/ban_thu.py` đổi tên miền của bản thử sang `127.0.0.1`.
+- **Chặn ghi đè dữ liệu dự án:** `cong-cu/sinh_trang_thai_qt.py` (test 9 gọi) khi thiếu mã nguồn app vẫn sinh tệp thiếu nguồn và ghi đè `du-an/dqtv/trang-thai-quy-trinh.json`. Nay dừng, không ghi gì.
+
+**Kết quả bộ test của bản 1.7 (18/11, lần chạy cả bộ thứ hai)**
+
+| | Mã gốc `cb4efef` (bản 1.6) | Bản 1.7 (`0743b07`) |
+| --- | --- | --- |
+| Số test | 21 | 24 (thêm `test_tham_do`, `test_dinh_tuyen_hash`, `test_luong_khong_dung`) |
+| Đạt | 11 | **21** |
+| Trượt vì kỳ vọng cũ | 7: test 5, 6, 10, 11, 13, `test_buoc14.sh`, `test_buoc17.sh` | 0 |
+| Chưa chạy được trên máy sạch | 3 | 3: `test_buoc8`, `test_buoc9` (cần mã nguồn `dqtv-app`), `test_dong_goi` (cần 3.26 gốc) |
+
+Lần chạy cả bộ đầu tiên của bản 1.7, `test_buoc16` trượt vì `test_buoc9` vừa ghi đè `trang-thai-quy-trinh.json`; sau khi chặn ghi đè, lần chạy cả bộ thứ hai `test_buoc16` đạt. Hai test mới đều trượt trên lõi gốc `cb4efef` (đối chứng).
+
+**Còn lại để đóng GĐ 8**
+
+- Đưa 3.26 gốc (`dqtv-kiem-tra-dacta-3.26.js`, không phải 3.26.6) vào `dist/goc/` → chạy `test_dong_goi`, tính lại `SO_B14` … `SO_B17`. Tệp không có trong repo lẫn lịch sử git.
+- Ghi lý do bỏ 3.23, 3.30, 3.31, 3.31.1, ITA 5.0: `PLAN.md` chỉ ghi «Không dùng», không ghi vì sao (quy tắc 5). Cần người quyết định ghi.
+- Ma trận năng lực còn thiếu 4 cột: bản 3, v4, 3.6, dacta 3.23 (không có tệp).
+- Test 8, 9 cần mã nguồn `dqtv-app` (`~/dqtv/dqtv-app`) để sinh giới hạn ô và trạng thái quy trình; máy sạch không có.
 
 ## Sắp tới: GĐ 8–12
 
