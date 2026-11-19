@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.7, đóng gói 2026-11-19T03:48:12+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.7.1, đóng gói 2026-11-19T03:48:25+00:00; gói dự án: không (nạp bằng «Nạp thư mục»); kèm sẵn 0 tệp tài liệu / TC (nén)
 if (!window.axe) {
 /*! axe v4.14.0
  * Copyright (c) 2015 - 2026 Deque Systems, Inc.
@@ -376,7 +376,7 @@ const ngoaiQuyCach = (bang, cho) => Object.keys(bang).filter(v => v.split(/\s+/)
 // nút chuyển trang trơn («← Trước», «Tiếp theo →», «Next»): khoá ở trang đầu / cuối là bình thường. Nhãn có thêm chữ khác («Tiếp theo: Trình ký») thì không phải
 const laNutChuyenTrang = ten => /^\s*[←‹«<]?\s*(trang\s+)?(trước|sau|tiếp|tiếp theo|previous|prev|next)\s*[→›»>]?\s*$/i.test(String(ten || ''));
 
-const PHIEN_BAN = '1.7';
+const PHIEN_BAN = '1.7.1';
 const KEY_CFG = 'ita.cfg.v1', KEY_CKPT = 'ita.ckpt.v1', KEY_LAST = 'ita.last.v1', KEY_TAY = 'ita.truongtay.v1', KEY_SAP = 'ita.sap.v1';
 
 /* --- Nhận ra tài khoản đang đăng nhập, để điểm dừng và kết quả TÁCH RIÊNG theo tài khoản ---
