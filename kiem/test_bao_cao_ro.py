@@ -48,12 +48,15 @@ assert any('/api/v1/meetings/:id/context' in x for x in api), api
 assert all('98be928' not in x for x in api), api
 dai = [x for x in api if 'nhanh-0' in x]
 assert dai and all(len(x) <= 200 and ':id' in x for x in dai), dai
+uu = [x for x in api if x.endswith('/item/:id/files')]
+assert len(uu) == 1, api   # [soát cuối] gom mã trước rồi mới cắt
 # 2
 assert not re.search(r'cao \d+, trung bình \d+', k['html']), 'dòng đầu còn mức cũ'
 # 3
 js = [m for m in mau if m['loai'] == 'js_loi']
 assert not any('loop completed' in m['chi_tiet'] for m in js), js
 assert any('ResizeObserver is not defined' in m['chi_tiet'] and m['ket_luan'] == 'Sai' for m in js), js
+assert k['nk_canh_bao'] == 1, k['nk_canh_bao']   # [soát cuối] nhật ký 300 mục: cảnh báo trình duyệt ghi một lần mỗi lần chạy
 # 4
 on = [m['chi_tiet'] for m in mau if m['loai'] == 'o_nhap']
 assert any('0 dòng nhưng không có thông báo trống' in x for x in on), on
@@ -71,6 +74,10 @@ assert 'không ghi lý do' in bq.get('Tiếp theo: Trình ký', ''), bq
 cg = [m for m in mau if m['loai'] == 'chan_ghi' and m['chi_tiet'].startswith('[công cụ bấm')]
 assert cg and all('Màn chỉ xem' not in m['nguyen_tac'] for m in cg), cg
 assert 'Sai — lệch quy cách dự án' in k['html'] and 'Cần xem — vượt ngưỡng công cụ' in k['html'], 'khối thiết kế chưa tách'
+# [soát cuối] dòng tổng kết ở console không rỗng ngoặc
+assert k['xong'] and '()' not in k['xong'] and 'Sai' in k['xong'], k['xong']
+# [soát cuối] tệp cùng loại cùng nội dung: giữ bản sau cùng, «tệp nạp sau thắng» như trước
+assert '(12, 14, 16)' in k['html'] and '(12, 13)' not in k['html'], 'quy cách áp sai tệp'
 # 8 (Task 5)
 hs = [x for x in k['du_lieu_nap'] if x['bo_doc'] == 'ho-so']
 assert len(hs) == 1, hs

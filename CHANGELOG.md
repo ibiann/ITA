@@ -7,18 +7,18 @@ Chi tiết từng bước: `PLAN.md`. Lịch sử trước ITA (bản 3 của PM
 
 ## [1.7.1] — 19/11/2026 · GĐ 8–9 · sửa lỗi báo cáo thấy ở lần chạy PMS 18/11
 
-Nguồn: 4 báo cáo PMS chạy bằng 1.7 (Thư ký, Chủ tọa, Đại biểu, Không nhóm). Chỉ sửa lỗi của ITA — không thêm phép kiểm, không bỏ chức năng (roadmap quy tắc 4). Kế hoạch: `docs/superpowers/plans/2026-11-19-sua-loi-bao-cao-pms.md`. Test mới `kiem/test_bao_cao_ro.py` + `kiem/thu_bao_cao_ro.html` (đỏ trên 1.7, đạt trên 1.7.1).
+Nguồn: 4 báo cáo PMS chạy bằng 1.7 (Thư ký, Chủ tọa, Đại biểu, Không nhóm). Chỉ sửa lỗi của ITA — không thêm phép kiểm, không bỏ chức năng (roadmap quy tắc 4). Kế hoạch: `docs/superpowers/plans/2026-11-19-sua-loi-bao-cao-pms.md`. Test mới `kiem/test_bao_cao_ro.py` + `kiem/thu_bao_cao_ro.html` (đỏ trên 1.7, đạt trên 1.7.1). Soát cuối bởi người soát độc lập: thêm 4 sửa (gom mã trước khi cắt, dòng console, nhật ký cảnh báo một lần, tệp trùng giữ bản sau cùng).
 
 **Báo cáo làm người đọc hiểu sai**
-- Đường dẫn API lỗi bị cắt ở 60 ký tự → `…/meetings/267f8972-…-98be928` mất đuôi mã, bản tổng hợp kết luận nhầm «ID lạ, hard-code sai». Nay giữ tới 200 ký tự, mã UUID / số gom về `:id`.
-- Dòng đầu báo cáo, bảng điều khiển, console còn «cao N, trung bình N» cạnh bốn chữ kết luận. Nay ghi «N màn có vấn đề» và đếm theo bốn chữ. Trường dữ liệu `man_cao`, `man_trung_binh`, `man_ghi_nhan` giữ nguyên.
+- Đường dẫn API lỗi bị cắt ở 60 ký tự → `…/meetings/267f8972-…-98be928` mất đuôi mã, bản tổng hợp kết luận nhầm «ID lạ, hard-code sai». Nay giữ đường dẫn gốc tới 400 ký tự; mẫu lỗi gom mã UUID / số về `:id` **trước** rồi mới rút còn 200 ký tự (cắt trước thì mã bị cắt dở, mỗi lệnh thành một mẫu). API chậm trước cắt ở 50 ký tự — cùng lỗi, sửa cùng cách.
+- Dòng đầu báo cáo, bảng điều khiển, console còn «cao N, trung bình N» cạnh bốn chữ kết luận. Nay ghi «N màn có vấn đề»; console thêm «mẫu lỗi: Sai N · Cần xem N». Trường dữ liệu `man_cao`, `man_trung_binh`, `man_ghi_nhan` giữ nguyên.
 - Gom mẫu lỗi ô tìm thay mọi số bằng `N` → «0 dòng nhưng không có thông báo trống» đọc thành «N dòng…». Nay giữ số 0.
 - Lệnh ghi do ITA bấm nút gửi ngay («Có mặt», «Chiếu»…) mang nguyên tắc «Màn chỉ xem không nên tự gửi lệnh ghi». Nay: «Nút gửi lệnh ghi ngay khi bấm: cần hỏi xác nhận hoặc mở form». Lệnh màn tự gửi khi chỉ mở xem giữ nguyên tắc cũ.
 - Nạp quy cách dự án làm cả khối thiết kế thành «Sai — lệch quy cách dự án», kể cả ngưỡng đếm của công cụ («37 màu chữ (chuẩn ≤ 8)»). Nay tách: «Sai» chỉ cho giá trị ngoài quy cách và ngưỡng dự án tự khai trong `chuanDS` của `quy-cach.json`; ngưỡng mặc định của công cụ là «Cần xem».
-- Hồ sơ dự án nạp hai lần (lẻ và trong thư mục, cùng nội dung) được liệt kê hai lần. Nay tệp cùng loại cùng mã băm chỉ dùng và liệt kê một lần.
+- Hồ sơ dự án nạp hai lần (lẻ và trong thư mục, cùng nội dung) được liệt kê hai lần. Nay tệp cùng loại cùng mã băm chỉ dùng và liệt kê một lần; giữ bản sau cùng để luật «tệp nạp sau thắng» không đổi.
 
 **Lỗi giả (báo nhầm)**
-- «ResizeObserver loop completed with undelivered notifications» (cảnh báo của trình duyệt) bị tính lỗi JS «Sai». Nay ghi nhật ký «bỏ qua cảnh báo trình duyệt»; lỗi thật có chữ ResizeObserver vẫn là lỗi.
+- «ResizeObserver loop completed with undelivered notifications» (cảnh báo của trình duyệt) bị tính lỗi JS «Sai». Nay ghi nhật ký «bỏ qua cảnh báo trình duyệt» một lần mỗi lần chạy (cảnh báo này có thể bắn mỗi khung hình); lỗi thật có chữ ResizeObserver vẫn là lỗi.
 - Bo góc nhiều phần có góc 0 (`0px 0px 10px 10px`) bị tính ngoài quy cách vì góc 0. Nay góc 0 bỏ qua. (`0px 0px 12px 12px`, `50%`, `999px` vẫn là lệch thật khi quy cách là 8 / 10 / 9999.)
 - Nút chuyển trang khoá ở trang đầu / cuối («← Trước», «Tiếp theo →») ghi «nút đang khoá — không ghi lý do». Nay ghi «bình thường»; nút bước quy trình khoá («Tiếp theo: Trình ký») vẫn ghi như cũ.
 

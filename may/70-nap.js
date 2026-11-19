@@ -146,9 +146,9 @@ async function apDungNap() {
   { const g = window.__itaHoSoMau; if (g && g.loai === 'ho-so-mau' && Array.isArray(g.ho_so)) HO_SO_MAU = g.ho_so.filter(h => h && h.ma && /^\//.test(String(h.duong_dan || ''))).map(h => Object.assign({ quy_trinh: '', chang: '', nhan_chang: '', vai: '', tai_khoan: '' }, h)); }
   TT_QT_CO = !!window.__itaTrangThaiQT;
   if (!ds.length) return;   // chưa nạp gì: giữ nguyên (đặc tả dán Console, nếu có)
-  // [1.7.1] cùng loại (bộ đọc) + cùng nội dung (mã băm) — vd «ho-so.json» nạp lẻ rồi «pms/ho-so.json» trong thư mục: dùng và liệt kê một lần.
-  // Nội dung giống hệt nên giữ tệp nào cũng ra cùng kết quả; giữ tệp gặp trước.
-  { const da = new Set(); ds = ds.filter(t => { if (!t.bam) return true; const k = t.bo_doc + '|' + t.bam; if (da.has(k)) return false; da.add(k); return true; }); }
+  // [1.7.1] cùng loại (bộ đọc) + cùng nội dung (mã băm) — vd «ho-so.json» nạp lẻ rồi «du-an/ho-so.json» trong thư mục: dùng và liệt kê một lần.
+  // Giữ bản SAU CÙNG: loại nào cũng lấy tệp cuối («tệp sau thắng»), giữ bản đầu thì một tệp khác nằm giữa hai bản trùng sẽ thắng sai.
+  { const da = new Set(); ds = ds.reverse().filter(t => { if (!t.bam) return true; const k = t.bo_doc + '|' + t.bam; if (da.has(k)) return false; da.add(k); return true; }).reverse(); }
   const bang = [], gop = {};
   for (const t of ds) {
     const bd = BO_DOC.find(b => b.ten === t.bo_doc) || boDocCua(t.ten, t.chu);
