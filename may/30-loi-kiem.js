@@ -2309,7 +2309,7 @@ async function itaAudit(over, trangThaiTiep) {
     if (!r[k]) continue;
     const muc = mucCua(k, r[k]), xn = CAN_XN[k] ? CAN_XN[k](r[k]) : ''; ccHien = canCuKiem(k, r[k]).join(' — ');
     if (THEO_TP.includes(k) && r.__tp && (r.__tp[k] || []).length) { for (const tp of new Set(r.__tp[k])) if (g[tp][0] === k) { const o = themMau(k + '·' + tp, k, muc, 'thành phần ' + tp, r.tab, xn); g[tp].slice(1).forEach(x => o._cung.add(x)); } }
-    else if (k === 'api_loi' || k === 'api_cham' || k === 'chan_ghi') { for (const p of String(r[k]).split(' | ')) { const c = duongMau(p.replace(/^\d+ms /, '')); ccHien = canCuKiem(k, p).join(' — '); themMau(k + '·' + c, k, mucCua(k, p), c, r.tab, k === 'api_loi' ? (CAN_XN.api_loi(p) || '') : xn); } }
+    else if (k === 'api_loi' || k === 'api_cham' || k === 'chan_ghi') { for (const p of String(r[k]).split(' | ')) { const c = duongMau(p.replace(/^\d+ms /, '')); ccHien = canCuKiem(k, p).join(' — '); const o = themMau(k + '·' + c, k, mucCua(k, p), c, r.tab, k === 'api_loi' ? (CAN_XN.api_loi(p) || '') : xn); if (k === 'chan_ghi' && /^\[công cụ bấm/.test(c)) o.nguyen_tac = NGUYEN_TAC.chan_ghi_nut; } }   // [1.7.1] lệnh ghi do công cụ bấm nút gửi ngay ≠ màn tự gửi
     else if (k === 'chu_la') { for (const p of String(r[k]).split(', ')) themMau(k + '·' + p, k, muc, p, r.tab, xn); }
     else if (k === 'du_lieu_nhay_cam') { for (const p of String(r[k]).split(' | ')) themMau(k + '·' + p.split(' «')[0], k, muc, p.split(' «')[0], r.tab, xn); }
     else if (k === 'wcag_loi') { for (const p of String(r[k]).split(' · ')) themMau(k + '·' + p.split(' ')[0], k, mucCua(k, p), p.replace(/ ×\d+$/, ''), r.tab, xn); }   // [1.1] mức theo từng luật   // [11a] mỗi luật axe một mẫu
@@ -2340,15 +2340,19 @@ async function itaAudit(over, trangThaiTiep) {
     nut_cung_nhan_khac_kieu: Object.values(DS.nut).filter(o => Object.keys(o.kieu).length > 1).map(o => ({ nhan: o.nhan, so_kieu: Object.keys(o.kieu).length, kieu: xep(o.kieu) })).sort((a, b) => b.so_kieu - a.so_kieu),
   };
   if (C.kiemThietKe) {
-    const vuot = [];
-    for (const [k, ten] of [['co_chu', 'cỡ chữ'], ['mau_chu', 'màu chữ'], ['mau_nen', 'màu nền'], ['bo_goc', 'bo góc'], ['do_bong', 'đổ bóng']]) if (dsKq[k].chuan_toi_da && dsKq[k].so_luong > dsKq[k].chuan_toi_da) vuot.push(dsKq[k].so_luong + ' ' + ten + ' (chuẩn ≤ ' + dsKq[k].chuan_toi_da + ')');
-    if (dsKq.lech_luoi.so_gia_tri) vuot.push(dsKq.lech_luoi.so_gia_tri + ' giá trị khoảng cách lệch lưới ' + chuanDS.luoi + 'px');
-    if (dsKq.nut_cung_nhan_khac_kieu.length) vuot.push(dsKq.nut_cung_nhan_khac_kieu.length + ' nhãn nút có nhiều kiểu');
-    dsKq.vuot_chuan = vuot;
+    // [1.7.1] hai loại căn cứ, hai khối: trái quy cách dự án (giá trị được phép, ngưỡng dự án tự khai ở quy-cach.json chuanDS) → «Sai»;
+    // ngưỡng đếm của công cụ (chuanDS mặc định) → «Cần xem», kể cả khi đã nạp quy cách. Trước đây nạp quy cách là cả khối thành «Sai».
+    const qcDS = (QUY_CACH && QUY_CACH.chuanDS) || {}, vuotQC = [], vuotNg = [];
+    for (const [k, ten, khoa] of [['co_chu', 'cỡ chữ', 'coChuToiDa'], ['mau_chu', 'màu chữ', 'mauChuToiDa'], ['mau_nen', 'màu nền', 'mauNenToiDa'], ['bo_goc', 'bo góc', 'boGocToiDa'], ['do_bong', 'đổ bóng', 'doBongToiDa']])
+      if (dsKq[k].chuan_toi_da && dsKq[k].so_luong > dsKq[k].chuan_toi_da) (khoa in qcDS ? vuotQC : vuotNg).push(dsKq[k].so_luong + ' ' + ten + ' (chuẩn ≤ ' + dsKq[k].chuan_toi_da + ')');
+    if (dsKq.lech_luoi.so_gia_tri) ('luoi' in qcDS ? vuotQC : vuotNg).push(dsKq.lech_luoi.so_gia_tri + ' giá trị khoảng cách lệch lưới ' + chuanDS.luoi + 'px');
+    if (dsKq.nut_cung_nhan_khac_kieu.length) vuotNg.push(dsKq.nut_cung_nhan_khac_kieu.length + ' nhãn nút có nhiều kiểu');
+    const vuot = vuotQC;   // giá trị ngoài quy cách (bên dưới) cũng là trái quy cách dự án
     if (QUY_CACH) {   // [13e] giá trị ngoài danh sách được phép của quy cách dự án (số px; viền bo nhiều giá trị thì xét từng giá trị)
       for (const [k, ten, bang] of [['co_chu_px', 'cỡ chữ', DS.coChu], ['bo_goc_px', 'bo góc', DS.boGoc]]) if (Array.isArray(QUY_CACH[k])) { const n = ngoaiQuyCach(bang, QUY_CACH[k]); if (n.length) vuot.push(n.length + ' giá trị ' + ten + ' ngoài quy cách (' + QUY_CACH[k].join(', ') + '): ' + n.slice(0, 8).join(' · ')); }
       dsKq.can_cu = 'quy cách dự án — ' + (QUY_CACH.nguon || 'quy-cach.json');
     } else dsKq.can_cu = TU_DAT + ' — ngưỡng chuanDS của công cụ; chưa có quy cách thiết kế của dự án nên chỉ ghi nhận';
+    dsKq.vuot_quy_cach = vuotQC; dsKq.vuot_nguong = vuotNg; dsKq.vuot_chuan = [...vuotQC, ...vuotNg];   // vuot_chuan: giữ cho bảng điều khiển / dữ liệu cũ
   }
   const nhieu = (bangGT, loc) => Object.values(bangGT).map(o => Object.entries(o)).filter(e => e.length > 1 && (!loc || loc(e)))
     .map(e => ({ cach_viet: e.map(([w, o]) => w + ' (' + o.so_man + ' màn)'), man: [...new Set(e.flatMap(([, o]) => o.man))] }));

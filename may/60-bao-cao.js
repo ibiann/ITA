@@ -15,7 +15,9 @@ function htmlThietKe(kq) {
     o.pho_bien.map(p => '<tr><td>' + esc(p.gia_tri) + '</td><td>' + esc(p.lan) + ' lần</td><td>' + esc(p.so_man) + ' màn</td><td>' + dsMan(p.man, p.so_man) + '</td></tr>').join('') + '</tbody></table>';
   const ds = (tieuDe, arr, f) => !arr || !arr.length ? '' : '<h4>' + esc(tieuDe) + ' (' + arr.length + ')</h4><table><tbody>' + arr.map(a => '<tr><td>' + f(a) + '</td></tr>').join('') + '</tbody></table>';
   return '<p class=m>Căn cứ: ' + esc(d.can_cu || 'ngưỡng công cụ tự đặt') + '. Phần ngôn từ cũng là luật công cụ tự đặt: kết luận «Cần xem».</p>' +
-    ((d.vuot_chuan || []).length ? '<p style="color:#8a4b00">' + (/^quy cách dự án/.test(d.can_cu || '') ? 'Sai — lệch quy cách dự án' : 'Cần xem — vượt ngưỡng công cụ') + ':<br>' + d.vuot_chuan.map(esc).join('<br>') + '</p>' : '') +
+    // [1.7.1] hai khối theo căn cứ; kết quả cũ (chưa có vuot_quy_cach) giữ cách in cũ
+    (d.vuot_quy_cach ? [['Sai — lệch quy cách dự án', d.vuot_quy_cach], ['Cần xem — vượt ngưỡng công cụ', d.vuot_nguong || []]] : [[/^quy cách dự án/.test(d.can_cu || '') ? 'Sai — lệch quy cách dự án' : 'Cần xem — vượt ngưỡng công cụ', d.vuot_chuan || []]])
+      .filter(([, a]) => a.length).map(([t, a]) => '<p style="color:#8a4b00">' + t + ':<br>' + a.map(esc).join('<br>') + '</p>').join('') +
     bangGT('Cỡ chữ', d.co_chu) + bangGT('Màu chữ', d.mau_chu) + bangGT('Màu nền', d.mau_nen) + bangGT('Bo góc', d.bo_goc) + bangGT('Đổ bóng', d.do_bong) + bangGT('Khoảng cách lệch lưới', d.lech_luoi) +
     ds('Cùng nhãn nút, khác kiểu', d.nut_cung_nhan_khac_kieu, a => '<b>' + esc(a.nhan) + '</b> — ' + esc(a.so_kieu) + ' kiểu<br><span style="color:#666">' + a.kieu.map(k => esc(k.gia_tri) + ' (' + esc(k.so_man) + ' màn: ' + dsMan(k.man, k.so_man) + ')').join('<br>') + '</span>') +
     ds('Một từ, nhiều cách viết', n.mot_tu_nhieu_cach_viet, a => esc(a.cach_viet.join(' · ')) + '<br><span class=m>' + dsMan(a.man) + ' — mỗi cách viết ghi tối đa 4 màn</span>') +

@@ -1,4 +1,4 @@
-// ITA — máy kiểm giao diện, bản 1.7, đóng gói 2026-11-19T03:46:43+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
+// ITA — máy kiểm giao diện, bản 1.7, đóng gói 2026-11-19T03:47:41+00:00; gói dự án: pms; kèm sẵn 0 tệp tài liệu / TC (nén)
 window.__itaHoSo = {"ten":"LANCS PMS","ten_mien":"pms.lab.linksafe.vn","kieu_app":"openslides","chon_tai_khoan":"os-account-button span[title]","post_cho_qua":["/system/auth/login","/system/auth/who-am-i","/system/presenter/handle_request"],"cuoc_hop_mau":87,"tai_khoan":[{"dang_nhap":"ita.thuky","ten_hien":"ITA Thư ký","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Quản trị viên"},{"dang_nhap":"ita.chutoa","ten_hien":"ITA Chủ tọa","vai":"CHU_TOA_QUAN_TRI","nhom_app":"Chủ tọa"},{"dang_nhap":"ita.daibieu","ten_hien":"ITA Đại biểu","vai":"DAI_BIEU","nhom_app":"Đại biểu"},{"dang_nhap":"ita.khongnhom","ten_hien":"ITA Không nhóm","vai":"KHONG_QUYEN","nhom_app":"Mặc định"},{"dang_nhap":"ita.qttochuc","ten_hien":"ITA Quản trị tổ chức","vai":"QUAN_TRI_TO_CHUC","nhom_app":""},{"dang_nhap":"ita.qluyban","ten_hien":"ITA Quản lý ủy ban","vai":"QUAN_LY_UY_BAN","nhom_app":""}],"_nguon":{"ten_mien":"lab của dự án (DOCS/80-setup-3-cuoc-hop-demo-khach-hang-2026-07-12.md)","kieu_app":"OpenSlides 4: dữ liệu đi qua SharedWorker (openslides-client/client/src/app/openslides-main-module/services/shared-worker.service.ts:108); ITA đọc nhóm + quyền qua who-am-i + autoupdate (35-kieu-app.js)","chon_tai_khoan":"openslides-client/client/src/app/site/modules/global-headbar/components/account-button/account-button.component.html: span đầu tiên có title = tên ngắn của tài khoản, span sau = nhóm","post_cho_qua":"đọc mà dùng POST: đăng nhập, who-am-i (auth-service public-controller.ts:41), presenter (openslides-backend/openslides_backend/presenter/: không presenter nào ghi dữ liệu, rà 07/11/2026). Mọi lệnh ghi đi qua /system/action/handle_request, /system/vote, /system/media, dịch vụ LPM (/api/gateway…, bóc băng, Drive) → bị chặn khi chạy. Lưu ý: lab có thể chạy bản backend khác repo (lab tạo 6 nhóm khi tạo cuộc họp, repo tạo 4)","cuoc_hop_mau":"cuộc họp «ITA – cuộc họp mẫu» dựng 07/11/2026 cho ITA: 3 mục chương trình, 2 kiến nghị, 1 bình bầu","tai_khoan":"tài khoản ita.* dựng 07/11/2026 (id 38–43). Vai theo hướng dẫn sử dụng (DOCS/ui-ux/huong-dan-su-dung/HUONG-DAN-SU-DUNG-LANCS-PMS.md mục 2, Phụ lục A): «Chủ tọa / Quản trị cuộc họp» gần như mọi quyền (người dùng chốt 07/11) — gán cho cả ita.thuky (nhóm Quản trị viên) và ita.chutoa (nhóm Chủ tọa, 12 quyền) để thấy chỗ nhóm Chủ tọa của app thiếu so với tài liệu. Không ghi mật khẩu."}};
 if (!window.axe) {
 /*! axe v4.14.0
@@ -190,7 +190,7 @@ const NGUYEN_TAC = {
   o_khong_nhan: 'WCAG 1.3.1 / 4.1.2: ô nhập cần nhãn', wcag_loi: 'WCAG 2.2 A/AA (axe-core): mỗi luật vi phạm một dòng, kèm mục WCAG', gio_khong_chuan: 'Nhất quán: ngày giờ dạng dd/mm/yyyy hh:mm, không hiện chuỗi máy', truong_loi: 'Kiểm kê trường: xem danh mục trường',
   dinh_dang_ngay_tron: 'Nhất quán: một định dạng ngày trong toàn hệ thống', dinh_dang_so_tron: 'Nhất quán: một kiểu phân cách hàng nghìn',
   tieu_de_lech_menu: 'Nhất quán điều hướng: tiêu đề màn khớp mục menu', nut_chinh_nhieu: 'Một hành động chính mỗi màn',
-  chan_ghi: 'Màn chỉ xem không nên tự gửi lệnh ghi', gia_loi_doc: 'Trạng thái lỗi: tải dữ liệu thất bại thì màn phải báo lỗi, không hiện «trống», không treo, không trắng', o_nhap: 'Tìm kiếm/lọc phải trả đúng kết quả và báo trống rõ ràng',
+  chan_ghi: 'Màn chỉ xem không nên tự gửi lệnh ghi', chan_ghi_nut: 'Nút gửi lệnh ghi ngay khi bấm: cần hỏi xác nhận hoặc mở form', gia_loi_doc: 'Trạng thái lỗi: tải dữ liệu thất bại thì màn phải báo lỗi, không hiện «trống», không treo, không trắng', o_nhap: 'Tìm kiếm/lọc phải trả đúng kết quả và báo trống rõ ràng',
 };
 // [3.26.1] Căn cứ của từng phép kiểm giao diện chung. Chỉ «sự việc», «chuẩn», «đặc tả» được tính mức (cao / trung bình / thấp).
 // «tự đặt» = ngưỡng hay luật do người viết công cụ đặt, chưa có tài liệu dự án nào nói: chỉ GHI NHẬN, không tính là lỗi.
@@ -2859,7 +2859,7 @@ async function itaAudit(over, trangThaiTiep) {
     if (!r[k]) continue;
     const muc = mucCua(k, r[k]), xn = CAN_XN[k] ? CAN_XN[k](r[k]) : ''; ccHien = canCuKiem(k, r[k]).join(' — ');
     if (THEO_TP.includes(k) && r.__tp && (r.__tp[k] || []).length) { for (const tp of new Set(r.__tp[k])) if (g[tp][0] === k) { const o = themMau(k + '·' + tp, k, muc, 'thành phần ' + tp, r.tab, xn); g[tp].slice(1).forEach(x => o._cung.add(x)); } }
-    else if (k === 'api_loi' || k === 'api_cham' || k === 'chan_ghi') { for (const p of String(r[k]).split(' | ')) { const c = duongMau(p.replace(/^\d+ms /, '')); ccHien = canCuKiem(k, p).join(' — '); themMau(k + '·' + c, k, mucCua(k, p), c, r.tab, k === 'api_loi' ? (CAN_XN.api_loi(p) || '') : xn); } }
+    else if (k === 'api_loi' || k === 'api_cham' || k === 'chan_ghi') { for (const p of String(r[k]).split(' | ')) { const c = duongMau(p.replace(/^\d+ms /, '')); ccHien = canCuKiem(k, p).join(' — '); const o = themMau(k + '·' + c, k, mucCua(k, p), c, r.tab, k === 'api_loi' ? (CAN_XN.api_loi(p) || '') : xn); if (k === 'chan_ghi' && /^\[công cụ bấm/.test(c)) o.nguyen_tac = NGUYEN_TAC.chan_ghi_nut; } }   // [1.7.1] lệnh ghi do công cụ bấm nút gửi ngay ≠ màn tự gửi
     else if (k === 'chu_la') { for (const p of String(r[k]).split(', ')) themMau(k + '·' + p, k, muc, p, r.tab, xn); }
     else if (k === 'du_lieu_nhay_cam') { for (const p of String(r[k]).split(' | ')) themMau(k + '·' + p.split(' «')[0], k, muc, p.split(' «')[0], r.tab, xn); }
     else if (k === 'wcag_loi') { for (const p of String(r[k]).split(' · ')) themMau(k + '·' + p.split(' ')[0], k, mucCua(k, p), p.replace(/ ×\d+$/, ''), r.tab, xn); }   // [1.1] mức theo từng luật   // [11a] mỗi luật axe một mẫu
@@ -2890,15 +2890,19 @@ async function itaAudit(over, trangThaiTiep) {
     nut_cung_nhan_khac_kieu: Object.values(DS.nut).filter(o => Object.keys(o.kieu).length > 1).map(o => ({ nhan: o.nhan, so_kieu: Object.keys(o.kieu).length, kieu: xep(o.kieu) })).sort((a, b) => b.so_kieu - a.so_kieu),
   };
   if (C.kiemThietKe) {
-    const vuot = [];
-    for (const [k, ten] of [['co_chu', 'cỡ chữ'], ['mau_chu', 'màu chữ'], ['mau_nen', 'màu nền'], ['bo_goc', 'bo góc'], ['do_bong', 'đổ bóng']]) if (dsKq[k].chuan_toi_da && dsKq[k].so_luong > dsKq[k].chuan_toi_da) vuot.push(dsKq[k].so_luong + ' ' + ten + ' (chuẩn ≤ ' + dsKq[k].chuan_toi_da + ')');
-    if (dsKq.lech_luoi.so_gia_tri) vuot.push(dsKq.lech_luoi.so_gia_tri + ' giá trị khoảng cách lệch lưới ' + chuanDS.luoi + 'px');
-    if (dsKq.nut_cung_nhan_khac_kieu.length) vuot.push(dsKq.nut_cung_nhan_khac_kieu.length + ' nhãn nút có nhiều kiểu');
-    dsKq.vuot_chuan = vuot;
+    // [1.7.1] hai loại căn cứ, hai khối: trái quy cách dự án (giá trị được phép, ngưỡng dự án tự khai ở quy-cach.json chuanDS) → «Sai»;
+    // ngưỡng đếm của công cụ (chuanDS mặc định) → «Cần xem», kể cả khi đã nạp quy cách. Trước đây nạp quy cách là cả khối thành «Sai».
+    const qcDS = (QUY_CACH && QUY_CACH.chuanDS) || {}, vuotQC = [], vuotNg = [];
+    for (const [k, ten, khoa] of [['co_chu', 'cỡ chữ', 'coChuToiDa'], ['mau_chu', 'màu chữ', 'mauChuToiDa'], ['mau_nen', 'màu nền', 'mauNenToiDa'], ['bo_goc', 'bo góc', 'boGocToiDa'], ['do_bong', 'đổ bóng', 'doBongToiDa']])
+      if (dsKq[k].chuan_toi_da && dsKq[k].so_luong > dsKq[k].chuan_toi_da) (khoa in qcDS ? vuotQC : vuotNg).push(dsKq[k].so_luong + ' ' + ten + ' (chuẩn ≤ ' + dsKq[k].chuan_toi_da + ')');
+    if (dsKq.lech_luoi.so_gia_tri) ('luoi' in qcDS ? vuotQC : vuotNg).push(dsKq.lech_luoi.so_gia_tri + ' giá trị khoảng cách lệch lưới ' + chuanDS.luoi + 'px');
+    if (dsKq.nut_cung_nhan_khac_kieu.length) vuotNg.push(dsKq.nut_cung_nhan_khac_kieu.length + ' nhãn nút có nhiều kiểu');
+    const vuot = vuotQC;   // giá trị ngoài quy cách (bên dưới) cũng là trái quy cách dự án
     if (QUY_CACH) {   // [13e] giá trị ngoài danh sách được phép của quy cách dự án (số px; viền bo nhiều giá trị thì xét từng giá trị)
       for (const [k, ten, bang] of [['co_chu_px', 'cỡ chữ', DS.coChu], ['bo_goc_px', 'bo góc', DS.boGoc]]) if (Array.isArray(QUY_CACH[k])) { const n = ngoaiQuyCach(bang, QUY_CACH[k]); if (n.length) vuot.push(n.length + ' giá trị ' + ten + ' ngoài quy cách (' + QUY_CACH[k].join(', ') + '): ' + n.slice(0, 8).join(' · ')); }
       dsKq.can_cu = 'quy cách dự án — ' + (QUY_CACH.nguon || 'quy-cach.json');
     } else dsKq.can_cu = TU_DAT + ' — ngưỡng chuanDS của công cụ; chưa có quy cách thiết kế của dự án nên chỉ ghi nhận';
+    dsKq.vuot_quy_cach = vuotQC; dsKq.vuot_nguong = vuotNg; dsKq.vuot_chuan = [...vuotQC, ...vuotNg];   // vuot_chuan: giữ cho bảng điều khiển / dữ liệu cũ
   }
   const nhieu = (bangGT, loc) => Object.values(bangGT).map(o => Object.entries(o)).filter(e => e.length > 1 && (!loc || loc(e)))
     .map(e => ({ cach_viet: e.map(([w, o]) => w + ' (' + o.so_man + ' màn)'), man: [...new Set(e.flatMap(([, o]) => o.man))] }));
@@ -3820,7 +3824,9 @@ function htmlThietKe(kq) {
     o.pho_bien.map(p => '<tr><td>' + esc(p.gia_tri) + '</td><td>' + esc(p.lan) + ' lần</td><td>' + esc(p.so_man) + ' màn</td><td>' + dsMan(p.man, p.so_man) + '</td></tr>').join('') + '</tbody></table>';
   const ds = (tieuDe, arr, f) => !arr || !arr.length ? '' : '<h4>' + esc(tieuDe) + ' (' + arr.length + ')</h4><table><tbody>' + arr.map(a => '<tr><td>' + f(a) + '</td></tr>').join('') + '</tbody></table>';
   return '<p class=m>Căn cứ: ' + esc(d.can_cu || 'ngưỡng công cụ tự đặt') + '. Phần ngôn từ cũng là luật công cụ tự đặt: kết luận «Cần xem».</p>' +
-    ((d.vuot_chuan || []).length ? '<p style="color:#8a4b00">' + (/^quy cách dự án/.test(d.can_cu || '') ? 'Sai — lệch quy cách dự án' : 'Cần xem — vượt ngưỡng công cụ') + ':<br>' + d.vuot_chuan.map(esc).join('<br>') + '</p>' : '') +
+    // [1.7.1] hai khối theo căn cứ; kết quả cũ (chưa có vuot_quy_cach) giữ cách in cũ
+    (d.vuot_quy_cach ? [['Sai — lệch quy cách dự án', d.vuot_quy_cach], ['Cần xem — vượt ngưỡng công cụ', d.vuot_nguong || []]] : [[/^quy cách dự án/.test(d.can_cu || '') ? 'Sai — lệch quy cách dự án' : 'Cần xem — vượt ngưỡng công cụ', d.vuot_chuan || []]])
+      .filter(([, a]) => a.length).map(([t, a]) => '<p style="color:#8a4b00">' + t + ':<br>' + a.map(esc).join('<br>') + '</p>').join('') +
     bangGT('Cỡ chữ', d.co_chu) + bangGT('Màu chữ', d.mau_chu) + bangGT('Màu nền', d.mau_nen) + bangGT('Bo góc', d.bo_goc) + bangGT('Đổ bóng', d.do_bong) + bangGT('Khoảng cách lệch lưới', d.lech_luoi) +
     ds('Cùng nhãn nút, khác kiểu', d.nut_cung_nhan_khac_kieu, a => '<b>' + esc(a.nhan) + '</b> — ' + esc(a.so_kieu) + ' kiểu<br><span style="color:#666">' + a.kieu.map(k => esc(k.gia_tri) + ' (' + esc(k.so_man) + ' màn: ' + dsMan(k.man, k.so_man) + ')').join('<br>') + '</span>') +
     ds('Một từ, nhiều cách viết', n.mot_tu_nhieu_cach_viet, a => esc(a.cach_viet.join(' · ')) + '<br><span class=m>' + dsMan(a.man) + ' — mỗi cách viết ghi tối đa 4 màn</span>') +
