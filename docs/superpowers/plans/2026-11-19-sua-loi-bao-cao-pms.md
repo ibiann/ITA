@@ -1,8 +1,8 @@
-# ITA 1.7.1 — sửa 8 lỗi báo cáo (lần chạy PMS 18/11) và dọn phần thừa — Kế hoạch
+# ITA 1.7.1 — sửa 8 lỗi báo cáo (lần chạy PMS 18/11) — Kế hoạch
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Báo cáo ITA không còn báo nhầm (3 lỗi giả) và không còn làm người đọc hiểu sai (5 chỗ), đo trên 4 báo cáo PMS chạy bằng bản 1.7 ngày 18/11; bỏ phần thừa đã chứng minh được của script (Task 6).
+**Goal:** Báo cáo ITA không còn báo nhầm (3 lỗi giả) và không còn làm người đọc hiểu sai (5 chỗ), đo trên 4 báo cáo PMS chạy bằng bản 1.7 ngày 18/11. Chỉ sửa lỗi: không bỏ chức năng, không dọn mã (người dùng chốt 19/11).
 
 **Architecture:** Chỉ sửa mã của ITA (`may/`), không sửa gì của PMS. Hai hàm nhỏ chuyển ra mức tệp (`may/20-cau-hinh.js`) để thử riêng được; còn lại sửa tại chỗ. Mỗi lỗi có một khẳng định trong một tệp test Chrome mới, viết trước, chạy trượt trên mã 1.7 rồi mới sửa.
 
@@ -14,7 +14,7 @@
 
 - Repo `~/Downloads/ITA-1.7/ITA`, nhánh `dev`. Commit sau mỗi task, **không push** (người dùng tự push).
 - Bản **1.7.1**: `PHIEN_BAN` trong `may/20-cau-hinh.js` = mục `## [1.7.1]` trong `CHANGELOG.md` = dòng đầu `dist/*.js`.
-- Không thêm phép kiểm mới, không đổi dữ liệu kết quả mà công cụ khác đọc: giữ nguyên các trường `man_cao`, `man_trung_binh`, `man_ghi_nhan` trong kết quả (`cong-cu/so_truoc_sau.py` có thể đọc), chỉ đổi chữ HIỆN.
+- Không bỏ chức năng, không dọn mã thừa (người dùng chốt 19/11). Không thêm phép kiểm mới, không đổi dữ liệu kết quả mà công cụ khác đọc: giữ nguyên các trường `man_cao`, `man_trung_binh`, `man_ghi_nhan` trong kết quả (`cong-cu/so_truoc_sau.py` có thể đọc), chỉ đổi chữ HIỆN.
 - Không ghi tên dự án (PMS, DQTV…) vào `may/`; ghi chú tả kiểu web.
 - Sau mỗi sửa: đóng gói lại cả 3 bản (`python3 -I cong-cu/dong_goi.py`, `--du-an dqtv`, `--du-an pms`) và `node --check` cả 3.
 - Không chạy `kiem/test_buoc8.py`, `kiem/test_buoc9.py` khi kiểm hồi quy (hai test này ghi đè `du-an/dqtv/*.json` trên máy có mã nguồn app); nếu lỡ chạy thì `git checkout -- du-an/dqtv/`.
@@ -42,7 +42,6 @@ Mỗi dòng có khẳng định ở task sở hữu (đánh dấu **[RF n]**).
 | `may/40-bang-dieu-khien.js` | dòng tóm tắt (~130) |
 | `may/70-nap.js` | `apDungNap`: bỏ tệp trùng nội dung (~150) |
 | `kiem/test_bao_cao_ro.py` + `kiem/thu_bao_cao_ro.html` | test mới, một lần chạy Chrome |
-| `may/90-khoi-dong.js`, `may/00-mo-dau.js`, `cong-cu/dong_goi.py`, `kiem/thu_trinh_duyet.html` | dọn (Task 6) |
 | `CHANGELOG.md`, `dist/` | mục 1.7.1, đóng gói lại |
 
 ---
@@ -156,37 +155,7 @@ assert 'Sai — lệch quy cách dự án' in k['html'] and 'Cần xem — vư�
 - [ ] **Step 2:** Run `python3 -I kiem/test_bao_cao_ro.py` → đạt toàn bộ.
 - [ ] **Step 3:** Commit `Nạp: hai tệp cùng loại cùng nội dung chỉ dùng và liệt kê một lần`.
 
-### Task 6: Dọn phần thừa đã chứng minh được (không bỏ năng lực nào)
-
-Đo ngày 19/11 trên `dist/chung/ita.js` (1.136.110 byte):
-
-| Phần | Byte | Tỉ lệ | Xử lý |
-|---|---|---|---|
-| axe-core 4.14.0 (đã nén sẵn, `thu-vien/`) | ~693.000 | 61 % | Giữ — là phép kiểm WCAG |
-| Máy kiểm (`may/`) | ~443.000 | 39 % | Trong đó ghi chú ~81.000 |
-| Ghi chú nguyên dòng trong bản đóng gói | 58.131 | 5 % | Bỏ khi đóng gói (bước 4), nguồn `may/` giữ nguyên |
-| Hàm khai mà không dùng | 0 | — | Rà bằng tên: chỉ `caiLaChan`, `keo` — là hàm tự gọi, không thừa |
-| `dist/rieng/ita-dqtv.js` 4,7 MB | ~3,6 MB là TC + tài liệu đóng gói | — | Giữ — là dữ liệu dự án, không phải mã |
-
-Chỉ bỏ thứ **không còn nơi nào sinh ra hoặc trùng việc** với thứ khác; mỗi mục có bằng chứng:
-
-**Files:** Modify `may/90-khoi-dong.js`, `may/10-la-chan.js` (~112–113), `may/60-bao-cao.js` (~137, ~160–161), `may/00-mo-dau.js`, `cong-cu/dong_goi.py`, `kiem/thu_trinh_duyet.html` (~15).
-
-- [ ] **Step 1: Bỏ đường nạp đặc tả cũ `window.__itaDacTaNap`** (`90-khoi-dong.js` ~17–18). Bằng chứng: không bản đóng gói nào sinh dòng này (`grep -c "__itaDacTaNap =" dist/**/*.js` = 0; `test_dong_goi.py` còn khẳng định nó KHÔNG có). Bỏ luôn trường `co_DacTaNap` ở `kiem/thu_trinh_duyet.html`.
-- [ ] **Step 2: Bỏ `KHONG_LUU` / `locLuu`** (`10-la-chan.js` ~112–113, chỗ dùng ở `60-bao-cao.js` ~137, ~156). Bằng chứng: ba khoá `chanGhi`, `mucQuyTrinh`, `moiTruongKiemThu` đã bị `KHOA_KHOA` (`20-cau-hinh.js` ~222) từ chối từ bản 1.2 — hai lớp chặn cùng một việc. Thay `locLuu(over)` bằng `over` sau khi xác nhận `locHopLe` đã lọc `KHOA_KHOA` trước khi lưu; nếu chưa lọc thì giữ `locLuu` và ghi lý do.
-- [ ] **Step 3: Bỏ dòng xoá «điểm dừng dùng chung của bản trước»** (`60-bao-cao.js` ~160–161). Bằng chứng: từ bản 1.0 (đổi `dqtv.*` → `ita.*`) điểm dừng luôn lưu theo tài khoản (`ckptKey()`), khoá trơn `ita.ckpt.v1` không còn được ghi.
-- [ ] **Step 4: Đóng gói bỏ ghi chú nguyên dòng** (`cong-cu/dong_goi.py`, chỉ phần máy kiểm, không đụng axe và dữ liệu): bỏ dòng mà phần đầu là `//`, và khối `/* … */` bắt đầu ở đầu dòng (trừ `/*!` giấy phép). Không đụng ghi chú cuối dòng (có thể nằm trong chuỗi / mẫu HTML). Kiểm: `node --check` 3 bản; khẳng định mới trong `kiem/test_dong_goi.py` hoặc `test_bao_cao_ro.py`: bản đóng gói nhỏ hơn bản trước ≥ 50.000 byte và vẫn có `/*! axe`.
-- [ ] **Step 5: Rút `may/00-mo-dau.js`** (10.503 byte, toàn ghi chú lịch sử 3.x — «Bản 3.6 THÊM», «[S4] Khóa lưu riêng…») còn ≤ 20 dòng: ITA là gì, thứ tự tệp `may/`, lệnh chính, trỏ `CHANGELOG.md` / roadmap. Lịch sử đã có trong git và CHANGELOG.
-- [ ] **Step 6:** Run toàn bộ test như Task 7 bước 3 (lệnh ở đó) → không test nào đổi kết quả so với trước Task 6.
-- [ ] **Step 7:** Commit `Dọn: bỏ đường nạp đặc tả cũ, lớp chặn khoá trùng, xoá điểm dừng cũ, ghi chú khi đóng gói (−~60 KB)`.
-
-**Không tự bỏ — chờ người dùng quyết** (là năng lực còn dùng được, bỏ thì mất một cột ở ma trận năng lực):
-- `window.ITA_MAC_DINH` (tệp cấu hình mẫu từ bản 3.5; nay có bộ cấu hình và hồ sơ dự án).
-- Bộ lệnh dán đặc tả `ita.napDacTa / xemDacTa / xoaDacTa / vaiDacTa` (nay có «Nạp thư mục»).
-- Ghi kịch bản bằng tay `ita.ghi / dungGhi`.
-- Ghi chú lịch sử trong thân mã (`[3.5]`, `[S1]`, `[1.1]`… ~145 chỗ): đã bỏ khỏi bản đóng gói ở bước 4; rút trong nguồn là việc riêng, nhiều rủi ro, ít lợi.
-
-### Task 7: Bản 1.7.1, hồi quy, đóng gói
+### Task 6: Bản 1.7.1, hồi quy, đóng gói
 
 **Files:** Modify `may/20-cau-hinh.js` (`PHIEN_BAN`), `CHANGELOG.md`, `dist/chung/ita.js`, `dist/rieng/ita-dqtv.js`, `dist/rieng/ita-pms.js`.
 
