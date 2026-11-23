@@ -47,10 +47,10 @@ function phanChamSan() {
 addEventListener('load', () => setTimeout(async () => {
   const kq = { cham: phanChamSan() };
   let loiChay = ''; const t0 = Date.now();
-  try { await ita.chay({ tenMienDuocChay: null, kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
+  try { await ita.chay({ kiemKeTruong: false, thuOTim: false, moHoSoDau: false, tuTaiBaoCao: false }); } catch (e) { loiChay = e.message; }
   const r = (window.__ITA_AUDIT || {}).ketQua || {};
   kq.chay = { loi_chay: loiChay, giay: Math.round((Date.now() - t0) / 1000), tro_nang: r.kiem_tro_nang ? { cong_cu: r.kiem_tro_nang.cong_cu, ds: r.kiem_tro_nang.ds.map(x => ({ man: x.man, loi: x.loi || '', vi_pham: (x.vi_pham || []).map(v => v.id + '|' + v.muc + '|' + v.sc.join('/')) })) } : null,
-    van_de: (r.van_de || []).map(v => ({ tab: v.tab, wcag_loi: v.wcag_loi || '', gio: v.gio_khong_chuan || '', menu: v.tieu_de_lech_menu || '', chu_la: v.chu_la || '', ma_enum: v.ma_enum_lo || '', can_cu: v.can_cu, muc: v.muc_do })),
+    van_de: (r.van_de || []).map(v => ({ tab: v.tab, wcag_loi: v.wcag_loi || '', gio: v.gio_khong_chuan || '', menu: v.tieu_de_lech_menu || '', chu_la: v.chu_la || '', ma_enum: v.ma_enum_lo || '', can_cu: v.can_cu, muc: v.muc_do, xn: v.can_xac_nhan || '' })),
     html: (() => { const h = window.__itaThu.sangHTML(r); return { tro_nang: h.includes('Kiểm trợ năng tự động — axe-core'), tuong_phan: h.includes('1.4.3 tương phản chữ') }; })() };
   kq.log = __log.slice(-30); kq.loi_js = __loi.join(' | ') || 'không';
   document.body.setAttribute('data-kq', JSON.stringify(kq));

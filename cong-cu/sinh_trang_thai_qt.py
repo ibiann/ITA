@@ -6,7 +6,7 @@
 #   - chang_khac_app: «Từ chặng» của bước trong tài liệu khác «from» trong tệp khai báo của chính tài liệu
 #   - app_chua_co_tai_lieu: tệp khai báo app không tài liệu nào trỏ tới
 # Chạy: python3 -I cong-cu/sinh_trang_thai_qt.py [--app ~/dqtv/dqtv-app] [--ra-soat ~/Downloads/RA-QT-TOAN-BO.zip] [--du-an dqtv]
-import argparse, datetime, json, pathlib, re, subprocess, zipfile
+import argparse, datetime, json, pathlib, re, subprocess, sys, zipfile
 import yaml
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
@@ -17,6 +17,8 @@ ap.add_argument('--du-an', default='dqtv')
 a = ap.parse_args()
 APP = pathlib.Path(a.app)
 QP = APP / 'core/processes'
+if not QP.is_dir():   # [GĐ 8] không có mã nguồn app thì trước đây vẫn sinh ra tệp thiếu nguồn và GHI ĐÈ tệp tốt trong du-an/ → dừng, không ghi gì
+    sys.exit('THIẾU mã nguồn app: không thấy %s (đặt --app <thư mục app>). Không sinh lại, giữ nguyên du-an/%s/trang-thai-quy-trinh.json.' % (QP, a.du_an))
 
 def git(*x):
     try: return subprocess.run(['git', '-C', str(APP), *x], capture_output=True, text=True).stdout.strip()

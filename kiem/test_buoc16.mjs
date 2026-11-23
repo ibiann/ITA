@@ -1,6 +1,8 @@
 // [bước 16 / bản 1.3] «Nạp thư mục» phải cho ĐÚNG dữ liệu như bản đóng gói: cùng thư mục du-an/<dự án>, hai cách nạp, so ita.duLieu().
 // Chạy: node kiem/test_buoc16.mjs <dự án> <tên miền>   (cần jsdom + fake-indexeddb qua NODE_PATH; dựng dist/ trước bằng cong-cu/dong_goi.py)
 import { createRequire } from 'module'; import fs from 'fs'; import path from 'path';
+// [GĐ 8] trình duyệt chỉ ghi cảnh báo khi một lời hứa bị từ chối mà không ai bắt; Node thì dừng cả tiến trình. Lệnh ITA cố ý làm hỏng (giả lỗi đọc, chặn ghi — lỗi mang cờ __ita) mà app giả lập không bắt thì bỏ qua; lỗi khác vẫn làm test trượt.
+process.on('unhandledRejection', e => { if (e && e.__ita) return; console.error(e); process.exit(1); });
 const req = createRequire(process.cwd() + '/');
 const { JSDOM } = req('jsdom'); const { IDBFactory, IDBKeyRange } = req('fake-indexeddb');
 const GOC = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');

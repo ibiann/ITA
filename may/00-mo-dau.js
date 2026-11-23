@@ -43,6 +43,8 @@
  *   ita.tamDung()         tạm dừng      ita.tiep()   chạy tiếp
  *   ita.dung()            dừng hẳn
  *   ita.chayLaiLoi()      chỉ kiểm lại các màn có lỗi ở lần trước
+ *   ita.batChup()         (1.8) bật chụp ảnh màn lỗi cao / trung bình cho lần chạy tiếp; phải gọi trong cú bấm — dùng ô «📷 Chụp ảnh màn lỗi» trên bảng
+ *   ita.taiAnhLoi() / ita.xoaAnhLoi()   (1.8) tải / xoá tệp ảnh lỗi đã lưu của tài khoản này
  *   ita.cauHinh()         in cấu hình đang dùng
  *   ita.dat('maxTabMoiMan', 10)   hoặc   ita.dat({ chiMenu: /Chiến sĩ/ })
  *   ita.hoSo('nhanh' | 'day-du' | 'bao-mat' | 'kiem-ke-truong')   dùng bộ cấu hình có sẵn

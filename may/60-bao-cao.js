@@ -15,7 +15,9 @@ function htmlThietKe(kq) {
     o.pho_bien.map(p => '<tr><td>' + esc(p.gia_tri) + '</td><td>' + esc(p.lan) + ' lần</td><td>' + esc(p.so_man) + ' màn</td><td>' + dsMan(p.man, p.so_man) + '</td></tr>').join('') + '</tbody></table>';
   const ds = (tieuDe, arr, f) => !arr || !arr.length ? '' : '<h4>' + esc(tieuDe) + ' (' + arr.length + ')</h4><table><tbody>' + arr.map(a => '<tr><td>' + f(a) + '</td></tr>').join('') + '</tbody></table>';
   return '<p class=m>Căn cứ: ' + esc(d.can_cu || 'ngưỡng công cụ tự đặt') + '. Phần ngôn từ cũng là luật công cụ tự đặt: kết luận «Cần xem».</p>' +
-    ((d.vuot_chuan || []).length ? '<p style="color:#8a4b00">' + (/^quy cách dự án/.test(d.can_cu || '') ? 'Sai — lệch quy cách dự án' : 'Cần xem — vượt ngưỡng công cụ') + ':<br>' + d.vuot_chuan.map(esc).join('<br>') + '</p>' : '') +
+    // [1.7.1] hai khối theo căn cứ; kết quả cũ (chưa có vuot_quy_cach) giữ cách in cũ
+    (d.vuot_quy_cach ? [['Sai — lệch quy cách dự án', d.vuot_quy_cach], ['Cần xem — vượt ngưỡng công cụ', d.vuot_nguong || []]] : [[/^quy cách dự án/.test(d.can_cu || '') ? 'Sai — lệch quy cách dự án' : 'Cần xem — vượt ngưỡng công cụ', d.vuot_chuan || []]])
+      .filter(([, a]) => a.length).map(([t, a]) => '<p style="color:#8a4b00">' + t + ':<br>' + a.map(esc).join('<br>') + '</p>').join('') +
     bangGT('Cỡ chữ', d.co_chu) + bangGT('Màu chữ', d.mau_chu) + bangGT('Màu nền', d.mau_nen) + bangGT('Bo góc', d.bo_goc) + bangGT('Đổ bóng', d.do_bong) + bangGT('Khoảng cách lệch lưới', d.lech_luoi) +
     ds('Cùng nhãn nút, khác kiểu', d.nut_cung_nhan_khac_kieu, a => '<b>' + esc(a.nhan) + '</b> — ' + esc(a.so_kieu) + ' kiểu<br><span style="color:#666">' + a.kieu.map(k => esc(k.gia_tri) + ' (' + esc(k.so_man) + ' màn: ' + dsMan(k.man, k.so_man) + ')').join('<br>') + '</span>') +
     ds('Một từ, nhiều cách viết', n.mot_tu_nhieu_cach_viet, a => esc(a.cach_viet.join(' · ')) + '<br><span class=m>' + dsMan(a.man) + ' — mỗi cách viết ghi tối đa 4 màn</span>') +
@@ -77,9 +79,10 @@ function sangHTML(kq) {
 ${kq.nguon_menu && !/^menu trái$/.test(kq.nguon_menu) ? '<p style="color:#8a4b00"><b>Nguồn menu: ' + esc(kq.nguon_menu) + '</b>' + (/link nội bộ|chỉ màn/.test(kq.nguon_menu) ? ' — công cụ không thấy menu trái / thanh điều hướng trên; màn chỉ vào được qua nút / form sẽ không được ghé.' : '') + '</p>' : ''}
 ${kq.giao_dien_thuan ? '<p style="color:#8a4b00"><b>Chế độ kiểm giao diện thuần</b> (hồ sơ tạm, chưa có hồ sơ dự án): mọi lệnh POST bị chặn; không bấm nút nghiệp vụ (chỉ mở form thêm / sửa / xem); phần quy trình / UC / TC không có căn cứ nên ghi «Chưa kiểm».</p>' : ''}
 <p><b>Tài khoản:</b> ${esc(kq.tai_khoan || '')}${kq.quyen_may_chu ? ' · <b>Máy chủ:</b> <span title="' + esc(((kq.quyen_may_chu.nhom || []).flatMap(n => n.quyen)).join(', ')) + '">' + esc(moTaQuyen(kq.quyen_may_chu)) + '</span>' : ''}${kq.dung_giua_chung ? ' · <b style="color:#c62828">LẦN CHẠY BỊ DỪNG GIỮA CHỪNG — kết quả chưa đủ</b>' : ''}</p>${(kq.muc_mat_ket_qua || []).length ? '<p style="color:#c62828"><b>MẤT KẾT QUẢ KHI TRANG TẢI LẠI — ' + kq.muc_mat_ket_qua.length + ' mục menu đã chạy nhưng không đọc lại được kết quả, màn và TC của các mục này không có trong báo cáo:</b> ' + kq.muc_mat_ket_qua.map(esc).join(' · ') + '</p>' : ''}${kq.dung_giua_chung ? `<p style="color:#c62828"><b>Lý do dừng:</b> ${esc(kq.ly_do_dung || '')}${(kq.menu_chua_chay || []).length ? '<br><b>Mục menu chưa chạy (' + kq.menu_chua_chay.length + '):</b> ' + kq.menu_chua_chay.map(esc).join(' · ') : ''}</p>` : ''}
+${(kq.menu_khong_mo_duoc || []).length * 2 > (kq.so_muc_menu || 0) && (kq.so_muc_menu || 0) >= 3 ? '<p style="color:#c62828"><b>CHỈ KIỂM ĐƯỢC ' + Math.max(0, kq.so_muc_menu - kq.menu_khong_mo_duoc.length) + '/' + kq.so_muc_menu + ' MỤC MENU — ' + kq.menu_khong_mo_duoc.length + ' mục không mở được (lý do ở mục «Mục menu chưa kiểm được» bên dưới). Kết quả chưa đủ để kết luận về cả app.</b></p>' : ''}
 ${kq.cau_hinh ? '<p class=m><b>Cấu hình:</b> bộ «' + esc(kq.cau_hinh.bo) + '»' + (kq.cau_hinh.khac_mac_dinh.length ? '; khác mặc định: ' + kq.cau_hinh.khac_mac_dinh.map(x => esc(x.khoa) + ' = ' + esc(x.gia_tri) + ' (' + esc(x.nguon) + ')').join('; ') : '; còn lại theo mặc định') + (kq.cau_hinh.da_luu.length ? '. <b>Có cấu hình đã lưu từ trước</b> (ita.dat): ' + kq.cau_hinh.da_luu.map(esc).join(', ') + ' — xoá bằng ita.datLai()' : '') + '</p>' : ''}
 <p class=m>Công cụ bản ${esc(kq.phien_ban || '≤3.10')} · nạp bằng ${esc(kq.cach_nap || '?')} · cửa sổ ${esc(kq.cua_so || '?')}${kq.ngung_bam_do_di_vong ? ' · <b style="color:#c62828">có phần chạy ở chế độ ngừng bấm nút nghiệp vụ (bản dán Console gặp yêu cầu mạng đi vòng bộ chặn) — form chưa kiểm đủ (xem mục «Yêu cầu mạng không đi qua bộ chặn» bên dưới)</b>' : ''}</p>
-<p class=m>${esc(kq.url)} · ${esc(kq.luc)} · ${kq.so_man_da_kiem} màn đã kiểm · cao ${kq.man_cao}, trung bình ${kq.man_trung_binh}, cần xem ${kq.man_ghi_nhan || 0}${kq.dem_ket_luan ? ' · mẫu lỗi: ' + Object.entries(kq.dem_ket_luan).map(([k, n]) => esc(k) + ' ' + n).join(', ') : ''} · ${kq.o_nhap_co_loi} lỗi ô nhập · ${kq.doi_chieu_dac_ta ? 'đối chiếu đặc tả: ' + esc(gonMaDT(kq.doi_chieu_dac_ta.quy_trinh.map(q => q.ma))) : 'mức quy trình ' + kq.muc_quy_trinh + (kq.co_dac_ta ? ' (có đặc tả)' : ' (chưa nạp đặc tả)')}</p>
+<p class=m>${esc(kq.url)} · ${esc(kq.luc)} · ${kq.so_man_da_kiem} màn đã kiểm · ${kq.man_co_van_de} màn có vấn đề${kq.dem_ket_luan ? ' · mẫu lỗi: ' + Object.entries(kq.dem_ket_luan).map(([k, n]) => esc(k) + ' ' + n).join(', ') : ''} · ${kq.o_nhap_co_loi} lỗi ô nhập · ${kq.doi_chieu_dac_ta ? 'đối chiếu đặc tả: ' + esc(gonMaDT(kq.doi_chieu_dac_ta.quy_trinh.map(q => q.ma))) : 'mức quy trình ' + kq.muc_quy_trinh + (kq.co_dac_ta ? ' (có đặc tả)' : ' (chưa nạp đặc tả)')}</p>
 <p class=m><b>Dữ liệu đã nạp:</b> ${(kq.du_lieu_nap || []).length ? Object.values(kq.du_lieu_nap.reduce((g, x) => { const k = x.bo_doc + (x.goi_san ? '|g' : ''); (g[k] = g[k] || []).push(x); return g; }, {})).map(n => n.length > 3 ? esc(n.length + ' tệp ' + n[0].bo_doc + (n[0].goi_san ? ' (đóng gói sẵn trong tệp dán)' : ' (đã nạp)') + ': ' + n.slice(0, 3).map(x => x.tep).join(', ') + '…') : n.map(x => esc(x.tep) + ' (bộ đọc ' + esc(x.bo_doc) + ', ' + (x.so_bang ? x.so_bang + ' bảng, ' : '') + (x.so_muc ? x.so_muc + ' mục, ' : '') + 'mã băm ' + esc(x.bam) + ', ' + (x.goi_san ? 'đóng gói sẵn ' : 'nạp ') + esc(x.luc) + ')').join('; ')).join('; ') : 'không có. Chỉ kiểm giao diện chung, không đối chiếu quy trình / UC / TC.'}</p>
 ${(kq.du_lieu_du_an || []).length ? '<h2 style="font-size:16px;margin-top:28px">Dữ liệu dự án — ' + kq.du_lieu_du_an.filter(x => x.co).length + '/' + kq.du_lieu_du_an.length + ' loại có</h2><table><thead><tr><th>Loại</th><th>Có</th><th>Chi tiết</th><th>Nguồn</th><th>Dùng cho</th></tr></thead><tbody>' + kq.du_lieu_du_an.map(x => '<tr class="' + (x.co ? '' : 'tb') + '"><td>' + esc(x.muc) + '</td><td>' + (x.co ? 'có' : 'KHÔNG') + '</td><td>' + esc(x.chi_tiet) + '</td><td>' + esc(x.nguon) + '</td><td>' + esc(x.dung_cho) + '</td></tr>').join('') + '</tbody></table>' + ((kq.tep_khong_nap_duoc || []).length ? '<p class=m><b>Tệp không nạp được ở lần nạp gần nhất (' + kq.tep_khong_nap_duoc.length + '):</b> ' + kq.tep_khong_nap_duoc.map(x => esc(x.tep) + ' — ' + esc(x.ly_do)).join('; ') + '</p>' : '') : ''}
 ${htmlDacTa(kq)}
@@ -144,6 +147,11 @@ window.ita = {
   xuatCauHinh() { return hoaChuoi(docCfgLuu()); },
   nhapCauHinh(s) { const o = typeof s === 'string' ? doChuoi(s) : s; return this.dat(o || {}); },
 
+  // [1.8] bật chụp ảnh màn lỗi cho lần chạy sắp tới; chỉ chạy được khi gọi thẳng trong cú bấm (ô «📷» trên bảng làm việc này)
+  batChup(tran, moi) { return batChup(tran, moi); },
+  // tải tệp ảnh lỗi đã lưu của tài khoản này / xoá chúng (nút «📷 Tải ảnh lỗi», «🗑 Xoá ảnh» trên bảng)
+  taiAnhLoi() { return taiAnhLoi(); },
+  xoaAnhLoi() { return xoaAnhLuu(); },
   async chay(over) {
     if (CO.dangChay) { console.warn('[ita] Đang chạy rồi, không cần bấm lại. Muốn chạy lại thì bấm "■ Dừng" (hoặc gõ ita.dung()) trước.'); return; }
     // [1.1] chưa có hồ sơ: hỏi một lần «kiểm giao diện thuần trên <tên miền>?» → hồ sơ tạm (khoá đúng tên miền này, mọi POST bị chặn)
@@ -167,7 +175,8 @@ window.ita = {
     catch (e) { console.log('%c[ita] LỖI: ' + (e && e.message || e), 'color:#fff;background:#b00;padding:2px 6px'); }
     // tới được đây là lần chạy đã kết thúc trong trang (xong, dừng hoặc lỗi) → bỏ cờ "đang chạy";
     // nếu trang tự tải lại giữa chừng thì không tới được đây, cờ còn lại để lần nạp sau chạy tiếp
-    finally { if (window.__itaGoHook) window.__itaGoHook(); CO.dangChay = false; CO.lanTiep = 0; if (!window.__itaDangRoi && !APP_SAP) { try { localStorage.removeItem(KEY_RUN); } catch (e) {} }   // [1.1] mất phiên: xoá cờ, không tự chạy tiếp
+    finally { try { await ketThucChup(); } catch (e) {}   // [1.8] tắt chia sẻ tab, lưu ảnh (trước cả khi trang tự tải lại)
+    if (window.__itaGoHook) window.__itaGoHook(); CO.dangChay = false; CO.lanTiep = 0; if (!window.__itaDangRoi && !APP_SAP) { try { localStorage.removeItem(KEY_RUN); } catch (e) {} }   // [1.1] mất phiên: xoá cờ, không tự chạy tiếp
     if (APP_SAP) console.log('%c[ita] ỨNG DỤNG SẬP Ở "' + APP_SAP + '" — TRANG SẼ TẢI LẠI.\nAPP KẸT MÀN BÁO LỖI SANG CẢ MÀN KHÁC.\nSAU KHI TRANG TẢI XONG: DÁN LẠI ĐÚNG TỆP BUNDLE NÀY (bản ' + PHIEN_BAN + ') VÀO CONSOLE. Công cụ tự chạy tiếp từ mục đang dở và bỏ qua các màn đã sập.', 'color:#fff;background:#c62828;font-size:14px;font-weight:bold;padding:6px 10px');
     if (APP_SAP) { CO.tienDo = '⚠ Ứng dụng sập ở "' + APP_SAP + '". Đang tải lại trang để chạy tiếp (bản dán Console: dán lại tệp sau khi trang tải xong).'; setTimeout(() => { try { location.assign(location.origin + '/' + (location.pathname.split('/')[1] || '')); } catch (e) {} }, 1500); } if (MAT_PHIEN) { CO.tienDo = '⚠ Dừng vì mất phiên: ' + MAT_PHIEN + '. Đăng nhập lại cùng tài khoản — công cụ tự chạy tiếp.'; /* [1.1] không tự chờ đăng nhập rồi chạy tiếp */ } capNhatBang(); }
   },
@@ -182,7 +191,7 @@ window.ita = {
   // 3.6: xem công cụ nhận ra menu, vùng chính, bảng, ô tìm, tài khoản thế nào (không bấm gì)
   // 3.6: xem công cụ nhận ra menu, vùng chính, bảng, ô tìm, tài khoản thế nào (không bấm gì)
   // bỏ điểm dừng của tài khoản đang đăng nhập rồi chạy lại toàn bộ
-  async chayLaiTuDau(over) { TK = taiKhoan(); try { localStorage.removeItem(ckptKey()); localStorage.removeItem(KEY_CKPT); } catch (e) {} /* màn sập vẫn giữ: muốn thử lại màn sập thì ita.manSap('xoa') */ console.info('[ita] Đã xoá điểm dừng của tài khoản này, chạy lại từ đầu.'); return this.chay(over); },
+  async chayLaiTuDau(over) { TK = taiKhoan(); try { await xoaAnhLuu(); } catch (e) {}   /* [1.8] chạy lại từ đầu: bỏ ảnh lỗi cũ */ try { localStorage.removeItem(ckptKey()); localStorage.removeItem(KEY_CKPT); } catch (e) {} /* màn sập vẫn giữ: muốn thử lại màn sập thì ita.manSap('xoa') */ console.info('[ita] Đã xoá điểm dừng của tài khoản này, chạy lại từ đầu.'); return this.chay(over); },
   // in 40 thao tác cuối (giữ qua tải lại trang / đăng xuất) để biết lần chạy dừng ở đâu
   nhatKy(n = 40) { const ds = docNK().slice(-n); console.table(ds.map(x => ({ giờ: x.t, 'tài khoản': x.tk, loại: x.loai, 'nội dung': x.nd, url: x.url }))); return ds; },
   xoaNhatKy() { try { localStorage.removeItem(KEY_NK); } catch (e) {} NK_BO = null; console.info('[ita] Đã xoá nhật ký.'); },
@@ -197,7 +206,7 @@ window.ita = {
     TK = taiKhoan();
     try { localStorage.removeItem(ckptKey()); } catch (e) {}
     CO.dung = false; CO.tamDung = false; CO.dangChay = true; capNhatBang();
-    try { return await itaAudit({}, { chiLoi: loi }); } finally { if (window.__itaGoHook) window.__itaGoHook(); CO.dangChay = false; capNhatBang(); }
+    try { return await itaAudit({}, { chiLoi: loi }); } finally { try { await ketThucChup(); } catch (e) {} if (window.__itaGoHook) window.__itaGoHook(); CO.dangChay = false; capNhatBang(); }
   },
   async moMan(url, ten) {   // mở lại đúng màn có lỗi để xem tận mắt
     console.log('[ita] Mở lại:', ten, url);
@@ -249,6 +258,18 @@ window.ita = {
     return ds;
   },
   xoaTruongTay() { try { localStorage.removeItem(KEY_TAY); } catch (e) {} console.log('[ita] Đã xoá các lần quét tay.'); },
+
+  /* --- thăm dò: xem ITA nhận ra menu, vùng chính, bảng, ô tìm, tài khoản của màn đang mở thế nào; không bấm gì, không chạy phép kiểm ---
+   * [GĐ 8] lệnh này mất từ bản 3.26 (nút «🔍 Thăm dò» và lõi itaAudit({ __thamDo }) vẫn còn, chỉ thiếu ita.thamDo) → bấm nút báo lỗi. */
+  async thamDo() {
+    if (CO.dangChay) { console.warn('[ita] Đang chạy tự động, dừng trước đã.'); return; }
+    let rows;
+    try { rows = await itaAudit({ __thamDo: true }); }
+    catch (e) { console.warn('[ita] Thăm dò không chạy được: ' + (e && e.message || e)); return; }
+    if (!Array.isArray(rows)) return;
+    console.table(rows.map(r => ({ '': r[''], mục: r.muc, 'công cụ nhận ra': r.ket_qua, 'gợi ý': r.goi_y })));
+    return rows;
+  },
 
   /* --- ghi kịch bản bằng thao tác tay --- */
   ghi() {

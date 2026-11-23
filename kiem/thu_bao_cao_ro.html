@@ -1,0 +1,66 @@
+<!doctype html><meta charset="utf-8">
+<!-- Trang thử cho kiem/test_bao_cao_ro.py (bản 1.7.1): tái hiện 8 lỗi báo cáo thấy ở lần chạy PMS 18/11.
+     /m/1: lỗi API đường dẫn dài có mã UUID · cảnh báo ResizeObserver + lỗi JS thật có chữ ResizeObserver · ô tìm 3 dòng không báo trống ·
+           nút chuyển trang khoá + nút bước quy trình khoá · bo góc 4 góc / 50% / 0px / 999px · nút «Có mặt» gửi lệnh ghi ngay
+     /m/2: ô tìm không lọc (bảng 7 dòng giữ nguyên) · /m/3: màn trơn -->
+<body>
+  <nav class="navigation" style="position:fixed;left:0;top:0;width:180px;height:900px">
+    <a href="/m/1">Màn A</a><a href="/m/2">Màn B</a><a href="/m/3">Màn C</a></nav>
+  <main style="margin-left:200px"></main>
+  <script>
+    const UUID = '267f8972-4236-42cd-bbbd-98be928a1b2c';
+    const DAI = '/api/v1/' + Array.from({ length: 20 }, (_, i) => 'nhanh-' + i + '/' + (1000 + i)).join('/') + '/het';
+    const bang = n => '<table><thead><tr><th>Mã</th><th>Tên</th></tr></thead><tbody>' +
+      Array.from({ length: n }, (_, i) => '<tr><td>HS-' + (i + 1) + '</td><td>Hồ sơ ' + (i + 1) + '</td></tr>').join('') + '</tbody></table>';
+    const ve = () => {
+      const p = location.pathname, m = document.querySelector('main');
+      if (p === '/m/1') {
+        // bảng đứng cuối: chữ ngay sau bảng bị ITA coi là thông báo trống (emptyNear)
+        m.innerHTML = '<h1>Màn A</h1>' +
+          '<div><button disabled>← Trước</button><button disabled>Tiếp theo →</button><button disabled>Tiếp theo: Trình ký</button>' +
+          '<button id="comat">Có mặt</button></div>' +
+          '<div style="border-radius:0px 0px 12px 12px;background:#eee;padding:8px">bốn góc</div>' +
+          '<div style="border-radius:50%;width:20px;height:20px;background:#ccc"></div>' +
+          '<div style="border-radius:999px;background:#ddd;padding:4px">viên</div>' +
+          '<div style="border-radius:10px;background:#ddd;padding:4px">nút</div>' +
+          '<input type="search" placeholder="Tìm hồ sơ" id="tim1">' + bang(3);
+        document.getElementById('tim1').addEventListener('input', e => {
+          const q = e.target.value.toLowerCase();
+          for (const r of m.querySelectorAll('tbody tr')) r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+        document.getElementById('comat').addEventListener('click', () => { fetch('/system/action/handle_request', { method: 'POST', body: '{}' }).catch(() => {}); });
+        fetch('/api/v1/meetings/' + UUID + '/context').catch(() => {});
+        fetch(DAI).catch(() => {});
+        // [soát cuối] 5 mã UUID, ký tự thứ 200 rơi vào giữa một mã: hai lệnh khác mã phải gom một mẫu, giữ được đuôi «/files»
+        for (const s of ['a', 'b']) fetch('/api/v1/org/' + ['org', 'unit', 'meeting', 'agenda', 'item'].map((x, i) => (i ? x + '/' : '') + s.repeat(8) + '-1111-2222-3333-' + String(i).repeat(12)).join('/') + '/files').catch(() => {});
+        for (let i = 0; i < 5; i++) window.dispatchEvent(new ErrorEvent('error', { message: 'ResizeObserver loop completed with undelivered notifications.' }));
+        window.dispatchEvent(new ErrorEvent('error', { message: 'TypeError: ResizeObserver is not defined' }));
+      } else if (p === '/m/2') {
+        m.innerHTML = '<h1>Màn B</h1><input type="search" placeholder="Tìm kiến nghị" id="tim2">' + bang(7);
+      } else m.innerHTML = '<h1>Màn C</h1><p>Màn trơn.</p>';
+    };
+    history.replaceState(null, '', '/m/1'); ve(); addEventListener('popstate', ve);
+    document.addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; e.preventDefault(); history.pushState(null, '', a.getAttribute('href')); ve(); }, true);
+  </script>
+  <script>window.__itaHoSo = {"ten": "thử", "ten_mien": "127.0.0.1", "post_cho_qua": []}</script>
+  <script>window.__xong = ''; { const l0 = console.log; console.log = function () { const s = [...arguments].join(' '); if (s.includes('[ita] Xong')) window.__xong = s; return l0.apply(this, arguments); }; }</script>
+  <script src="/tool.js"></script>
+  <script>
+    const HS = JSON.stringify({ loai: 'ho-so-du-an', ten: 'thử', ten_mien: '127.0.0.1', post_cho_qua: [] });
+    const QC = JSON.stringify({ loai: 'quy-cach-giao-dien', nguon: 'thử', co_chu_px: [12, 14, 16], bo_goc_px: [8, 10, 9999] });
+    const QC2 = JSON.stringify({ loai: 'quy-cach-giao-dien', nguon: 'thử 2', co_chu_px: [12, 13], bo_goc_px: [8, 10, 9999] });
+    addEventListener('load', () => setTimeout(async () => {
+      let error = '', kq = null, nap = null;
+      try {
+        nap = await ita.napTep([new File([QC], 'a/quy-cach.json'), new File([QC2], 'b/quy-cach.json'), new File([QC], 'quy-cach.json'), new File([HS], 'ho-so.json'), new File([HS], 'pms/ho-so.json')]);
+        kq = await ita.chay({ kiemNgonTu: false, kiemThietKe: true, kiemKeTruong: true, thuOTim: true, moHoSoDau: false, tuTaiBaoCao: false, kiemTroNang: false, thuLoiDoc: false });
+      } catch (e) { error = e.message; }
+      const T = window.__itaThu || {};
+      document.body.setAttribute('data-kq', JSON.stringify({ error, nap,
+        xong: window.__xong, nk_canh_bao: ita.nhatKy(300).filter(x => x.loai === 'bỏ qua cảnh báo trình duyệt').length, mau: kq ? kq.mau_loi : [], o_nhap: kq ? kq.loi_o_nhap : [], thu_o: kq ? (kq.thu_o_nhap || []).map(x => x.man + ' · ' + x.o) : [], bo_qua: kq ? kq.bo_qua_khong_bam : [], du_lieu_nap: kq ? (kq.du_lieu_nap || []) : [],
+        html: kq ? T.html(kq) : '', csv: kq ? T.csv(kq) : '',
+        don_vi: { ngoai: T.ngoaiQuyCach ? T.ngoaiQuyCach({ '0px 0px 10px 10px': 1, '0px 0px 12px 12px': 1, '50%': 1, '0px': 1, '999px': 1, '10px': 1 }, [8, 10, 9999]) : null,
+                  chuyen_trang: T.laNutChuyenTrang ? ['← Trước', 'Tiếp theo →', 'Next', 'Tiếp theo: Trình ký', 'Trước hạn'].map(T.laNutChuyenTrang) : null } }));
+    }, 300));
+  </script>
+</body>

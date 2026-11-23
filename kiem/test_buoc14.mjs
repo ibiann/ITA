@@ -3,6 +3,8 @@
 // Chạy: bash kiem/test_buoc14.sh   (cần jsdom: npm i jsdom@24 trong một thư mục rồi đặt NODE_PATH=<thư mục>/node_modules)
 // Tham số: node kiem/test_buoc14.mjs <bản dựng> [day-du | thuan | thuan-khong | matphien]. Sai điều kiện nào thì mã thoát 1.
 import { createRequire } from 'module'; const { JSDOM } = createRequire(process.cwd() + '/')('jsdom');
+// [GĐ 8] trình duyệt chỉ ghi cảnh báo khi một lời hứa bị từ chối mà không ai bắt; Node thì dừng cả tiến trình. Lệnh ITA cố ý làm hỏng (giả lỗi đọc, chặn ghi — lỗi mang cờ __ita) mà app giả lập không bắt thì bỏ qua; lỗi khác vẫn làm test trượt.
+process.on('unhandledRejection', e => { if (e && e.__ita) return; console.error(e); process.exit(1); });
 import fs from 'fs';
 const [, , tep, cheDo0] = process.argv; const cheDo = cheDo0 || 'day-du';
 const html = `<!doctype html><html><head><style>button.active{background-color:rgb(29,78,216);color:rgb(255,255,255)}</style></head><body>
@@ -110,15 +112,21 @@ else {
     dat(!kq.dung_giua_chung && !kq.mat_phien, '401 của dịch vụ phụ không được làm dừng lần chạy');
     dat((kq.menu_chua_chay || []).length === 0, 'chạy đủ mọi mục menu');
     dat((kq.dich_vu_401 || []).some(x => x.dv === '/drive-proxy' && x.phien_chinh_con && /dịch vụ phụ|vẫn trả/.test(x.ly_do || '')), 'ghi /drive-proxy 401, phiên chính còn, kèm căn cứ');
-    dat((kq.van_de || []).some(r => r.tab === 'Kho tài liệu' && /401 \/drive-proxy/.test(r.api_loi || '') && r.muc_do === 'cao'), '401 dịch vụ phụ ghi là lỗi API mức cao ở đúng màn (không bỏ qua)');
+    // [GĐ 8] từ b0fcecf (GĐ 7): 401 ở dịch vụ phụ khi phiên chính còn là điều ITA KHÔNG chắc → hạ «ghi nhận» / «Cần xem», kèm lý do; vẫn ghi ở đúng màn
+    dat((kq.van_de || []).some(r => r.tab === 'Kho tài liệu' && /401 \/drive-proxy/.test(r.api_loi || '') && r.muc_do === 'ghi nhận' && r.ket_luan === 'Cần xem' && /401 ở dịch vụ phụ, phiên chính vẫn còn/.test(r.can_xac_nhan || '')), '401 dịch vụ phụ vẫn ghi ở đúng màn (không bỏ qua), mức «ghi nhận» / «Cần xem» kèm lý do');
     dat(!man.some(t => /› [1-5]$/.test(t)), 'ô lịch chỉ có số không phải tab');
     dat(!man.some(t => /^LANCS NETWORKS › (Bình bầu|Kho tài liệu|Chương trình nghị sự)( ›|$)/.test(t)), 'link thẻ điều hướng nhanh (trùng mục menu) không phải tab');
     dat(man.includes('LANCS NETWORKS › Bình bầu đang mở'), 'link có tham số lọc (khác mục menu) vẫn được kiểm như tab');
     dat(man.includes('Chương trình nghị sự'), 'mục «Chương trình nghị sự» được kiểm (chữ «trình» giữa nhãn link không làm bỏ qua)');
     dat((kq.bo_qua_khong_bam || []).filter(x => x.man === 'Bình bầu' && /nội dung trùng màn/.test(x.ly_do)).length >= 2, 'gộp tab trùng nội dung ở Bình bầu');
     dat(boQua.some(x => /^Trang chủ \| mục menu cùng đường dẫn/.test(x)), 'mục menu cùng đường dẫn không kiểm lại');
-    dat(boQua.filter(x => /^Bắt đầu phiên họp/.test(x)).length === 1, 'nút gửi ngay chỉ bị bấm một lần');
-    dat((kq.van_de || []).some(r => /^\[công cụ bấm «Bắt đầu phiên họp»\]/.test(r.chan_ghi || '')), 'lệnh ghi bị chặn ghi rõ do công cụ bấm');
+    if (cheDo === 'thuan') {   // [GĐ 8] từ 30e73d5 (GĐ 7): giao diện thuần không bấm nút nghiệp vụ
+      dat(kq.nut_nghiep_vu_da_bat === false, 'giao diện thuần: nút nghiệp vụ tắt');
+      dat(!boQua.some(x => /^Bắt đầu phiên họp/.test(x)) && !(kq.van_de || []).some(r => /công cụ bấm «Bắt đầu phiên họp»/.test(r.chan_ghi || '')), 'giao diện thuần: không bấm «Bắt đầu phiên họp»');
+    } else {
+      dat(boQua.filter(x => /^Bắt đầu phiên họp/.test(x)).length === 1, 'nút gửi ngay chỉ bị bấm một lần');
+      dat((kq.van_de || []).some(r => /^\[công cụ bấm «Bắt đầu phiên họp»\]/.test(r.chan_ghi || '')), 'lệnh ghi bị chặn ghi rõ do công cụ bấm');
+    }
     dat(!(kq.van_de || []).some(r => r.js_loi), 'lỗi JS ngay sau lệnh bị chặn không tính là lỗi app');
     dat(!(kq.van_de || []).some(r => r.tieu_de_lech_menu), 'không báo «tiêu đề lệch menu» cho mục trùng đường dẫn');
     dat(!(((kq.he_thong_thiet_ke || {}).nut_cung_nhan_khac_kieu) || []).length, 'nút đang chọn không tính «cùng nhãn khác kiểu»');

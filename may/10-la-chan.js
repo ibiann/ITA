@@ -66,7 +66,7 @@ const NGUYEN_TAC = {
   o_khong_nhan: 'WCAG 1.3.1 / 4.1.2: ô nhập cần nhãn', wcag_loi: 'WCAG 2.2 A/AA (axe-core): mỗi luật vi phạm một dòng, kèm mục WCAG', gio_khong_chuan: 'Nhất quán: ngày giờ dạng dd/mm/yyyy hh:mm, không hiện chuỗi máy', truong_loi: 'Kiểm kê trường: xem danh mục trường',
   dinh_dang_ngay_tron: 'Nhất quán: một định dạng ngày trong toàn hệ thống', dinh_dang_so_tron: 'Nhất quán: một kiểu phân cách hàng nghìn',
   tieu_de_lech_menu: 'Nhất quán điều hướng: tiêu đề màn khớp mục menu', nut_chinh_nhieu: 'Một hành động chính mỗi màn',
-  chan_ghi: 'Màn chỉ xem không nên tự gửi lệnh ghi', gia_loi_doc: 'Trạng thái lỗi: tải dữ liệu thất bại thì màn phải báo lỗi, không hiện «trống», không treo, không trắng', o_nhap: 'Tìm kiếm/lọc phải trả đúng kết quả và báo trống rõ ràng',
+  chan_ghi: 'Màn chỉ xem không nên tự gửi lệnh ghi', chan_ghi_nut: 'Nút gửi lệnh ghi ngay khi bấm: cần hỏi xác nhận hoặc mở form', gia_loi_doc: 'Trạng thái lỗi: tải dữ liệu thất bại thì màn phải báo lỗi, không hiện «trống», không treo, không trắng', o_nhap: 'Tìm kiếm/lọc phải trả đúng kết quả và báo trống rõ ràng',
 };
 // [3.26.1] Căn cứ của từng phép kiểm giao diện chung. Chỉ «sự việc», «chuẩn», «đặc tả» được tính mức (cao / trung bình / thấp).
 // «tự đặt» = ngưỡng hay luật do người viết công cụ đặt, chưa có tài liệu dự án nào nói: chỉ GHI NHẬN, không tính là lỗi.

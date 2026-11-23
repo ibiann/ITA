@@ -32,6 +32,7 @@ assert k1['loi_js'] == 'không' and k2['loi_js'] == 'không', (k1['loi_js'], k2[
 assert 'loi_trang_thu' not in k1 and 'loi_trang_thu' not in k2, (k1.get('loi_trang_thu'), k2.get('loi_trang_thu'))
 assert k1['truoc'] == {'ho_so': 'undefined', 'ten_mien': 'null', 'session': 'block', 'khac': 'block'}, k1['truoc']
 assert k1['chay_khong_ho_so'].startswith('Không chạy: chưa có hồ sơ dự án'), k1['chay_khong_ho_so']
+assert k1['hoi_thuan'], 'chưa có hồ sơ: phải hỏi «kiểm giao diện thuần?» trước khi từ chối chạy'
 print('đạt: chưa có hồ sơ → không chạy kiểm, mọi POST bị chặn')
 assert k1['nap1'] == [{'tep': 'du-an/mau/ho-so.json', 'bo_doc': 'ho-so', 'so_bang': 0}], k1['nap1']
 assert k1['sau_nap1'] == {'ten_mien': '/^khong-khop\\.vidu$/i', 'session': 'ok', 'khac': 'block'}, k1['sau_nap1']

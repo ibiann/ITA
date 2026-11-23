@@ -2,23 +2,31 @@
 # Chạy: python3 -I kiem/test_buoc11.py
 # Dựng bản thử bằng cong-cu/dong_goi.py (--ra, không ghi đè dist/) + một dòng xuất hàm nội bộ ra window.__itaThu; chạy kiem/thu_buoc11.html
 # trong Chrome thời gian thật (kiem/mo_chrome.mjs). Trang mẫu cố ý có lỗi trợ năng và lỗi khung chung.
-import json, pathlib, socket, subprocess, sys, tempfile, time
+import json, pathlib, shutil, socket, subprocess, sys, tempfile, time
 
 GOC = pathlib.Path(__file__).resolve().parent.parent
-with tempfile.TemporaryDirectory() as t:
-    t = pathlib.Path(t)
-    subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/dong_goi.py'), '--du-an', 'dqtv', '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
-    dist = (t / 'dist.js').read_text(encoding='utf-8')
-    assert 'axe v4.14.0' in dist and 'if (!window.axe) {' in dist, 'tệp dán không kèm axe-core'
-    (t / 'tool.js').write_text(dist.rstrip()[:-len('})();')] + 'window.__itaThu = { doiChieuDacTa, phuDanhMucTC, sangHTML };\n})();\n', encoding='utf-8')
-    (t / 'thu.html').write_text((GOC / 'kiem/thu_buoc11.html').read_text(encoding='utf-8'), encoding='utf-8')
-    so = socket.socket(); so.bind(('127.0.0.1', 0)); cong = so.getsockname()[1]; so.close()
-    mc = subprocess.Popen([sys.executable, '-I', '-m', 'http.server', str(cong), '--bind', '127.0.0.1', '--directory', str(t)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    try:
-        time.sleep(0.8)
-        r = subprocess.run(['node', str(GOC / 'kiem/mo_chrome.mjs'), 'http://127.0.0.1:%d/thu.html' % cong, str(t / 'p'), '300'], capture_output=True, text=True, timeout=360)
-    finally:
-        mc.terminate()
+# [GĐ 8] từ 1.2 khoá tên miền chỉ lấy từ ho-so.json (ita.chay({ tenMienDuocChay }) bị bỏ qua) → dựng hồ sơ thử _thu11 = hồ sơ dqtv, ten_mien 127.0.0.1
+THU = GOC / 'du-an/_thu11'
+shutil.rmtree(THU, ignore_errors=True); shutil.copytree(GOC / 'du-an/dqtv', THU)
+hs = json.loads((THU / 'ho-so.json').read_text(encoding='utf-8')); hs['ten_mien'] = '127.0.0.1'
+(THU / 'ho-so.json').write_text(json.dumps(hs, ensure_ascii=False, indent=2), encoding='utf-8')
+try:
+    with tempfile.TemporaryDirectory() as t:
+        t = pathlib.Path(t)
+        subprocess.run([sys.executable, '-I', str(GOC / 'cong-cu/dong_goi.py'), '--du-an', '_thu11', '--ra', str(t / 'dist.js')], check=True, stdout=subprocess.DEVNULL)
+        dist = (t / 'dist.js').read_text(encoding='utf-8')
+        assert 'axe v4.14.0' in dist and 'if (!window.axe) {' in dist, 'tệp dán không kèm axe-core'
+        (t / 'tool.js').write_text(dist.rstrip()[:-len('})();')] + 'window.__itaThu = { doiChieuDacTa, phuDanhMucTC, sangHTML };\n})();\n', encoding='utf-8')
+        (t / 'thu.html').write_text((GOC / 'kiem/thu_buoc11.html').read_text(encoding='utf-8'), encoding='utf-8')
+        so = socket.socket(); so.bind(('127.0.0.1', 0)); cong = so.getsockname()[1]; so.close()
+        mc = subprocess.Popen([sys.executable, '-I', '-m', 'http.server', str(cong), '--bind', '127.0.0.1', '--directory', str(t)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            time.sleep(0.8)
+            r = subprocess.run(['node', str(GOC / 'kiem/mo_chrome.mjs'), 'http://127.0.0.1:%d/thu.html' % cong, str(t / 'p'), '300'], capture_output=True, text=True, timeout=360)
+        finally:
+            mc.terminate()
+finally:
+    shutil.rmtree(THU, ignore_errors=True)
 assert r.stdout, 'Chrome không trả kết quả: ' + r.stderr[-500:]
 k = json.loads(r.stdout)
 
@@ -53,18 +61,22 @@ print('chạy thật (%s giây):' % c['giay'], json.dumps(c, ensure_ascii=False)
 assert not c['loi_chay'] and k['loi_js'] == 'không', (c['loi_chay'], k['loi_js'])
 assert c['tro_nang'], 'lần chạy không ra kết quả: ' + json.dumps(k.get('log'), ensure_ascii=False)[:3000]
 assert c['tro_nang'] and c['tro_nang']['cong_cu'] == 'axe-core 4.14.0'
+# [GĐ 8] menu định tuyến bằng # (#/mau, #/mau-2, #/mau-3): phải kiểm đủ 3 mục (trước đây cả 3 bị coi «cùng đường dẫn», chỉ kiểm mục đầu)
+assert [x['man'] for x in c['tro_nang']['ds']] == ['Danh sách mẫu', 'Mẫu hai', 'Mẫu ba'], [x['man'] for x in c['tro_nang']['ds']]
 m1 = next(x for x in c['tro_nang']['ds'] if x['man'] == 'Danh sách mẫu')
 id1 = {v.split('|')[0]: v for v in m1['vi_pham']}
 assert not m1['loi'] and {'color-contrast', 'button-name', 'image-alt'} <= set(id1), m1
 assert id1['color-contrast'].endswith('|1.4.3') and id1['image-alt'].split('|')[1] == 'critical', id1
 print('đạt: axe-core 4.14.0 chạy trong lần chạy, bắt đúng 3 lỗi cố ý (tương phản 1.4.3, nút không tên, ảnh không chữ thay thế)')
 vd = {v['tab']: v for v in c['van_de']}
+# [GĐ 8] từ 97c8506 (GĐ 7) căn cứ ghi «TC của dự án <mã>» thay «TC v7»
 v1, v2 = vd['Danh sách mẫu'], vd['Mẫu hai']
 assert 'color-contrast' in v1['wcag_loi'] and 'wcag_loi: chuẩn' in v1['can_cu'], v1
-assert 'ISO' in v1['gio'] and 'gio_khong_chuan: TC v7' in v1['can_cu'], v1
-assert (v1['chu_la'] or v1['ma_enum']) and 'TC v7 — KHUNG-CHUNG.MA_CHUA_DICH' in v1['can_cu'], v1
+assert 'ISO' in v1['gio'] and 'gio_khong_chuan: đặc tả — TC của dự án KHUNG-CHUNG.THOI_DIEM' in v1['can_cu'], v1
+assert (v1['chu_la'] or v1['ma_enum']) and 'TC của dự án KHUNG-CHUNG.MA_CHUA_DICH' in v1['can_cu'], v1
 # [tầng] tiêu đề khác menu luôn «cần xác nhận» (tên khác nhưng có thể cùng nghĩa) → «Cần xem», không tính mức
-assert v2['menu'] and 'tieu_de_lech_menu: TC v7' in v2['can_cu'] and v2['muc'] == 'ghi nhận', v2
+# [GĐ 8] màn «Mẫu hai» còn lỗi WCAG chắc chắn nên MỨC của dòng theo lỗi đó; phần tiêu đề vẫn phải mang lý do «cần xác nhận»
+assert v2['menu'] and 'tieu_de_lech_menu: đặc tả — TC của dự án' in v2['can_cu'] and 'tieu_de_lech_menu' in v2['xn'] and 'có thể cùng nghĩa' in v2['xn'], v2
 print('đạt: dòng vấn đề của màn ghi lỗi WCAG (căn cứ chuẩn), giờ ISO thô, mã camelCase; tiêu đề khác menu ra «Cần xem» (ITA không chắc)')
 assert c['html'] == {'tro_nang': True, 'tuong_phan': True}, c['html']
 print('đạt: báo cáo HTML có mục «Kiểm trợ năng tự động — axe-core», tên mục WCAG tiếng Việt')

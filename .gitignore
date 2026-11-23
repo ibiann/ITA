@@ -1,0 +1,6 @@
+node_modules/
+cong-cu/__pycache__/
+kiem/__pycache__/
+
+# Kế hoạch làm việc (cục bộ, không đưa lên git): docs/plans/
+/docs/plans/

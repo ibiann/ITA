@@ -1,7 +1,9 @@
 <!doctype html><html><head><meta charset="utf-8"></head>
 <!-- Trang mẫu kiểm chặn ghi. Chạy qua kiem/test_dong_goi.py (cần máy chủ thử trên 127.0.0.1), không mở tay. -->
 <body><nav><a href="#a">Mục A</a><a href="#b">Mục B</a><a href="#c">Mục C</a></nav><main><h1>Trang mẫu</h1></main>
-<script>window.__loi = []; addEventListener('error', e => __loi.push(e.message));</script>
+<script>window.__loi = []; addEventListener('error', e => __loi.push(e.message));
+// Chrome chạy ngầm không trả lời hộp thoại: hỏi «kiểm giao diện thuần?» (không hồ sơ) sẽ treo trang → trả lời «Không»
+window.confirm = () => false;</script>
 <script src="tool.js"></script>
 <script>
 // chờ tool khởi động xong: lúc khởi động, không có lượt chạy dở thì tool nhả lá chắn (chayTiepSauTaiLai → nhaLaChan)
@@ -19,7 +21,7 @@ addEventListener('load', () => setTimeout(async () => {
   kq.gui_that = { '/api/session': await gui('/api/session'), '/api/duty-registrations/1/extend-age': await gui('/api/duty-registrations/1/extend-age') };
   LC.quyetDinh = null;
   // 3. đang chạy kiểm mà truyền công tắc mở ghi: vẫn phải chặn
-  ita.chay({ tenMienDuocChay: null, chanGhi: false, mucQuyTrinh: 3, moiTruongKiemThu: [location.hostname] });
+  ita.chay({ chanGhi: false, mucQuyTrinh: 3, moiTruongKiemThu: [location.hostname] });
   for (let i = 0; i < 60 && !LC.quyetDinh; i++) await new Promise(r => setTimeout(r, 25));
   kq.khi_chay = LC.quyetDinh ? { 'PUT /api/units/1': LC.quyetDinh('PUT', '/api/units/1'), 'POST /api/units/1/approve': LC.quyetDinh('POST', '/api/units/1/approve'), 'POST /api/search': LC.quyetDinh('POST', '/api/search') } : 'không bắt được lúc đang chạy';
   try { ita.dung(); } catch (e) {}
