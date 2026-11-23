@@ -32,6 +32,7 @@ function moBang() {
     tr.cao td{background:#fdecea}tr.tb td{background:#fff6e5}tr.row{cursor:pointer}tr.row:hover td{background:#eef5ff}
     .muted{color:#777;font-size:12px}
     .pill{display:inline-block;padding:1px 6px;border-radius:9px;font-size:11px}
+    .pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.pills .pill{cursor:pointer;font-size:12px;padding:2px 8px}
     .pill.cao{background:#c62828;color:#fff}.pill.tb{background:#e08600;color:#fff}.pill.thap{background:#777;color:#fff}
     select,input{font:inherit;padding:4px;border:1px solid #ccc;border-radius:4px}
   </style>
@@ -56,7 +57,8 @@ function moBang() {
   veThe('run');
 }
 
-function el(html) { const d = document.createElement('div'); d.innerHTML = html; return d.firstElementChild; }
+// [1.7.2] dùng <template>: trong <div>, trình duyệt vứt <tr>/<td> đứng ngoài <table> → hàng bảng kết quả chỉ còn cái nhãn rơi ra ngoài bảng
+function el(html) { const d = document.createElement('template'); d.innerHTML = html.trim(); return d.content.firstElementChild; }
 function esc(s) { return cheChuoi(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 function veThe(t) {
@@ -77,10 +79,14 @@ function veThe(t) {
       <div class="r"><label>Bộ cấu hình:
         <select id="r-hoso"><option value="chuan">chuẩn (mặc định)</option><option value="nhanh">nhanh — bề mặt mọi màn</option><option value="sau">sâu — trước bàn giao</option><option value="kiem-ke-truong">chỉ kiểm kê trường</option><option value="bao-mat">bảo mật (thêm XSS/SQL)</option></select></label>
       </div>
+      <div class="r"><label title="Chụp ngay lúc kiểm, chỉ màn lỗi mức cao / trung bình, có khung đánh dấu chỗ lỗi. Trình duyệt sẽ hỏi chia sẻ tab: chọn tab hiện tại. Không tắt chia sẻ cho tới hết lần chạy."><input type="checkbox" id="r-chup"> 📷 Chụp ảnh màn lỗi (cao / trung bình)</label></div>
+      <div class="r"><button class="g" id="r-anh" disabled title="Tải một tệp ảnh có khung đánh dấu chỗ lỗi (riêng, không nằm trong báo cáo chính). Ảnh được lưu trong trình duyệt, giữ qua tải lại trang.">📷 Tải ảnh lỗi (0)</button><button class="g" id="r-xanh" disabled title="Xoá ảnh lỗi đã lưu của tài khoản này">🗑 Xoá ảnh</button></div>
       <div class="prog" id="r-prog">Chưa chạy.</div>
       <div class="muted" id="r-note"></div>
     </div>`));
-    root.getElementById('r-chay').onclick = () => { const h = root.getElementById('r-hoso').value; ita.chay(h ? { __bo: h } : undefined); };   // [1.2] bộ áp cho lần chạy, không lưu
+    // [1.8] ô «📷»: xin quyền chia sẻ tab NGAY trong cú bấm (đồng bộ, trước mọi await), xong mới chạy; không được quyền thì vẫn chạy, không ảnh
+    const batChupNeuChon = () => root.getElementById('r-chup').checked ? ita.batChup() : Promise.resolve(true);
+    root.getElementById('r-chay').onclick = () => { const h = root.getElementById('r-hoso').value; batChupNeuChon().then(() => ita.chay(h ? { __bo: h } : undefined)); };   // [1.2] bộ áp cho lần chạy, không lưu
     root.getElementById('r-tham').onclick = async () => {   // 3.6
       const rows = await ita.thamDo(); if (!rows) return;
       let box = root.getElementById('r-thamdo'); if (!box) { box = document.createElement('div'); box.id = 'r-thamdo'; root.getElementById('r-tham').closest('div').parentElement.appendChild(box); }
@@ -88,11 +94,14 @@ function veThe(t) {
     };
     root.getElementById('r-tam').onclick = () => { if (CO.tamDung) { ita.tiep(); root.getElementById('r-tam').textContent = '⏸ Tạm dừng'; } else { ita.tamDung(); root.getElementById('r-tam').textContent = '▶ Tiếp'; } };
     root.getElementById('r-dung').onclick = () => ita.dung();
-    root.getElementById('r-loi').onclick = () => ita.chayLaiLoi();
+    root.getElementById('r-loi').onclick = () => { batChupNeuChon().then(() => ita.chayLaiLoi()); };
     root.getElementById('r-nk').onclick = () => { const ds = docNK(); taiTep('ita-nhat-ky-' + slugTK() + '-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.csv', '\ufeffgiờ,tài khoản,loại,nội dung,url\n' + ds.map(x => [x.t, x.tk, x.loai, x.nd, x.url].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(',')).join('\n'), 'text/csv'); ita.nhatKy(); };
     root.getElementById('r-nap').onclick = () => ita.nap();
     root.getElementById('r-napthu').onclick = () => ita.napThuMuc();
-    root.getElementById('r-dau').onclick = () => { const h = root.getElementById('r-hoso').value; ita.chayLaiTuDau(h ? { __bo: h } : undefined); };
+    root.getElementById('r-dau').onclick = () => { const h = root.getElementById('r-hoso').value; (root.getElementById('r-chup').checked ? ita.batChup(undefined, true) : Promise.resolve(true)).then(() => ita.chayLaiTuDau(h ? { __bo: h } : undefined)); };   // [1.8] chạy lại từ đầu: bỏ ảnh đã lưu
+    root.getElementById('r-anh').onclick = () => ita.taiAnhLoi();
+    root.getElementById('r-xanh').onclick = () => { const d = demAnh(); if (window.confirm('Xoá ' + d.n + ' ảnh lỗi đã lưu của tài khoản này?')) ita.xoaAnhLoi(); };
+    capNhatNutAnh();
     root.getElementById('r-tay').onclick = async () => { const n = root.getElementById('r-note'); n.textContent = 'Đang quét màn này…'; const ds = await ita.quetManNay(); n.textContent = 'Quét tay: ' + (ds ? ds.length : 0) + ' trường. Gom được ' + docTay().length + ' trường. Xuất: ita.xuat("truong-tay")'; };
     // gợi ý tiếp tục nếu có điểm dừng
     TK = taiKhoan();
@@ -134,11 +143,14 @@ function veThe(t) {
       </div>
       <div class="r">
         <button class="g" id="x-json">JSON</button><button class="g" id="x-csv">CSV</button><button class="g" id="x-html">HTML</button><button class="g" id="x-mau">Mẫu lỗi (CSV)</button><button class="b" id="x-truong">Danh mục trường (CSV)</button>
-      </div></div>`);
+      </div>
+      <div class="r"><button class="g" id="x-gon" title="Đổi giữa bảng đầy đủ và chỉ dải trạng thái (rê chuột lên nhãn để thấy tên màn, bấm để mở màn)"></button></div></div>`);
+    let gon = true;   // [1.7.2] true (mặc định) = chỉ dải trạng thái; bấm nút để mở rộng thành bảng
     body.appendChild(head);
     const wrap = el('<div id="res-tbl"></div>'); body.appendChild(wrap);
     const render = () => {
       const f = root.getElementById('f-muc').value;
+      const nx = root.getElementById('x-gon'); nx.textContent = gon ? '▤ Mở rộng bảng' : '▭ Gọn: chỉ trạng thái'; nx.disabled = f.startsWith('__');
       if (f === '__mau' || f === '__ds') {   // 3.6
         if (f === '__ds') { wrap.innerHTML = htmlThietKe(kq) || '<div class="muted">Không có dữ liệu (bản chạy cũ hoặc đã tắt).</div>'; return; }
         const ml = kq.mau_loi || []; wrap.innerHTML = ml.length ? '' : '<div class="muted">Không có mục khớp.</div>'; if (!ml.length) return;
@@ -159,6 +171,11 @@ function veThe(t) {
       const rows = (kq.van_de || []).filter(r => !f || r.ket_luan === f);
       wrap.innerHTML = rows.length ? '' : '<div class="muted">Không có mục khớp.</div>';
       if (!rows.length) return;
+      if (gon) {
+        const dai = el('<div class="pills"></div>');
+        rows.forEach(r => { const sp = el(`<span class="pill ${r.ket_luan === 'Sai' ? 'cao' : r.ket_luan === 'Lệch chuẩn' ? 'tb' : 'thap'}" title="${esc(r.tab)}">${esc(r.ket_luan || r.muc_do)}</span>`); sp.onclick = () => ita.moMan(r.url, r.tab); dai.appendChild(sp); });
+        wrap.appendChild(dai); return;
+      }
       const tb = el('<table><thead><tr><th>Màn</th><th>Kết luận</th><th>Vấn đề</th></tr></thead><tbody></tbody></table>');
       const body2 = tb.querySelector('tbody');
       rows.forEach(r => {
@@ -175,6 +192,7 @@ function veThe(t) {
       wrap.appendChild(tb);
     };
     root.getElementById('f-muc').onchange = render;
+    root.getElementById('x-gon').onclick = () => { gon = !gon; render(); };
     root.getElementById('x-json').onclick = () => ita.xuat('json');
     root.getElementById('x-csv').onclick = () => ita.xuat('csv');
     root.getElementById('x-html').onclick = () => ita.xuat('html');
@@ -188,6 +206,7 @@ function capNhatBang() {
   if (!root) return;
   const p = root.getElementById('r-prog'); if (p) p.textContent = CO.dangChay ? ('Đang: ' + CO.tienDo) : (CO.tienDo || 'Xong.');
   const onRes = root.querySelector('.tabs button[data-t=res].on'); if (onRes) veThe('res');
+  capNhatNutAnh();   // [1.8]
 }
 
 // In đối tượng JS có kèm /regex/ cho dễ đọc

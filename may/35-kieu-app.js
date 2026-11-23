@@ -11,6 +11,11 @@
  * ============================================================= */
 const kieuApp = () => DU_AN.kieu_app || '';
 
+// [1.7.2] openslides: phạm vi cuộc họp = «/<số>» đầu đường dẫn lúc bắt đầu chạy ('' = đang ở ngoài cuộc họp, hoặc app khác).
+// Menu cuộc họp của tài khoản quản trị tổ chức có thêm mục dẫn RA NGOÀI cuộc họp (vd «Bảng điều hành» → /): bấm vào là mất menu cuộc họp.
+const phamViCuocHop = () => kieuApp() === 'openslides' ? ((location.pathname.match(/^\/\d+(?=\/|$)/) || [])[0] || '') : '';
+const trongPhamVi = (pv, href) => { try { const p = new URL(href, location.href).pathname; return p === pv || p.startsWith(pv + '/'); } catch (e) { return true; } };
+
 async function docQuyenOpenSlides() {
   const r = await fetch('/system/auth/who-am-i/', { method: 'POST', credentials: 'include' });
   const tok = r.headers.get('authentication');

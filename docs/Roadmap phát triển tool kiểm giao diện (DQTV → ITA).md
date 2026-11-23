@@ -202,7 +202,7 @@ Lần chạy cả bộ đầu tiên của bản 1.7, `test_buoc16` trượt vì 
 
 **Còn lại để đóng GĐ 8**
 
-- Đưa 3.26 gốc (`dqtv-kiem-tra-dacta-3.26.js`, không phải 3.26.6) vào `dist/goc/` → chạy `test_dong_goi`, tính lại `SO_B14` … `SO_B17`. Tệp không có trong repo lẫn lịch sử git.
+- ~~Đưa 3.26 gốc (`dqtv-kiem-tra-dacta-3.26.js`, không phải 3.26.6) vào `dist/goc/` → chạy `test_dong_goi`, tính lại `SO_B14` … `SO_B17`.~~ **Xong 19/11:** tệp lấy từ `~/Downloads/base-script-scrap/`, đã chép vào `dist/goc/`. `test_dong_goi` 8/8 đạt. Bước 14–17 gộp một hằng `SO_B14_17 = 838` vì chưa commit từng bước nên không tách được; `test_dong_goi` cũng không còn treo ở hộp thoại «kiểm giao diện thuần?» (trang mẫu `thu_chan_ghi.html` trả lời «Không»).
 - Ghi lý do bỏ 3.23, 3.30, 3.31, 3.31.1, ITA 5.0: `PLAN.md` chỉ ghi «Không dùng», không ghi vì sao (quy tắc 5). Cần người quyết định ghi.
 - Ma trận năng lực còn thiếu 4 cột: bản 3, v4, 3.6, dacta 3.23 (không có tệp).
 - Test 8, 9 cần mã nguồn `dqtv-app` (`~/dqtv/dqtv-app`) để sinh giới hạn ô và trạng thái quy trình; máy sạch không có.

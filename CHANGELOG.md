@@ -5,9 +5,28 @@ số chính chỉ tăng khi qua cổng (2.0 = an toàn trên app lạ, 3.0 = dù
 Số bản trong mã (`PHIEN_BAN`, `may/20-cau-hinh.js`), số trong CHANGELOG và số trên gói phát hành phải là **một**.
 Chi tiết từng bước: `PLAN.md`. Lịch sử trước ITA (bản 3 của PM → 3.26.6): roadmap, GĐ 1–5.
 
+## [1.8] — 20/11/2026 · đưa lại chụp ảnh màn lỗi cho bản DQTV
+
+Không thêm phép kiểm mới. Chụp ảnh màn lỗi (bước 19, bản 1.5 / 1.5b) vốn chỉ có ở bản DQTV riêng («dqtv-script (only)», `dqtv-kiem-thu-1.7.js` = lõi ITA 1.4 + mô-đun chụp ảnh); ITA 1.7.x chưa từng có. Nay ghép vào lõi ITA 1.7.2 để một tệp có cả hai. Mô-đun chép **nguyên văn** từ `dqtv-kiem-thu-1.7.js` (1.5b), không kèm phần đo bố cục 1.7 của bản riêng (đó là phép kiểm mới, chờ qua cổng).
+
+- Tệp mới `may/45-chup-anh.js`: ô «📷 Chụp ảnh màn lỗi (cao / trung bình)» trên tab Chạy; chia sẻ tab (xin ngay trong cú bấm); ảnh có khung vàng viền đen và số đánh dấu chỗ lỗi WCAG / dữ liệu nhạy cảm / bảng vượt tổng; ẩn bảng công cụ và chờ khung hình mới trước khi chụp (không lộ bảng); trần 30 ảnh; ảnh lưu IndexedDB `ita-anh` theo tên miền + tài khoản, sống qua tải lại trang; nút «📷 Tải ảnh lỗi (N)» và «🗑 Xoá ảnh»; `ita.batChup()`, `ita.taiAnhLoi()`, `ita.xoaAnhLoi()`. «Chạy lại từ đầu» bỏ ảnh cũ.
+- `may/30-loi-kiem.js`: khối «Phân loại mức độ» (`CAO/TB/THAP`, `mucDo`, `mucCua`, `CHECK`…) dời **nguyên văn** lên trước hàm `audit` để chụp ảnh hỏi được mức ngay tại màn; axe giữ tạm phần tử vi phạm khi đang chụp; `audit` gọi chụp sau khi ghi dòng màn. Không đổi mức, không đổi bản ghi.
+- `may/40-bang-dieu-khien.js`, `may/60-bao-cao.js`, `may/00-mo-dau.js`: ô tick, hai nút, nối vào Chạy / Chạy lại mục lỗi / Chạy lại từ đầu, tắt chia sẻ và lưu ảnh khi hết lần chạy.
+- Kiểm: `kiem/test_chup_anh.py` chụp thật trong Chrome ngầm (`--auto-accept-this-tab-capture`): màn lỗi API có 1 ảnh PNG, màn sạch không có, ảnh không lộ bảng công cụ. `kiem/test_dong_goi.py`: tệp mới `45-chup-anh.js`, hằng `SO_18 = 53`. 21 test còn lại (trừ `test_buoc8`, `test_buoc9`) đạt như 1.7.2.
+
+## [1.7.2] — 19/11/2026 · GĐ 9 · tài khoản quản trị đứng trong cuộc họp không còn bị đưa ra ngoài
+
+Nguồn: báo cáo `ita-administrator-2026-11-19-09-19` (admin PMS, dán ở `/87`): «1 màn đã kiểm», 13 mục menu cuộc họp «chưa kiểm được», cả lần chạy 13 giây. Chỉ sửa lỗi của ITA. Kế hoạch: `docs/plans/P002-admin-trong-cuoc-hop/plan.md`.
+
+- Menu cuộc họp của tài khoản quản trị tổ chức có thêm mục «Bảng điều hành» dẫn ra trang tổ chức `/`. ITA bấm mục đó, rời cuộc họp, menu cuộc họp mất, 13 mục còn lại không mở được. Nay (kiểu app `openslides`, bắt đầu ở `/<số>/…`): mục dẫn ra ngoài cuộc họp **không bấm**, ghi ở «Không bấm / bỏ qua» kèm lý do. Các mục trong cuộc họp được kiểm đủ.
+- Lỡ rời trang bất kỳ cách nào (nút trong màn, link ngoài menu) thì mất menu. Nay ITA quay về trang bắt đầu, chờ menu dựng lại, tìm mục theo đường dẫn + chữ (app dựng lại menu thì mất dấu ITA gắn). Áp dụng cho mọi app, không riêng openslides. Trước đó: không thấy mục là bỏ luôn, mọi mục sau cũng «không mở được».
+- «Mục menu chưa kiểm được» kèm lý do (trang đang ở đâu, đã thử quay về đâu). Quá nửa số mục menu không mở được thì dòng đầu báo cáo thêm dòng đỏ «CHỈ KIỂM ĐƯỢC x/y MỤC MENU».
+- Chưa làm: tự vào cuộc họp mẫu khi bắt đầu ở trang tổ chức (`cuoc_hop_mau` trong hồ sơ vẫn chưa được công cụ dùng); dòng «Máy chủ» của superadmin ghi «nhóm Mặc định (6 quyền)» trong khi quyền thật là tối đa.
+- Kiểm: `kiem/test_cuoc_hop_openslides.py` (trang giả `/87/` openslides, `/88/` app thường; chạy trên 1.7.1 thì thất bại đúng như báo cáo PMS: chỉ kiểm được «Bảng điều hành», 3 mục kia «không mở được»).
+
 ## [1.7.1] — 19/11/2026 · GĐ 8–9 · sửa lỗi báo cáo thấy ở lần chạy PMS 18/11
 
-Nguồn: 4 báo cáo PMS chạy bằng 1.7 (Thư ký, Chủ tọa, Đại biểu, Không nhóm). Chỉ sửa lỗi của ITA — không thêm phép kiểm, không bỏ chức năng (roadmap quy tắc 4). Kế hoạch: `docs/superpowers/plans/2026-11-19-sua-loi-bao-cao-pms.md`. Test mới `kiem/test_bao_cao_ro.py` + `kiem/thu_bao_cao_ro.html` (đỏ trên 1.7, đạt trên 1.7.1). Soát cuối bởi người soát độc lập: thêm 4 sửa (gom mã trước khi cắt, dòng console, nhật ký cảnh báo một lần, tệp trùng giữ bản sau cùng).
+Nguồn: 4 báo cáo PMS chạy bằng 1.7 (Thư ký, Chủ tọa, Đại biểu, Không nhóm). Chỉ sửa lỗi của ITA — không thêm phép kiểm, không bỏ chức năng (roadmap quy tắc 4). Kế hoạch: `docs/plans/P001-sua-loi-bao-cao-pms/plan.md`. Test mới `kiem/test_bao_cao_ro.py` + `kiem/thu_bao_cao_ro.html` (đỏ trên 1.7, đạt trên 1.7.1). Soát cuối bởi người soát độc lập: thêm 4 sửa (gom mã trước khi cắt, dòng console, nhật ký cảnh báo một lần, tệp trùng giữ bản sau cùng).
 
 **Báo cáo làm người đọc hiểu sai**
 - Đường dẫn API lỗi bị cắt ở 60 ký tự → `…/meetings/267f8972-…-98be928` mất đuôi mã, bản tổng hợp kết luận nhầm «ID lạ, hard-code sai». Nay giữ đường dẫn gốc tới 400 ký tự; mẫu lỗi gom mã UUID / số về `:id` **trước** rồi mới rút còn 200 ký tự (cắt trước thì mã bị cắt dở, mỗi lệnh thành một mẫu). API chậm trước cắt ở 50 ký tự — cùng lỗi, sửa cùng cách.

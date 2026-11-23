@@ -60,8 +60,14 @@ for x in khac:
 # bước 13b: SO_B13B dòng (hồ sơ nạp được: hàm apHoSo 8 dòng ở 20-cau-hinh.js, apHoSoDoiChieu ở 50-doi-chieu-dac-ta.js, chặn ita.chay khi chưa có hồ sơ ở 60-bao-cao.js)
 # bước 13c–13e: SO_B13CDE dòng (kiểu app: ghiBuocMay chỉ rest-buoc, đọc quyền openslides đầu lần chạy, ô tên tài khoản theo hồ sơ; quy cách dự án thay ngưỡng chuanDS + giá trị ngoài quy cách) + tệp mới 35-kieu-app.js
 SO_B4, SO_B5, SO_B6, SO_B8, SO_B9, SO_B10, SO_B11, SO_B12, SO_B13A, SO_B13B, SO_B13CDE = 18, 77, 8, 121, 9, 129, 167, 5, 5, 10, 10
-assert moi == ['35-kieu-app.js', '70-nap.js'], 'tệp mới trong may/: %s' % moi   # 13c: 35-kieu-app.js
-assert len(khac) == 33 + SO_B4 + SO_B5 + SO_B6 + SO_B8 + SO_B9 + SO_B10 + SO_B11 + SO_B12 + SO_B13A + SO_B13B + SO_B13CDE, 'số dòng đổi so với 3.26 là %d' % len(khac)
+# [GĐ 8] bước 14–17 gộp một hằng: làm 10–17/11 chưa commit từng bước nên không tách được số dòng theo bước. 838 = đọc từ tệp hiện tại (3.26 gốc dist/goc/ vs may/); đổi khi sửa may/ có chủ ý.
+SO_B14_17 = 838
+# [1.7.2] admin ở /87 không rời cuộc họp: bỏ mục menu dẫn ra ngoài, quay về tìm lại mục, báo cáo ghi lý do (35-kieu-app.js 5 dòng, 30-loi-kiem.js 14, 60-bao-cao.js 1 dòng; đo từ test: 1446 − 1430)
+SO_172 = 16
+# [1.8] đưa lại chụp ảnh màn lỗi (mô-đun 1.5 / 1.5b của bản DQTV riêng, tệp mới 45-chup-anh.js): dòng móc vào 00-mo-dau, 30-loi-kiem, 40-bang-dieu-khien, 60-bao-cao; số đo từ test
+SO_18 = 53
+assert moi == ['35-kieu-app.js', '45-chup-anh.js', '70-nap.js'], 'tệp mới trong may/: %s' % moi   # 13c: 35-kieu-app.js; [1.8] 45-chup-anh.js
+assert len(khac) == 33 + SO_B4 + SO_B5 + SO_B6 + SO_B8 + SO_B9 + SO_B10 + SO_B11 + SO_B12 + SO_B13A + SO_B13B + SO_B13CDE + SO_B14_17 + SO_172 + SO_18,'số dòng đổi so với 3.26 là %d' % len(khac)
 print('đạt: may/ khác 3.26 %d dòng đã định, thêm tệp mới %s' % (len(khac), ', '.join(moi)))
 
 # 6. dòng mã (không tính chú thích) trong may/ không còn chữ riêng DQTV
