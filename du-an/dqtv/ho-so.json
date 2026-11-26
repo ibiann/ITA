@@ -15,7 +15,9 @@
     "/api/session",
     "/api/search"
   ],
+  "kiem_luu": true,
   "_nguon": {
+    "kiem_luu": "26/11 (P004): bật các phép kiểm form sửa / lưu, và ghi nội dung (đã che) của lệnh ghi bị chặn. Hồ sơ không có khoá này thì tool chạy như cũ. Căn cứ: nhận định PM 26/11 đã lọc theo mã dqtv-app 6479efe9",
     "ten_mien": "3.26, cấu hình tenMienDuocChay",
     "goc_duong_dan": "3.26, 30-loi-kiem: bỏ tiền tố /dqtv khỏi tên màn",
     "man_viec_chung": "3.26, 50-doi-chieu-dac-ta; đường dẫn có trong mã app core/platform/server/mount.mjs. Màn mọi vai đều thấy, không dùng làm màn của quy trình khi xét quyền xem",

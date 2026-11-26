@@ -129,6 +129,21 @@ function cheChuoi(s) {
   return t;
 }
 
+// [P004 M0] nội dung lệnh ghi bị chặn đưa vào báo cáo: giữ tên trường, che MỌI giá trị chữ (CCCD, điện thoại, tên người, mật khẩu đều là chữ);
+// số / đúng sai / rỗng giữ nguyên. Không phải JSON thì che cả chuỗi. Tối đa 2 KB.
+function cheNoiDungLenh(body) {
+  let s;
+  if (body == null) return '';
+  if (typeof body === 'string') s = body;
+  else if (typeof URLSearchParams !== 'undefined' && body instanceof URLSearchParams) s = body.toString();
+  else if (typeof FormData !== 'undefined' && body instanceof FormData) return '[form-data: ' + [...new Set([...body.keys()])].join(', ') + ']';
+  else return '[nhị phân ' + (body.size || body.byteLength || '?') + ' byte]';
+  let j; try { j = JSON.parse(s); } catch (e) { return cheMot(s).slice(0, 2048); }
+  const che = v => Array.isArray(v) ? v.map(che) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, che(x)]))
+    : typeof v === 'string' ? (v === '' ? '' : cheMot(v)) : v;
+  return JSON.stringify(che(j)).slice(0, 2048);
+}
+
 // [1.7.1] ba luật nhỏ dùng chung, để ở mức tệp cho test gọi thẳng được
 // cảnh báo của chính trình duyệt, không phải lỗi app (so CẢ câu: lỗi thật có chữ ResizeObserver ở giữa vẫn là lỗi)
 const LOI_TRINH_DUYET_VO_HAI = /^(JS: )?ResizeObserver loop (completed with undelivered notifications|limit exceeded)\.?$/i;
