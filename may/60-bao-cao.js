@@ -55,13 +55,33 @@ function htmlTroNang(kq) {
       + hang.map(x => '<tr class="' + (x.muc === 'critical' || x.muc === 'serious' ? 'tb' : '') + '"><td>' + esc(x.id) + '</td><td>' + esc(MUC_AXE_VN[x.muc] || x.muc) + '</td><td>' + esc(x.sc.map(s => s + (TEN_SC[s] ? ' ' + TEN_SC[s] : '')).join('; ')) + '</td><td>' + esc(x.help) + '</td><td>' + x.man.length + '</td><td>' + x.so + '</td><td>' + esc(x.man.slice(0, 2).join(' | ')) + '</td></tr>').join('') + '</tbody></table>' : '');
 }
 // [tầng] chữ kết luận + mức (chỉ «Sai» / «Lệch chuẩn» có mức)
-const klHien = r => '<b>' + esc(r.ket_luan || (r.muc_do === 'ghi nhận' ? 'Cần xem' : 'Sai')) + '</b>';
+const klCuaDong = r => r.ket_luan || (r.muc_do === 'ghi nhận' ? 'Cần xem' : 'Sai');
+const klHien = r => '<b>' + esc(klCuaDong(r)) + '</b>';
+// [1.9] chỉ «Sai» / «Lệch chuẩn» là lỗi phải sửa; «Không thống nhất» / «Cần xem» là gợi ý, gập lại bên dưới
+const laLoiThat = r => ['Sai', 'Lệch chuẩn'].includes(klCuaDong(r));
+const gap = (tieuDe, noiDung) => noiDung ? '<details style="margin-top:12px"><summary>' + tieuDe + '</summary>' + noiDung + '</details>' : '';
+// [1.9] tên đọc được của từng loại lỗi (mã nội bộ giữ nguyên trong dữ liệu)
+const TEN_LOI = { api_loi: 'Máy chủ trả lỗi', js_loi: 'Trang báo lỗi JavaScript', du_lieu_nhay_cam: 'Lộ thông tin hạ tầng / mật khẩu', rong_nhung_api_loi: 'API lỗi nhưng màn hiện «trống»',
+  so_dong_vuot_tong: 'Số dòng vượt tổng', quy_trinh_loi: 'Sai quy trình / phân quyền', gia_loi_doc: 'Mất mạng mà màn không báo lỗi', chu_la: 'Chữ lạ trên màn', phan_tram_vo_ly: 'Phần trăm vô lý',
+  van_dang_tai: '«Đang tải» bị treo', tran_ngang: 'Tràn ngang', tieu_de_bi_cat: 'Tiêu đề bị cắt', o_khong_nhan: 'Ô nhập không có nhãn', truong_loi: 'Trường có lỗi', wcag_loi: 'Trợ năng (WCAG)',
+  gio_khong_chuan: 'Ngày giờ không chuẩn', ma_enum_lo: 'Lộ mã trạng thái', cat_chu_khong_tooltip: 'Chữ cắt «…» không xem được đủ', chuoi_dai_khong_ngat: 'Chuỗi dài không ngắt dòng',
+  dinh_dang_ngay_tron: 'Nhiều kiểu ngày', dinh_dang_so_tron: 'Nhiều kiểu số', tieu_de_lech_menu: 'Tiêu đề lệch tên menu', nut_chinh_nhieu: 'Nhiều nút chính trên một màn',
+  chan_ghi: 'Màn tự gửi lệnh ghi', nghi_ngo_so_lech: 'Số trên màn lệch dữ liệu', o_nhap: 'Ô tìm kiếm / lọc', api_cham: 'API chậm' };
+const tenLoi = k => TEN_LOI[k] || k;
+// [1.9] khối đầu báo cáo: tối đa 10 việc, mỗi việc là một mẫu lỗi (một lỗi thành phần ở nhiều màn = một việc), xếp theo mức rồi số màn
+function htmlViecCanSua(kq) {
+  const mau = kq.mau_loi || [], that = mau.filter(laLoiThat), phu = mau.length - that.length, top = that.slice(0, 10);
+  const dau = '<h2 style="font-size:17px;margin-top:20px">Việc cần sửa (' + that.length + ')</h2>';
+  const cuoi = '<p class=m>' + (that.length > top.length ? 'Còn ' + (that.length - top.length) + ' việc nữa ở mục «Mẫu lỗi» bên dưới. ' : '') + (phu ? phu + ' gợi ý «Cần xem» / «Không thống nhất» (công cụ không chắc hoặc ngưỡng tự đặt) đã gập ở cuối, không tính là lỗi.' : '') + '</p>';
+  if (!top.length) return dau + '<p>Không có lỗi có căn cứ chắc chắn ở các màn đã kiểm.</p>' + cuoi;
+  return dau + '<table><thead><tr><th>#</th><th>Kết luận</th><th>Lỗi</th><th>Số màn</th><th>Ví dụ màn</th></tr></thead><tbody>' + top.map((m, i) => '<tr class="' + (m.muc_do === 'cao' ? 'cao' : m.muc_do === 'trung bình' ? 'tb' : '') + '"><td>' + (i + 1) + '</td><td>' + klHien(m) + (m.muc_do && m.muc_do !== 'ghi nhận' ? '<div class=m>' + esc(m.muc_do) + '</div>' : '') + '</td><td><b>' + esc(tenLoi(m.loai)) + '</b>' + (m.chi_tiet ? ' — ' + esc(m.chi_tiet) : '') + '<div class=m>' + esc(m.nguyen_tac || '') + '</div></td><td>' + esc(m.so_man) + '</td><td>' + esc((m.ds_man || m.vi_du_man || []).slice(0, 3).join(' · ')) + '</td></tr>').join('') + '</tbody></table>' + cuoi;
+}
 function sangHTML(kq) {
   const rows = kq.van_de || [];
   const ds = kq.danh_muc_truong || [];
   const trT = ds.map(f => `<tr class="${f.loi ? 'tb' : ''}">${COT_TRUONG.map(c => `<td>${esc(f[c[0]])}</td>`).join('')}</tr>`).join('');
   const trThieu = (kq.thieu_truong_so_voi_mong_doi || []).map(x => `<tr class="cao"><td>${esc(x.man)}</td><td>${esc(x.truong)}</td></tr>`).join('');
-  const tr = rows.map(r => `<tr class="${r.muc_do === 'cao' ? 'cao' : r.muc_do === 'trung bình' ? 'tb' : ''}"><td>${esc(r.tab)}</td><td>${klHien(r)}</td><td>${esc(r.url)}</td><td>${esc(r.can_cu || '')}</td><td>${esc([
+  const dongMan = rs => rs.map(r => `<tr class="${r.muc_do === 'cao' ? 'cao' : r.muc_do === 'trung bình' ? 'tb' : ''}"><td>${esc(r.tab)}</td><td>${klHien(r)}</td><td>${esc(r.url)}</td><td>${esc(r.can_cu || '')}</td><td>${esc([
     r.du_lieu_nhay_cam && 'Dữ liệu nhạy cảm hiện trên màn: ' + r.du_lieu_nhay_cam,
     r.api_loi && 'API lỗi: ' + r.api_loi, r.js_loi && 'JS lỗi: ' + r.js_loi, r.quy_trinh_loi && 'Quy trình: ' + r.quy_trinh_loi,
     r.rong_nhung_api_loi, r.cat_chu_khong_goi_y && 'Chữ bị cắt «…» không có gợi ý: ' + r.cat_chu_khong_goi_y, r.so_dong_vuot_tong && 'Số dòng vượt tổng: ' + r.so_dong_vuot_tong,
@@ -73,6 +93,12 @@ function sangHTML(kq) {
     r.chuoi_dai_khong_ngat && 'Chuỗi dài không ngắt: ' + r.chuoi_dai_khong_ngat, r.dinh_dang_ngay_tron && 'Ngày trộn: ' + r.dinh_dang_ngay_tron, r.dinh_dang_so_tron && 'Số trộn: ' + r.dinh_dang_so_tron,
     r.gia_loi_doc && 'Khi tải dữ liệu thất bại: ' + r.gia_loi_doc, r.tieu_de_lech_menu && 'Tiêu đề lệch menu: ' + r.tieu_de_lech_menu, r.nut_chinh_nhieu && 'Nhiều nút chính: ' + r.nut_chinh_nhieu, r.can_xac_nhan && 'Cần xác nhận: ' + r.can_xac_nhan,
   ].filter(Boolean).join(' | '))}</td></tr>`).join('');
+  const bangMan = rs => `<table><thead><tr><th>Màn</th><th>Kết luận</th><th>URL</th><th>Căn cứ</th><th>Vấn đề</th></tr></thead><tbody>${dongMan(rs)}</tbody></table>`;
+  const manThat = rows.filter(laLoiThat), manPhu = rows.filter(r => !laLoiThat(r));
+  const dongMau = ms => ms.map(m => `<tr class="${m.muc_do === 'cao' ? 'cao' : m.muc_do === 'trung bình' ? 'tb' : ''}"><td>${klHien(m)}</td><td><b>${esc(tenLoi(m.loai))}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class=m>${esc(m.nguyen_tac)}${m.can_cu ? ' · căn cứ: ' + esc(m.can_cu) : ''}${m.can_xac_nhan ? ' · cần xem vì: ' + esc(m.can_xac_nhan) : ''}${(m.cung || []).length ? ' · cùng chỗ này cũng trúng: ' + esc(m.cung.map(tenLoi).join(', ')) : ''}</div></td><td>${esc(m.so_man)}</td><td>${dsMan(m.ds_man || m.vi_du_man, m.so_man)}</td></tr>`).join('');
+  const bangMau = ms => `<table><thead><tr><th>Kết luận</th><th>Mẫu lỗi · nguyên tắc</th><th>Số màn</th><th>Ở màn</th></tr></thead><tbody>${dongMau(ms)}</tbody></table>`;
+  const mauThat = (kq.mau_loi || []).filter(laLoiThat), mauPhu = (kq.mau_loi || []).filter(m => !laLoiThat(m));
+  const tk = htmlThietKe(kq), tkSai = ((kq.he_thong_thiet_ke || {}).vuot_quy_cach || []).length;   // lệch quy cách dự án → mở; chỉ vượt ngưỡng công cụ → gập
   return `<!doctype html><meta charset=utf-8><title>ITA kết quả kiểm</title>
 <style>body{font:14px system-ui;margin:24px;color:#1a1a1a}h1{font-size:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}tr.cao td{background:#fdecea}tr.tb td{background:#fff6e5}.m{color:#666}</style>
 <h1>ITA — kết quả kiểm giao diện</h1>
@@ -80,6 +106,7 @@ ${kq.nguon_menu && !/^menu trái$/.test(kq.nguon_menu) ? '<p style="color:#8a4b0
 ${kq.giao_dien_thuan ? '<p style="color:#8a4b00"><b>Chế độ kiểm giao diện thuần</b> (hồ sơ tạm, chưa có hồ sơ dự án): mọi lệnh POST bị chặn; không bấm nút nghiệp vụ (chỉ mở form thêm / sửa / xem); phần quy trình / UC / TC không có căn cứ nên ghi «Chưa kiểm».</p>' : ''}
 <p><b>Tài khoản:</b> ${esc(kq.tai_khoan || '')}${kq.quyen_may_chu ? ' · <b>Máy chủ:</b> <span title="' + esc(((kq.quyen_may_chu.nhom || []).flatMap(n => n.quyen)).join(', ')) + '">' + esc(moTaQuyen(kq.quyen_may_chu)) + '</span>' : ''}${kq.dung_giua_chung ? ' · <b style="color:#c62828">LẦN CHẠY BỊ DỪNG GIỮA CHỪNG — kết quả chưa đủ</b>' : ''}</p>${(kq.muc_mat_ket_qua || []).length ? '<p style="color:#c62828"><b>MẤT KẾT QUẢ KHI TRANG TẢI LẠI — ' + kq.muc_mat_ket_qua.length + ' mục menu đã chạy nhưng không đọc lại được kết quả, màn và TC của các mục này không có trong báo cáo:</b> ' + kq.muc_mat_ket_qua.map(esc).join(' · ') + '</p>' : ''}${kq.dung_giua_chung ? `<p style="color:#c62828"><b>Lý do dừng:</b> ${esc(kq.ly_do_dung || '')}${(kq.menu_chua_chay || []).length ? '<br><b>Mục menu chưa chạy (' + kq.menu_chua_chay.length + '):</b> ' + kq.menu_chua_chay.map(esc).join(' · ') : ''}</p>` : ''}
 ${(kq.menu_khong_mo_duoc || []).length * 2 > (kq.so_muc_menu || 0) && (kq.so_muc_menu || 0) >= 3 ? '<p style="color:#c62828"><b>CHỈ KIỂM ĐƯỢC ' + Math.max(0, kq.so_muc_menu - kq.menu_khong_mo_duoc.length) + '/' + kq.so_muc_menu + ' MỤC MENU — ' + kq.menu_khong_mo_duoc.length + ' mục không mở được (lý do ở mục «Mục menu chưa kiểm được» bên dưới). Kết quả chưa đủ để kết luận về cả app.</b></p>' : ''}
+${htmlViecCanSua(kq)}
 ${kq.cau_hinh ? '<p class=m><b>Cấu hình:</b> bộ «' + esc(kq.cau_hinh.bo) + '»' + (kq.cau_hinh.khac_mac_dinh.length ? '; khác mặc định: ' + kq.cau_hinh.khac_mac_dinh.map(x => esc(x.khoa) + ' = ' + esc(x.gia_tri) + ' (' + esc(x.nguon) + ')').join('; ') : '; còn lại theo mặc định') + (kq.cau_hinh.da_luu.length ? '. <b>Có cấu hình đã lưu từ trước</b> (ita.dat): ' + kq.cau_hinh.da_luu.map(esc).join(', ') + ' — xoá bằng ita.datLai()' : '') + '</p>' : ''}
 <p class=m>Công cụ bản ${esc(kq.phien_ban || '≤3.10')} · nạp bằng ${esc(kq.cach_nap || '?')} · cửa sổ ${esc(kq.cua_so || '?')}${kq.ngung_bam_do_di_vong ? ' · <b style="color:#c62828">có phần chạy ở chế độ ngừng bấm nút nghiệp vụ (bản dán Console gặp yêu cầu mạng đi vòng bộ chặn) — form chưa kiểm đủ (xem mục «Yêu cầu mạng không đi qua bộ chặn» bên dưới)</b>' : ''}</p>
 <p class=m>${esc(kq.url)} · ${esc(kq.luc)} · ${kq.so_man_da_kiem} màn đã kiểm · ${kq.man_co_van_de} màn có vấn đề${kq.dem_ket_luan ? ' · mẫu lỗi: ' + Object.entries(kq.dem_ket_luan).map(([k, n]) => esc(k) + ' ' + n).join(', ') : ''} · ${kq.o_nhap_co_loi} lỗi ô nhập · ${kq.doi_chieu_dac_ta ? 'đối chiếu đặc tả: ' + esc(gonMaDT(kq.doi_chieu_dac_ta.quy_trinh.map(q => q.ma))) : 'mức quy trình ' + kq.muc_quy_trinh + (kq.co_dac_ta ? ' (có đặc tả)' : ' (chưa nạp đặc tả)')}</p>
@@ -87,10 +114,16 @@ ${kq.cau_hinh ? '<p class=m><b>Cấu hình:</b> bộ «' + esc(kq.cau_hinh.bo) +
 ${(kq.du_lieu_du_an || []).length ? '<h2 style="font-size:16px;margin-top:28px">Dữ liệu dự án — ' + kq.du_lieu_du_an.filter(x => x.co).length + '/' + kq.du_lieu_du_an.length + ' loại có</h2><table><thead><tr><th>Loại</th><th>Có</th><th>Chi tiết</th><th>Nguồn</th><th>Dùng cho</th></tr></thead><tbody>' + kq.du_lieu_du_an.map(x => '<tr class="' + (x.co ? '' : 'tb') + '"><td>' + esc(x.muc) + '</td><td>' + (x.co ? 'có' : 'KHÔNG') + '</td><td>' + esc(x.chi_tiet) + '</td><td>' + esc(x.nguon) + '</td><td>' + esc(x.dung_cho) + '</td></tr>').join('') + '</tbody></table>' + ((kq.tep_khong_nap_duoc || []).length ? '<p class=m><b>Tệp không nạp được ở lần nạp gần nhất (' + kq.tep_khong_nap_duoc.length + '):</b> ' + kq.tep_khong_nap_duoc.map(x => esc(x.tep) + ' — ' + esc(x.ly_do)).join('; ') + '</p>' : '') : ''}
 ${htmlDacTa(kq)}
 <p class=m><b>Kết luận</b> theo căn cứ: <b>Sai</b> = sự việc (máy chủ, trang báo lỗi…), chuẩn công khai (WCAG, ghi điều khoản) hoặc đặc tả / quy cách của dự án · <b>Lệch chuẩn</b> = trái điều các hệ thiết kế lớn cùng làm, dự án chưa định (mức thấp) · <b>Không thống nhất</b> = khác số đông trong chính app · <b>Cần xem</b> = ITA không chắc hoặc ngưỡng do ITA tự đặt, kèm lý do. Chỉ «Sai» và «Lệch chuẩn» có mức (cao / trung bình / thấp) và được tính là lỗi.</p>
-<table><thead><tr><th>Màn</th><th>Kết luận</th><th>URL</th><th>Căn cứ</th><th>Vấn đề</th></tr></thead><tbody>${tr}</tbody></table>
-${(kq.mau_loi || []).length ? `<h2 style="font-size:16px;margin-top:28px">Mẫu lỗi — gom theo thành phần / loại (${kq.mau_loi.length})</h2><table><thead><tr><th>Kết luận</th><th>Mẫu lỗi · nguyên tắc</th><th>Số màn</th><th>Ở màn</th></tr></thead><tbody>${kq.mau_loi.map(m => `<tr class="${m.muc_do === 'cao' ? 'cao' : m.muc_do === 'trung bình' ? 'tb' : ''}"><td>${klHien(m)}</td><td><b>${esc(m.loai)}</b>${m.chi_tiet ? ' — ' + esc(m.chi_tiet) : ''}<div class=m>${esc(m.nguyen_tac)}${m.can_cu ? ' · căn cứ: ' + esc(m.can_cu) : ''}${m.can_xac_nhan ? ' · cần xem vì: ' + esc(m.can_xac_nhan) : ''}${(m.cung || []).length ? ' · cùng chỗ này cũng trúng: ' + esc(m.cung.join(', ')) : ''}</div></td><td>${esc(m.so_man)}</td><td>${dsMan(m.ds_man || m.vi_du_man, m.so_man)}</td></tr>`).join('')}</tbody></table>` : ''}
+${mauThat.length ? `<h2 style="font-size:16px;margin-top:28px">Mẫu lỗi — gom theo thành phần / loại (${mauThat.length})</h2>${bangMau(mauThat)}` : ''}
+${manThat.length ? `<h2 style="font-size:16px;margin-top:28px">Lỗi theo từng màn (${manThat.length} màn)</h2>${bangMan(manThat)}` : ''}
 ${htmlGiaLoi(kq)}
-${htmlThietKe(kq) ? '<h2 style="font-size:16px;margin-top:28px">Hệ thống thiết kế &amp; ngôn từ</h2>' + htmlThietKe(kq) : ''}
+${tk && tkSai ? '<h2 style="font-size:16px;margin-top:28px">Hệ thống thiết kế &amp; ngôn từ</h2>' + tk : ''}
+<h2 style="font-size:16px;margin-top:28px">Gợi ý cần xem — không tính là lỗi</h2>
+<p class=m>Công cụ không chắc, hoặc ngưỡng do công cụ tự đặt khi dự án chưa có quy cách. Mở ra khi muốn rà thêm.</p>
+${(() => { const tl = ds.filter(f => f.loi); return tl.length ? `<h2 style="font-size:16px;margin-top:28px">Trường có lỗi (${tl.length} / ${ds.length})</h2><p class=m>Chỉ các trường có lỗi; danh mục đầy đủ ở Phụ lục.</p><table><thead><tr><th>Màn</th><th>Vùng</th><th>Trường</th><th>Kiểu</th><th>Lỗi</th></tr></thead><tbody>${tl.map(f => `<tr class=tb><td>${esc(f.man)}</td><td>${esc(f.vung)}</td><td>${esc(f.nhan)}</td><td>${esc(f.loai)}</td><td>${esc(f.loi)}</td></tr>`).join('')}</tbody></table>` : ''; })()}
+${gap('Mẫu gợi ý «Cần xem» / «Không thống nhất» (' + mauPhu.length + ')', mauPhu.length ? bangMau(mauPhu) : '')}
+${gap('Màn chỉ có gợi ý (' + manPhu.length + ')', manPhu.length ? bangMan(manPhu) : '')}
+${tk && !tkSai ? gap('Hệ thống thiết kế &amp; ngôn từ (thống kê, ngưỡng công cụ)', tk) : ''}
 ${(kq.dich_vu_401 || []).length ? `<h2 style="font-size:16px;margin-top:28px">Dịch vụ trả 401 (${kq.dich_vu_401.length})</h2><p class=m>401 chưa phải mất phiên: công cụ kiểm lại phiên chính (về màn đăng nhập? lệnh kiem_phien của hồ sơ? dịch vụ khác vẫn trả về bình thường?). Phiên còn thì ghi lỗi API và chạy tiếp.</p><table><thead><tr><th>Dịch vụ</th><th>Số lệnh</th><th>Phiên chính</th><th>Căn cứ</th><th>Đường dẫn</th><th>Ở màn</th></tr></thead><tbody>${kq.dich_vu_401.map(x => `<tr class="${x.phien_chinh_con ? 'tb' : 'cao'}"><td>${esc(x.dv)}</td><td>${x.so}</td><td>${x.phien_chinh_con ? 'vẫn còn — ghi lỗi API của dịch vụ' : 'mất — đã dừng hẳn'}</td><td>${esc(x.ly_do || '')}</td><td>${esc(x.duong.join(' · '))}</td><td>${esc(x.man.join(' · '))}</td></tr>`).join('')}</tbody></table>` : ''}
 ${(kq.ho_so_mau || []).length ? `<h2 style="font-size:16px;margin-top:28px">Hồ sơ mẫu (dataset) — ${kq.ho_so_mau.filter(x => /^đã mở/.test(x.ket_qua)).length}/${kq.ho_so_mau.length} mở được</h2><table><thead><tr><th>Mã</th><th>Đường dẫn</th><th>Kết quả</th><th>Ghi chú</th></tr></thead><tbody>${kq.ho_so_mau.map(x => `<tr class="${/^đã mở$/.test(x.ket_qua) ? '' : 'tb'}"><td>${esc(x.ma)}</td><td>${esc(x.duong_dan)}</td><td>${esc(x.ket_qua)}</td><td>${esc(x.ly_do || '')}</td></tr>`).join('')}</tbody></table>` : ''}
 ${kq.mat_phien ? `<p style="color:#c62828"><b>DỪNG HẲN vì mất phiên đăng nhập:</b> ${esc(kq.mat_phien)}${kq.mat_phien_can_cu ? '<br><b>Căn cứ:</b> ' + esc(kq.mat_phien_can_cu) : ''}${kq.mat_phien_lap_lai ? '<br><b>LẶP LẠI</b> ở cùng màn (lần trước ' + esc(kq.mat_phien_lap_lai) + '): đăng nhập lại rồi chạy tiếp sẽ lặp lại — kiểm tay màn này hoặc loại nó khỏi lần chạy.' : ''}<br>Công cụ không tự chạy tiếp.</p>` : ''}
@@ -120,13 +153,11 @@ ${(kq.loi_o_nhap || []).length ? `<h2 style="font-size:16px;margin-top:28px">L�
 ${(kq.bieu_do_chua_bam_duoc || []).length ? `<h2 style="font-size:16px;margin-top:28px">Biểu đồ chưa bấm được để xem chi tiết (${kq.bieu_do_chua_bam_duoc.length})</h2><ul>${kq.bieu_do_chua_bam_duoc.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
 ${(kq.danh_sach_menu || []).length ? `<h2 style="font-size:16px;margin-top:28px">Mục menu của tài khoản (${kq.danh_sach_menu.length})</h2><p class=m>${kq.danh_sach_menu.map(esc).join(' · ')}</p>` : ''}
 ${(kq.menu_khong_mo_duoc || []).length ? `<h2 style="font-size:16px;margin-top:28px;color:#b3261e">Mục menu chưa kiểm được (${kq.menu_khong_mo_duoc.length})</h2><ul>${kq.menu_khong_mo_duoc.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
-<h2 style="font-size:16px;margin-top:28px">Các màn đã kiểm (${(kq.man_da_kiem || []).length})</h2>
-<table><thead><tr><th>Màn</th><th>URL</th><th>Số trường</th><th>Nút trên màn</th></tr></thead><tbody>${(kq.man_da_kiem || []).map(r => `<tr><td>${esc(r.tab)}</td><td>${esc(r.url)}</td><td>${esc(r.so_truong)}</td><td>${esc(r.nut_tren_man)}</td></tr>`).join('')}</tbody></table>
-<h2 style="font-size:16px;margin-top:28px">Không bấm / bỏ qua (${(kq.bo_qua_khong_bam || []).length})</h2>
-<table><thead><tr><th>Màn</th><th>Chữ</th><th>Lý do</th></tr></thead><tbody>${(kq.bo_qua_khong_bam || []).map(r => `<tr><td>${esc(r.man)}</td><td>${esc(r.chu)}</td><td>${esc(r.ly_do)}</td></tr>`).join('')}</tbody></table>
 ${trThieu ? `<h2 style="font-size:16px;margin-top:28px">Thiếu trường so với danh mục mong đợi</h2><table><thead><tr><th>Màn</th><th>Trường không thấy</th></tr></thead><tbody>${trThieu}</tbody></table>` : ''}
-<h2 style="font-size:16px;margin-top:28px">Danh mục trường (${ds.length} trường, ${ds.filter(f => f.loi).length} có lỗi)</h2>
-<table><thead><tr>${COT_TRUONG.map(c => `<th>${c[1]}</th>`).join('')}</tr></thead><tbody>${trT}</tbody></table>`;
+<h2 style="font-size:16px;margin-top:28px">Phụ lục — số liệu lần chạy</h2>
+${gap('Các màn đã kiểm (' + (kq.man_da_kiem || []).length + ')', `<table><thead><tr><th>Màn</th><th>URL</th><th>Số trường</th><th>Nút trên màn</th></tr></thead><tbody>${(kq.man_da_kiem || []).map(r => `<tr><td>${esc(r.tab)}</td><td>${esc(r.url)}</td><td>${esc(r.so_truong)}</td><td>${esc(r.nut_tren_man)}</td></tr>`).join('')}</tbody></table>`)}
+${gap('Không bấm / bỏ qua (' + (kq.bo_qua_khong_bam || []).length + ')', `<table><thead><tr><th>Màn</th><th>Chữ</th><th>Lý do</th></tr></thead><tbody>${(kq.bo_qua_khong_bam || []).map(r => `<tr><td>${esc(r.man)}</td><td>${esc(r.chu)}</td><td>${esc(r.ly_do)}</td></tr>`).join('')}</tbody></table>`)}
+${gap('Danh mục trường đầy đủ (' + ds.length + ' trường) — đủ dữ liệu ở ita.xuat()', `<table><thead><tr>${COT_TRUONG.map(c => `<th>${c[1]}</th>`).join('')}</tr></thead><tbody>${trT}</tbody></table>`)}`;
 }
 
 /* ---------- đối tượng lệnh ita ---------- */
